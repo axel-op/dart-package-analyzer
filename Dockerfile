@@ -1,7 +1,11 @@
-FROM alpine:3.10
+FROM google/dart
 
 COPY LICENSE README.md /
 
-COPY entrypoint.sh /entrypoint.sh
+COPY entrypoint.dart /entrypoint.dart
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENV PATH="$PATH:/usr/lib/dart/bin"
+
+#RUN pub global activate pana
+
+ENTRYPOINT ["dart", "/entrypoint.dart", "first_arg"]
