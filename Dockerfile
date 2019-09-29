@@ -1,4 +1,4 @@
-FROM google/dart
+FROM google/dart:latest
 
 COPY LICENSE README.md /
 
@@ -8,4 +8,4 @@ ENV PATH="$PATH:/usr/lib/dart/bin"
 
 #RUN pub global activate pana
 
-ENTRYPOINT ["dart", "/entrypoint.dart", "first_arg"]
+ENTRYPOINT ["dart", "/entrypoint.dart", "-p", "/github/workspace"]
