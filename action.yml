@@ -2,17 +2,17 @@ name: 'Container Action Template'
 description: 'Get started with Container actions'
 author: 'axel-op'
 inputs: 
-  #githubToken:
-  #  description: 'Token to connect to Github. Use ${{ secrets.GITHUB_TOKEN }}'
-  #  required: true
-  #eventPayload:
-  #  description: 'Use ${{ toJson(github.event) }}'
-  #  required: true
+  githubToken:
+    description: 'Token to connect to Github. Use ${{ secrets.GITHUB_TOKEN }}'
+    required: true
+  eventPayload:
+    description: 'Use ${{ toJson(github.event) }}'
+    required: true
 runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
-    - '--github_token'
-    - ${{ secrets.GITHUB_TOKEN }}
-    - '--event_payload'
-    - ${{ toJson(github.event) }}
+    - --github_token
+    - ${{ inputs.githubToken }}
+    - --event_payload
+    - ${{ inputs.eventPayload }}
