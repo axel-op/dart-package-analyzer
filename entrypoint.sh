@@ -1,4 +1,6 @@
 #!/bin/sh -l
 
+echo "> pwd"
+pwd
+echo "> ls"
 ls
-echo "hello $1"
