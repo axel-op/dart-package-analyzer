@@ -19,13 +19,28 @@ main(List<String> arguments) {
   final String eventPayload = argresults['event_payload'];
   final String githubToken = argresults['github_token'];
 
-  final ProcessResult result = Process.runSync('pub',
-      ['global', 'run', 'pana', '--source', path, '--scores', '--no-warning'],
+  final ProcessResult test = Process.runSync('cd', [path], runInShell: true);
+  _writeOutputs(test);
+  final ProcessResult test2 = Process.runSync('ls', [], runInShell: true);
+  _writeOutputs(test2, exitOnError: true);
+  final ProcessResult resultPanaActivation =
+      Process.runSync('pub', ['global', 'activate', 'pana'], runInShell: true);
+  _writeOutputs(resultPanaActivation, exitOnError: true);
+  final ProcessResult resultPana = Process.runSync(
+      'pub',
+      [
+        'global',
+        'run',
+        'pana',
+        '--source',
+        'path',
+        '.',
+        '--scores',
+        '--no-warning',
+      ],
       runInShell: true);
-  if (result.stderr != null) stderr.write(result.stderr);
-  if (result.stdout != null) stdout.write(result.stdout);
-  if (result.exitCode != 0) exit(1);
-  final Map<String, dynamic> output = jsonDecode(result.stdout);
+  _writeOutputs(resultPana, exitOnError: true);
+  final Map<String, dynamic> output = jsonDecode(resultPana.stdout);
 
   final Event event = getEvent(jsonDecode(eventPayload));
   final Result results = app.processOutput(output);
@@ -44,10 +59,15 @@ main(List<String> arguments) {
       //github.git.getCommit(repo.slug(), event.commitId)
       //  .then((commit) => github.)
     }
-  })
-  .catchError((e, s) {
+  }).catchError((e, s) {
     stderr.write(e.toString());
     stderr.write(s.toString());
     exit(1);
   });
+}
+
+void _writeOutputs(ProcessResult processResult, {bool exitOnError = false}) {
+  if (processResult.stderr != null) stderr.write(processResult.stderr);
+  if (processResult.stdout != null) stdout.write(processResult.stdout);
+  if (exitOnError && processResult.exitCode != 0) exit(processResult.exitCode);
 }
