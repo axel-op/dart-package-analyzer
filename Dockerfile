@@ -1,4 +1,4 @@
-FROM python:3
+FROM google/dart-runtime:latest
 
 COPY LICENSE README.md /
 
