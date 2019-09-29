@@ -4,6 +4,8 @@ COPY LICENSE README.md /
 
 COPY entrypoint.sh /entrypoint.sh
 
-RUN pub global activate pana
+ENV PATH="$PATH:/usr/lib/dart/bin"
+
+#RUN pub global activate pana
 
 ENTRYPOINT ["/entrypoint.sh"]
