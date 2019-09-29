@@ -3,10 +3,10 @@ description: 'Get started with Container actions'
 author: 'axel-op'
 inputs: 
   githubToken:
-    description: 'Token to connect to Github. Use ${{ secrets.GITHUB_TOKEN }}'
+    description: 'Token to connect to Github. Use secrets.GITHUB_TOKEN'
     required: true
   eventPayload:
-    description: 'Use ${{ toJson(github.event) }}'
+    description: 'Use toJson(github.event)'
     required: true
 runs:
   using: 'docker'
