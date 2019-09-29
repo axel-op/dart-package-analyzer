@@ -1,6 +1,6 @@
-FROM google/dart-runtime:latest
+FROM google/dart-runtime:2.5
 
-COPY LICENSE README.md /
+#COPY LICENSE README.md /
 
 COPY entrypoint.sh /entrypoint.sh
 
