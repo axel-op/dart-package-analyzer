@@ -8,6 +8,9 @@ inputs:
   eventPayload:
     description: 'Use toJson(github.event)'
     required: true
+  commitSha:
+    description: 'Use github.sha'
+    required: true
 runs:
   using: 'docker'
   image: 'Dockerfile'
@@ -16,3 +19,5 @@ runs:
     - ${{ inputs.githubToken }}
     - --event_payload
     - ${{ inputs.eventPayload }}
+    - --commit_sha
+    - ${{ inputs.commitSha }}

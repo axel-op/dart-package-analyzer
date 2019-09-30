@@ -14,12 +14,14 @@ main(List<String> arguments) {
     ..addOption('package_path', abbr: 'p')
     ..addOption('github_token', abbr: 't')
     ..addOption('event_payload', abbr: 'e')
-    ..addOption('fluttersdk_path', abbr: 'f');
+    ..addOption('fluttersdk_path', abbr: 'f')
+    ..addOption('commit_sha', abbr: 'c');
   final ArgResults argresults = argparser.parse(arguments);
   final String package_path = argresults['package_path'];
   final String flutter_path = argresults['fluttersdk_path'];
   final String eventPayload = argresults['event_payload'];
   final String githubToken = argresults['github_token'];
+  final String commitSha = argresults['commit_sha'];
 
   final ProcessResult resultPanaActivation =
       Process.runSync('pub', ['global', 'activate', 'pana'], runInShell: true);
@@ -46,7 +48,7 @@ main(List<String> arguments) {
   // To debug only
   stderr.write("DEBUGGING: repoId = ${event.repoId}");
   final Result results = app.processOutput(output);
-  final String comment = app.buildComment(results, event);
+  final String comment = app.buildComment(results, event, commitSha);
 
   final g.GitHub github =
       g.createGitHubClient(auth: g.Authentication.withToken(githubToken));

@@ -2,8 +2,8 @@ import 'package:app/event.dart';
 import 'package:app/result.dart';
 
 /// Build message to be posted on GitHub
-String buildComment(Result result, Event event) {
-  String comment = '## Package analysis results for commit ${event.commitId}';
+String buildComment(Result result, Event event, String commitSha) {
+  String comment = '## Package analysis results for commit $commitSha';
   comment +=
       '\n(version of [pana](https://pub.dev/packages/pana) used: ${result.pana_version}';
   comment +=
