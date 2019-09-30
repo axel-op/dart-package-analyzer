@@ -5,7 +5,7 @@ import 'package:app/result.dart';
 String buildComment(Result result, Event event, String commitSha) {
   String comment = '## Package analysis results for commit $commitSha';
   comment +=
-      '\n(version of [pana](https://pub.dev/packages/pana) used: ${result.pana_version}';
+      '\n(version of [pana](https://pub.dev/packages/pana) used: ${result.pana_version})';
   comment +=
       '\n\n* Health score is **${result.health_score.toString()} / 100.0**';
   comment +=
