@@ -43,6 +43,8 @@ main(List<String> arguments) {
   final Map<String, dynamic> output = jsonDecode(resultPana.stdout);
 
   final Event event = getEvent(jsonDecode(eventPayload));
+  // To debug only
+  stderr.write("DEBUGGING: repoId = ${event.repoId}");
   final Result results = app.processOutput(output);
   final String comment = app.buildComment(results, event);
 
