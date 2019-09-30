@@ -55,14 +55,10 @@ main(List<String> arguments) async {
         createGitHubClient(auth: Authentication.withToken(githubToken));
     final Repository repo = await github.repositories
         .getRepository(RepositorySlug.full(event.repoSlug));
-    if (event is PullRequest) {
-      await github.issues.createComment(repo.slug(), event.number, comment);
-    } else {
-      final RepositoryCommit commit =
-          await github.repositories.getCommit(repo.slug(), commitSha);
-      await github.repositories
-          .createCommitComment(repo.slug(), commit, body: comment);
-    }
+    final RepositoryCommit commit =
+        await github.repositories.getCommit(repo.slug(), commitSha);
+    await github.repositories
+        .createCommitComment(repo.slug(), commit, body: comment);
     exitCode = 0;
   } catch (e, s) {
     _writeErrors(e, s);
