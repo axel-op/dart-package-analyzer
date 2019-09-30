@@ -69,14 +69,17 @@ main(List<String> arguments) {
 }
 
 void _writeOutputs(ProcessResult processResult, {bool exitOnError = false}) {
-  if (processResult.stderr != null) stderr.write(processResult.stderr);
+  if (processResult.stderr != null) {
+    _flushOutputs().then((_) => stderr.write(processResult.stderr));
+  }
   if (processResult.stdout != null) {
-    stderr.flush().then((_) => stdout.write(processResult.stdout));
+    _flushOutputs().then((_) => stdout.write(processResult.stdout));
   }
   if (exitOnError && processResult.exitCode != 0) {
-    stderr
-        .flush()
-        .then((_) => stdout.flush())
-        .then((_) => exit(processResult.exitCode));
+    _flushOutputs().then((_) => exit(processResult.exitCode));
   }
+}
+
+Future<void> _flushOutputs() {
+  return Future.wait([stderr.flush(), stdout.flush()]);
 }
