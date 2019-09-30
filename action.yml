@@ -1,5 +1,5 @@
-name: 'Dart package analyzer'
-description: 'Check the Pub score of your Dart package'
+name: 'Dart/Flutter Package Analyzer'
+description: 'Check the Pub score of your Dart/Flutter package'
 author: 'axel-op'
 branding:
   color: 'blue'
