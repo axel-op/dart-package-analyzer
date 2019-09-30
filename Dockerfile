@@ -4,7 +4,6 @@ FROM google/dart
 RUN apt-get update \
     && apt-get -y install unzip \
     && git clone -b stable https://github.com/flutter/flutter.git /flutter \
-    && /flutter/bin/flutter --version \
     && /flutter/bin/flutter --version
 
 COPY LICENSE README.md /
