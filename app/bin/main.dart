@@ -68,6 +68,12 @@ main(List<String> arguments) {
 
 void _writeOutputs(ProcessResult processResult, {bool exitOnError = false}) {
   if (processResult.stderr != null) stderr.write(processResult.stderr);
-  if (processResult.stdout != null) stdout.write(processResult.stdout);
-  if (exitOnError && processResult.exitCode != 0) exit(processResult.exitCode);
+  if (processResult.stdout != null) {
+    stderr.done.then((_) => stdout.write(processResult.stdout));
+  }
+  if (exitOnError && processResult.exitCode != 0) {
+    stderr.done
+        .then((_) => stdout.done)
+        .then((_) => exit(processResult.exitCode));
+  }
 }
