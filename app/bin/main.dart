@@ -19,8 +19,10 @@ main(List<String> arguments) {
   final String eventPayload = argresults['event_payload'];
   final String githubToken = argresults['github_token'];
 
-  //final ProcessResult test = Process.runSync('cd', [path], runInShell: true);
-  //_writeOutputs(test, exitOnError: true);
+  final ProcessResult test = Process.runSync('cd', [path], runInShell: true);
+  _writeOutputs(test);
+  final ProcessResult test2 = Process.runSync('ls', [], runInShell: true);
+  _writeOutputs(test2, exitOnError: true);
   final ProcessResult resultPanaActivation =
       Process.runSync('pub', ['global', 'activate', 'pana'], runInShell: true);
   _writeOutputs(resultPanaActivation, exitOnError: true);
@@ -32,7 +34,7 @@ main(List<String> arguments) {
         'pana',
         '--source',
         'path',
-        path,
+        '.',
         '--scores',
         '--no-warning',
       ],
