@@ -1,6 +1,9 @@
-name: 'Container Action Template'
-description: 'Get started with Container actions'
+name: 'Dart/Flutter Package Analyzer'
+description: 'Computes the Pub score of your Dart/Flutter package and posts a detailed commit comment'
 author: 'axel-op'
+branding:
+  color: 'blue'
+  icon: 'feather'
 inputs: 
   githubToken:
     description: 'Token to connect to Github. Use secrets.GITHUB_TOKEN'
