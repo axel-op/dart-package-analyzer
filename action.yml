@@ -11,6 +11,10 @@ inputs:
   commitSha:
     description: 'Use github.sha'
     required: true
+  maxScoreToComment:
+    description: 'No comment will be posted if both scores are over this max'
+    required: false
+    default: 100.0
 runs:
   using: 'docker'
   image: 'Dockerfile'
@@ -21,3 +25,5 @@ runs:
     - ${{ inputs.eventPayload }}
     - --commit_sha
     - ${{ inputs.commitSha }}
+    - --max_score
+    - ${{ inputs.maxScoreToComment }}
