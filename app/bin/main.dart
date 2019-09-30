@@ -71,17 +71,19 @@ main(List<String> arguments) async {
   }
 }
 
-/// Run a command and print its outputs to stderr and stdout while running.
+/// Runs a command and prints its outputs to stderr and stdout while running.
 /// Returns the sdtout output in a String.
 Future<String> _runCommand(String executable, List<String> arguments,
     {bool exitOnError = false}) async {
   Future<List<String>> output;
+  Future<dynamic> stderrAddStream;
+  Future<dynamic> stdoutAddStream;
   try {
     final Process process =
         await Process.start(executable, arguments, runInShell: true)
             .then((process) {
-      stderr.addStream(process.stderr);
-      stdout.addStream(process.stdout);
+      stderrAddStream = stderr.addStream(process.stderr);
+      stdoutAddStream = stdout.addStream(process.stdout);
       output = process.stdout.transform(utf8.decoder).toList();
       return process;
     });
@@ -90,6 +92,7 @@ Future<String> _runCommand(String executable, List<String> arguments,
       await _exitProgram(code);
     }
   } catch (e, s) {
+    await Future.wait([stderrAddStream, stdoutAddStream]);
     _writeErrors(e, s);
     await _exitProgram(1);
   }
