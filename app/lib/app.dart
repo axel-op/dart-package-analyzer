@@ -23,10 +23,6 @@ String buildComment(Result result, Event event, String commitSha) {
     result.maintenance_suggestions
         .forEach((s) => comment += _stringSuggestion(s));
   }
-  if (event is PullRequest) {
-    comment +=
-        '\n\n_This comment is posted only because at least one of the scores is below 100. If no comment appears after the next commit, then no problem will remain._';
-  }
   return comment;
 }
 
