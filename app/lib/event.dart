@@ -2,7 +2,7 @@ import 'package:meta/meta.dart';
 
 Event getEvent(Map<String, dynamic> payload) {
   final bool isPullRequest = payload.containsKey('pull_request');
-  final String repoId = payload['repository']['id'];
+  final String repoId = payload['repository']['id'].toString();
   final String repoSlug = payload['repository']['full_name'];
   final String commitId = isPullRequest
       ? payload['pull_request']['head']['sha']
