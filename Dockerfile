@@ -1,4 +1,4 @@
-FROM google/dart:latest
+FROM google/dart
 
 # Install Flutter
 RUN apt-get update \
