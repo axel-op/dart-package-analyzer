@@ -76,24 +76,26 @@ main(List<String> arguments) async {
 Future<String> _runCommand(String executable, List<String> arguments,
     {bool exitOnError = false}) async {
   Future<List<String>> output;
-  Process process;
+  Future<dynamic> addStreamOut;
+  Future<dynamic> addStreamErr;
   try {
-    process = await Process.start(executable, arguments, runInShell: true)
-        .then((process) {
-      stderr.addStream(process.stderr);
-      stdout.addStream(process.stdout);
+    final int code =
+        await Process.start(executable, arguments, runInShell: true)
+            .then((process) {
+      addStreamErr = stderr.addStream(process.stderr);
+      addStreamOut = stdout.addStream(process.stdout);
       output = process.stdout.transform(utf8.decoder).toList();
-      return process;
+      return process.exitCode;
     });
-    final int code = await process.exitCode;
     if (exitOnError && code != 0) {
       await _exitProgram(code);
     }
   } catch (e, s) {
-    await process?.kill();
+    await Future.wait([addStreamErr, addStreamOut]);
     _writeErrors(e, s);
     await _exitProgram(1);
   }
+  await Future.wait([addStreamErr, addStreamOut]);
   return (await output).join();
 }
 
@@ -102,7 +104,6 @@ void _writeErrors(dynamic error, dynamic stackTrace) {
 }
 
 Future<void> _exitProgram([int code]) async {
-  await stderr.done;
-  await stdout.done;
+  await Future.wait([stderr.done, stdout.done]);
   exit(code != null ? code : exitCode);
 }
