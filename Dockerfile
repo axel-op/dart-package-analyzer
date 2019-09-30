@@ -1,4 +1,4 @@
-FROM google/dart
+FROM google/dart:latest
 
 COPY app/ /app/
 
