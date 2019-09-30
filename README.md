@@ -35,5 +35,5 @@ jobs:
 ```
 
 * `githubToken`, `eventPayload`, and `commitSha` inputs are required to post a comment on GitHub.
-* Use `maxScoreToComment` if you only want to have a comment if your score is lower than this. If you don't specify it, a comment will be posted for every commit that triggers the workflow.
+* Use `maxScoreToComment` if you only want to have a comment if your score is lower than this. If you don't specify it, a comment will be posted for every commit that triggers the workflow. In this example, a comment won't be posted if the score is above 99.99, that is, if it equals 100. 
 
