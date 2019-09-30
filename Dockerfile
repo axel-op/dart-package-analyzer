@@ -13,6 +13,4 @@ RUN apt-get update \
     && /flutter/bin/flutter --version \
     && /flutter/bin/flutter config --no-analytics
 
-COPY LICENSE README.md /
-
 ENTRYPOINT ["dartaotruntime", "/main.dart.aot", "-f", "/flutter", "-p", "/github/workspace"]
