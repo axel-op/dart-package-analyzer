@@ -13,16 +13,14 @@ main(List<String> arguments) {
   argparser
     ..addOption('package_path', abbr: 'p')
     ..addOption('github_token', abbr: 't')
-    ..addOption('event_payload', abbr: 'e');
+    ..addOption('event_payload', abbr: 'e')
+    ..addOption('fluttersdk_path', abbr: 'f');
   final ArgResults argresults = argparser.parse(arguments);
-  final String path = argresults['package_path'];
+  final String package_path = argresults['package_path'];
+  final String flutter_path = argresults['fluttersdk_path'];
   final String eventPayload = argresults['event_payload'];
   final String githubToken = argresults['github_token'];
 
-  final ProcessResult test = Process.runSync('cd', [path], runInShell: true);
-  _writeOutputs(test);
-  final ProcessResult test2 = Process.runSync('ls', [], runInShell: true);
-  _writeOutputs(test2, exitOnError: true);
   final ProcessResult resultPanaActivation =
       Process.runSync('pub', ['global', 'activate', 'pana'], runInShell: true);
   _writeOutputs(resultPanaActivation, exitOnError: true);
@@ -32,11 +30,13 @@ main(List<String> arguments) {
         'global',
         'run',
         'pana',
-        '--source',
-        'path',
-        '.',
         '--scores',
         '--no-warning',
+        '--flutter-sdk',
+        flutter_path,
+        '--source',
+        'path',
+        package_path,
       ],
       runInShell: true);
   _writeOutputs(resultPana, exitOnError: true);
