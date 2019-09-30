@@ -34,7 +34,7 @@ String buildComment(Result result, Event event, String commitSha) {
       '\n* Maintenance score is **${result.maintenance_score.toString()} / 100.0**';
   if (result.health_suggestions.isNotEmpty ||
       result.maintenance_suggestions.isNotEmpty) {
-    comment += '\n\n### Problems';
+    comment += '\n\n### Issues';
   }
   if (result.health_suggestions.isNotEmpty) {
     comment += '\n#### Health';
@@ -49,7 +49,9 @@ String buildComment(Result result, Event event, String commitSha) {
 }
 
 String _stringSuggestion(Suggestion s) {
-  return '\n* **${s.title} (${s.loss.toString()} points)**: ${s.description}';
+  final String description =
+      s.description.replaceAll(RegExp(r'(\n)*'), '\n  *');
+  return '\n* **${s.title} (${s.loss.toString()} points)**: $description';
 }
 
 /// Process the output of the pana command and returns the [Result]
