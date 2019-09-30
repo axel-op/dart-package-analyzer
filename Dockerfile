@@ -3,7 +3,6 @@ FROM google/dart
 # Install Flutter
 RUN apt-get -y install unzip \
     && git clone -b stable https://github.com/flutter/flutter.git /flutter \
-    && /flutter/bin/flutter --version \
     && /flutter/bin/flutter --version
 
 COPY LICENSE README.md /
