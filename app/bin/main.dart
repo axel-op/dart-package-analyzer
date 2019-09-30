@@ -11,8 +11,7 @@ main(List<String> arguments) async {
   exitCode = 1;
 
   // Parse command arguments
-  final ArgParser argparser = ArgParser();
-  argparser
+  final ArgParser argparser = ArgParser()
     ..addOption('package_path', abbr: 'p')
     ..addOption('github_token', abbr: 't')
     ..addOption('event_payload', abbr: 'e')
@@ -83,8 +82,9 @@ Future<String> _runCommand(String executable, List<String> arguments,
         await Process.start(executable, arguments, runInShell: true)
             .then((process) {
       addStreamErr = stderr.addStream(process.stderr);
-      addStreamOut = stdout.addStream(process.stdout);
-      output = process.stdout.transform(utf8.decoder).toList();
+      final Stream<List<int>> outBrStream = process.stdout.asBroadcastStream();
+      addStreamOut = stdout.addStream(outBrStream);
+      output = outBrStream.transform(utf8.decoder).toList();
       return process.exitCode;
     });
     if (exitOnError && code != 0) {
