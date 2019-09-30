@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:app/app.dart' as app;
+import 'package:app/app.dart';
 import 'package:app/event.dart';
 import 'package:app/result.dart';
 import 'package:args/args.dart';
-import 'package:github/server.dart' hide Event, PullRequest;
 
 main(List<String> arguments) async {
   exitCode = 1;
@@ -16,13 +16,18 @@ main(List<String> arguments) async {
     ..addOption('github_token', abbr: 't')
     ..addOption('event_payload', abbr: 'e')
     ..addOption('fluttersdk_path', abbr: 'f')
-    ..addOption('commit_sha', abbr: 'c');
+    ..addOption('commit_sha', abbr: 'c')
+    ..addOption('max_score', abbr: 'm');
   final ArgResults argresults = argparser.parse(arguments);
   final String package_path = argresults['package_path'];
   final String flutter_path = argresults['fluttersdk_path'];
   final String eventPayload = argresults['event_payload'];
   final String githubToken = argresults['github_token'];
   final String commitSha = argresults['commit_sha'];
+  final dynamic maxScoreUnknownType = argresults['max_score'];
+  final num maxScore = maxScoreUnknownType is String
+      ? num.parse(maxScoreUnknownType)
+      : maxScoreUnknownType;
 
   // Install pana package
   await _runCommand('pub', ['global', 'activate', 'pana'], exitOnError: true);
@@ -50,19 +55,19 @@ main(List<String> arguments) async {
   final String comment = app.buildComment(results, event, commitSha);
 
   // Post a comment on GitHub
-  try {
-    final GitHub github =
-        createGitHubClient(auth: Authentication.withToken(githubToken));
-    final Repository repo = await github.repositories
-        .getRepository(RepositorySlug.full(event.repoSlug));
-    final RepositoryCommit commit =
-        await github.repositories.getCommit(repo.slug(), commitSha);
-    await github.repositories
-        .createCommitComment(repo.slug(), commit, body: comment);
+  if (results.health_score > maxScore && results.maintenance_score > maxScore) {
+    stdout.write(
+        'Health score and maintenance score are both higher than the maximum score, so no comment will be posted.');
     exitCode = 0;
-  } catch (e, s) {
-    _writeErrors(e, s);
-    exitCode = 1;
+  } else {
+    exitCode = 0;
+    await postCommitComment(comment,
+        event: event,
+        githubToken: githubToken,
+        commitSha: commitSha, onError: (e, s) {
+      _writeErrors(e, s);
+      exitCode = 1;
+    });
   }
 }
 

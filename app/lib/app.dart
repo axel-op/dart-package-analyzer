@@ -1,5 +1,27 @@
 import 'package:app/event.dart';
 import 'package:app/result.dart';
+import 'package:github/server.dart' hide Event;
+import 'package:meta/meta.dart';
+
+/// Post the comment as a commit comment on GitHub
+Future<void> postCommitComment(String comment,
+    {@required Event event,
+    @required String commitSha,
+    @required String githubToken,
+    @required void Function(dynamic error, dynamic stack) onError}) async {
+  try {
+    final GitHub github =
+        createGitHubClient(auth: Authentication.withToken(githubToken));
+    final Repository repo = await github.repositories
+        .getRepository(RepositorySlug.full(event.repoSlug));
+    final RepositoryCommit commit =
+        await github.repositories.getCommit(repo.slug(), commitSha);
+    await github.repositories
+        .createCommitComment(repo.slug(), commit, body: comment);
+  } catch (e, s) {
+    onError(e, s);
+  }
+}
 
 /// Build message to be posted on GitHub
 String buildComment(Result result, Event event, String commitSha) {
@@ -30,7 +52,7 @@ String _stringSuggestion(Suggestion s) {
   return '\n* **${s.title} (${s.loss.toString()} points)**: ${s.description}';
 }
 
-/// Process the output of the pana command
+/// Process the output of the pana command and returns the [Result]
 Result processOutput(Map<String, dynamic> output) {
   final scores = output['scores'];
   final Result result = Result(
