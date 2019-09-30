@@ -19,13 +19,23 @@ main(List<String> arguments) {
   final String eventPayload = argresults['event_payload'];
   final String githubToken = argresults['github_token'];
 
-  final ProcessResult test = Process.runSync('cd', [path], runInShell: true);
-  _writeOutputs(test, exitOnError: true);
+  //final ProcessResult test = Process.runSync('cd', [path], runInShell: true);
+  //_writeOutputs(test, exitOnError: true);
   final ProcessResult resultPanaActivation =
       Process.runSync('pub', ['global', 'activate', 'pana'], runInShell: true);
   _writeOutputs(resultPanaActivation, exitOnError: true);
-  final ProcessResult resultPana = Process.runSync('pub',
-      ['global', 'run', 'pana', '--source', '.', '--scores', '--no-warning'],
+  final ProcessResult resultPana = Process.runSync(
+      'pub',
+      [
+        'global',
+        'run',
+        'pana',
+        '--source',
+        'path',
+        path,
+        '--scores',
+        '--no-warning',
+      ],
       runInShell: true);
   _writeOutputs(resultPana, exitOnError: true);
   final Map<String, dynamic> output = jsonDecode(resultPana.stdout);
