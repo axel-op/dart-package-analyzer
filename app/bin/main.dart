@@ -45,8 +45,6 @@ main(List<String> arguments) {
   final Map<String, dynamic> output = jsonDecode(resultPana.stdout);
 
   final Event event = getEvent(jsonDecode(eventPayload));
-  // To debug only
-  stderr.write("DEBUGGING: repoId = ${event.repoId}");
   final Result results = app.processOutput(output);
   final String comment = app.buildComment(results, event, commitSha);
 
@@ -58,16 +56,21 @@ main(List<String> arguments) {
     if (event is PullRequest) {
       github.issues.createComment(repo.slug(), event.number, comment);
     } else {
-      stderr.write("Commit comments aren't implemented yet.");
-      exit(1);
-      //github.git.getCommit(repo.slug(), event.commitId)
-      //  .then((commit) => github.)
+      github.repositories.getCommit(repo.slug(), commitSha).then((commit) =>
+          github.repositories
+              .createCommitComment(repo.slug(), commit, body: comment)
+              .catchError((e, s) => _writeErrors(e, s)));
     }
   }).catchError((e, s) {
-    stderr.write(e.toString());
-    stderr.write(s.toString());
-    exit(1);
+    _writeErrors(e, s);
   });
+}
+
+void _writeErrors(dynamic error, dynamic stackTrace,
+    {bool exitProgram = true}) {
+  stderr.write(error);
+  stderr.write(stackTrace);
+  if (exitProgram) stderr.done.then((_) => exit(1));
 }
 
 void _writeOutputs(ProcessResult processResult, {bool exitOnError = false}) {
