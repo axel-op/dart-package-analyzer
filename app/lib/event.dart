@@ -4,9 +4,7 @@ Event getEvent(Map<String, dynamic> payload) {
   final bool isPullRequest = payload.containsKey('pull_request');
   final String repoId = payload['repository']['id'].toString();
   final String repoSlug = payload['repository']['full_name'];
-  final String commitId = isPullRequest
-      ? payload['pull_request']['head']['sha']
-      : payload['head_commit']['id'];
+  final String commitId = payload['after'];
   final int number = isPullRequest ? payload['pull_request']['number'] : null;
   return isPullRequest
       ? PullRequest._(
