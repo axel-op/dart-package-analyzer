@@ -90,7 +90,7 @@ Future<String> _runCommand(String executable, List<String> arguments,
       await _exitProgram(code);
     }
   } catch (e, s) {
-    await process.kill();
+    await process?.kill();
     _writeErrors(e, s);
     await _exitProgram(1);
   }
