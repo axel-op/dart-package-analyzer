@@ -50,7 +50,7 @@ String buildComment(Result result, Event event, String commitSha) {
 
 String _stringSuggestion(Suggestion s) {
   final String description =
-      s.description.replaceAll(RegExp(r'(\n)*'), '\n  *');
+      s.description.replaceAll(RegExp(r'(\n)+'), '\n  *');
   return '\n* **${s.title} (${s.loss.toString()} points)**: $description';
 }
 
