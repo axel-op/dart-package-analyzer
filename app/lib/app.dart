@@ -98,11 +98,11 @@ Result processOutput(Map<String, dynamic> output) {
   if (output.containsKey('dartFiles')) {
     final Map<String, dynamic> dartFiles = output['dartFiles'];
     for (final String file in dartFiles.keys) {
-      final Map<String, dynamic> details = output[file];
+      final Map<String, dynamic> details = dartFiles[file];
       if (details.containsKey('codeProblems')) {
         List<Map<String, dynamic>> problems =
             List.castFrom<dynamic, Map<String, dynamic>>(
-                output['codeProblems']);
+                details['codeProblems']);
         lineSuggestions.addAll(problems.map((jsonObj) => LineSuggestion(
               lineNumber: jsonObj['line'],
               description: jsonObj['description'],
