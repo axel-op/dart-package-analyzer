@@ -4,11 +4,18 @@ import 'package:github/server.dart' hide Event;
 import 'package:meta/meta.dart';
 
 /// Post the comment as a commit comment on GitHub
-Future<void> postCommitComment(String comment,
-    {@required Event event,
-    @required String commitSha,
-    @required String githubToken,
-    @required void Function(dynamic error, dynamic stack) onError}) async {
+Future<void> postCommitComment(
+    String comment,
+    {@required
+        final Event event,
+    @required
+        final String commitSha,
+    @required
+        final String githubToken,
+    final int lineNumber,
+    final String fileRelativePath,
+    @required
+        Future<void> Function(dynamic error, dynamic stack) onError}) async {
   try {
     final GitHub github =
         createGitHubClient(auth: Authentication.withToken(githubToken));
@@ -16,10 +23,10 @@ Future<void> postCommitComment(String comment,
         .getRepository(RepositorySlug.full(event.repoSlug));
     final RepositoryCommit commit =
         await github.repositories.getCommit(repo.slug(), commitSha);
-    await github.repositories
-        .createCommitComment(repo.slug(), commit, body: comment);
+    await github.repositories.createCommitComment(repo.slug(), commit,
+        body: comment, path: fileRelativePath, position: lineNumber);
   } catch (e, s) {
-    onError(e, s);
+    await onError(e, s);
   }
 }
 
@@ -27,45 +34,56 @@ Future<void> postCommitComment(String comment,
 String buildComment(Result result, Event event, String commitSha) {
   String comment = '## Package analysis results for commit $commitSha';
   comment +=
-      '\n(version of [pana](https://pub.dev/packages/pana) used: ${result.pana_version})';
+      '\n(version of [pana](https://pub.dev/packages/pana) used: ${result.panaVersion})';
   comment +=
-      '\n\n* Health score is **${result.health_score.toString()} / 100.0**';
+      '\n\n* Health score is **${result.healthScore.toString()} / 100.0**';
   comment +=
-      '\n* Maintenance score is **${result.maintenance_score.toString()} / 100.0**';
-  if (result.health_suggestions.isNotEmpty ||
-      result.maintenance_suggestions.isNotEmpty) {
+      '\n* Maintenance score is **${result.maintenanceScore.toString()} / 100.0**';
+  if (result.healthSuggestions.isNotEmpty ||
+      result.maintenanceSuggestions.isNotEmpty) {
     comment += '\n\n### Issues';
   }
-  if (result.health_suggestions.isNotEmpty) {
+  if (result.healthSuggestions.isNotEmpty) {
     comment += '\n#### Health';
-    result.health_suggestions.forEach((s) => comment += _stringSuggestion(s));
+    result.healthSuggestions.forEach((s) => comment += _stringSuggestion(s));
   }
-  if (result.maintenance_suggestions.isNotEmpty) {
+  if (result.maintenanceSuggestions.isNotEmpty) {
     comment += '\n#### Maintenance';
-    result.maintenance_suggestions
+    result.maintenanceSuggestions
         .forEach((s) => comment += _stringSuggestion(s));
   }
   return comment;
 }
 
-String _stringSuggestion(Suggestion s) {
-  final String description =
-      s.description.replaceAll(RegExp(r'(\n)+'), '\n  *');
-  return '\n* **${s.title} (${s.loss.toString()} points)**: $description';
+String _stringSuggestion(Suggestion suggestion) {
+  String str = '\n* ';
+  if (suggestion.title != null || suggestion.loss != null) {
+    str += '**';
+    if (suggestion.title != null) str += '${suggestion.title} ';
+    if (suggestion.loss != null) {
+      str += '(${suggestion.loss.toString()} points)';
+    }
+    str += '**: ';
+  }
+  ;
+  str += suggestion.description.replaceAll(RegExp(r'(\n)+'), '\n  *');
+  return str;
 }
 
 /// Process the output of the pana command and returns the [Result]
 Result processOutput(Map<String, dynamic> output) {
   final scores = output['scores'];
-  final Result result = Result(
-      pana_version: output['runtimeInfo']['panaVersion'],
-      health_score: scores['health'],
-      maintenance_score: scores['maintenance']);
+  final String panaVersion = output['runtimeInfo']['panaVersion'];
+  final double healthScore = scores['health'];
+  final double maintenanceScore = scores['maintenance'];
+  final List<Suggestion> maintenanceSuggestions = [];
+  final List<Suggestion> healthSuggestions = [];
+  final List<LineSuggestion> lineSuggestions = [];
 
   if (output.containsKey('suggestions')) {
     final List<Map<String, dynamic>> suggestions =
         List.castFrom<dynamic, Map<String, dynamic>>(output['suggestions']);
-    _parseSuggestions(suggestions).forEach(result.addMaintenanceSuggestion);
+    maintenanceSuggestions.addAll(_parseSuggestions(suggestions));
   }
 
   if (output.containsKey('health')) {
@@ -73,11 +91,35 @@ Result processOutput(Map<String, dynamic> output) {
     if (health.containsKey('suggestions')) {
       final List<Map<String, dynamic>> suggestions =
           List.castFrom<dynamic, Map<String, dynamic>>(health['suggestions']);
-      _parseSuggestions(suggestions).forEach(result.addHealthSuggestion);
+      healthSuggestions.addAll(_parseSuggestions(suggestions));
     }
   }
 
-  return result;
+  if (output.containsKey('dartFiles')) {
+    final Map<String, dynamic> dartFiles = output['dartFiles'];
+    for (final String file in dartFiles.keys) {
+      final Map<String, dynamic> details = output[file];
+      if (details.containsKey('codeProblems')) {
+        List<Map<String, dynamic>> problems =
+            List.castFrom<dynamic, Map<String, dynamic>>(
+                output['codeProblems']);
+        lineSuggestions.addAll(problems.map((jsonObj) => LineSuggestion(
+              lineNumber: jsonObj['line'],
+              description: jsonObj['description'],
+              relativePath: jsonObj['file'],
+            )));
+      }
+    }
+  }
+
+  return Result(
+    panaVersion: panaVersion,
+    maintenanceScore: maintenanceScore,
+    healthScore: healthScore,
+    maintenanceSuggestions: maintenanceSuggestions,
+    healthSuggestions: healthSuggestions,
+    lineSuggestions: lineSuggestions,
+  );
 }
 
 List<Suggestion> _parseSuggestions(List<Map<String, dynamic>> list) {

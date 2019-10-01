@@ -1,26 +1,23 @@
 import 'package:meta/meta.dart';
 
 class Result {
-  double health_score;
-  double maintenance_score;
-  String pana_version;
+  final double healthScore;
+  final double maintenanceScore;
+  final String panaVersion;
+  final List<Suggestion> maintenanceSuggestions;
+  final List<Suggestion> healthSuggestions;
+  final List<LineSuggestion> lineSuggestions;
 
-  List<Suggestion> _maintenance_suggestions = [];
-  List<Suggestion> _health_suggestions = [];
-
-  Result(
-      {@required this.health_score,
-      @required this.maintenance_score,
-      @required this.pana_version});
-
-  List<Suggestion> get maintenance_suggestions =>
-      _maintenance_suggestions.toList();
-  List<Suggestion> get health_suggestions => _health_suggestions.toList();
-
-  void addHealthSuggestion(Suggestion suggestion) =>
-      _health_suggestions.add(suggestion);
-  void addMaintenanceSuggestion(Suggestion suggestion) =>
-      _maintenance_suggestions.add(suggestion);
+  Result({
+    @required this.healthScore,
+    @required this.maintenanceScore,
+    @required this.panaVersion,
+    @required this.maintenanceSuggestions,
+    @required this.healthSuggestions,
+    @required this.lineSuggestions,
+  })  : assert(maintenanceSuggestions != null),
+        assert(healthSuggestions != null),
+        assert(lineSuggestions != null);
 }
 
 class Suggestion {
@@ -28,5 +25,16 @@ class Suggestion {
   final String description;
   final String title;
 
-  Suggestion({this.loss, @required this.description, @required this.title});
+  Suggestion({this.loss, @required this.description, this.title});
+}
+
+class LineSuggestion extends Suggestion {
+  final int lineNumber;
+  final String relativePath;
+
+  LineSuggestion(
+      {@required String description,
+      @required this.lineNumber,
+      @required this.relativePath})
+      : super(description: description);
 }

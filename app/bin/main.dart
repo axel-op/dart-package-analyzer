@@ -55,7 +55,7 @@ main(List<String> arguments) async {
   final String comment = app.buildComment(results, event, commitSha);
 
   // Post a comment on GitHub
-  if (results.health_score > maxScore && results.maintenance_score > maxScore) {
+  if (results.healthScore > maxScore && results.maintenanceScore > maxScore) {
     stdout.write(
         'Health score and maintenance score are both higher than the maximum score, so no comment will be posted.');
     exitCode = 0;
@@ -64,7 +64,20 @@ main(List<String> arguments) async {
     await postCommitComment(comment,
         event: event,
         githubToken: githubToken,
-        commitSha: commitSha, onError: (e, s) {
+        commitSha: commitSha, onError: (e, s) async {
+      _writeErrors(e, s);
+      exitCode = 1;
+    });
+  }
+
+  // Post file-specific comments on GitHub
+  for (final LineSuggestion suggestion in results.lineSuggestions) {
+    await app.postCommitComment(suggestion.description,
+        event: event,
+        githubToken: githubToken,
+        commitSha: commitSha,
+        lineNumber: suggestion.lineNumber,
+        fileRelativePath: suggestion.relativePath, onError: (e, s) async {
       _writeErrors(e, s);
       exitCode = 1;
     });

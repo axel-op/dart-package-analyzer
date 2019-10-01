@@ -1,10 +1,10 @@
 # Dart/Flutter package analyzer
 
-This action uses the [pana (Package ANAlysis) package](https://pub.dev/packages/pana) to compute the score that your Dart or Flutter package will have on the [Pub site](https://pub.dev), and post it as a commit comment, with suggestions for improvements. 
+This action uses the [pana (Package ANAlysis) package](https://pub.dev/packages/pana) to compute the score that your Dart or Flutter package will have on the [Pub site](https://pub.dev), and post it as a commit comment, with suggestions for improvements. It also comments lines where code issues have been found. 
 
 This package, amongst other things:
 * checks code formatting with `dartfmt` or `flutter format` (detected automatically),
-* validates the code by performing static analysis with [dartanalyzer](https://dart.dev/tools/dartanalyzer),
+* validates the code by performing static analysis with [dartanalyzer](https://dart.dev/tools/dartanalyzer) and comments the lines with issues,
 * checks for outdated dependencies,
 * validates the `pubscpec.yaml` file (dependencies, description's length...),
 * checks for required files (`CHANGELOG`, `README`, `example` folder...)
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1 # required
-      - uses: axel-op/dart_package_analyzer@v1
+      - uses: axel-op/dart_package_analyzer@master
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }} # required
           eventPayload: ${{ toJson(github.event) }} # required
