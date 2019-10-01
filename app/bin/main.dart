@@ -33,7 +33,7 @@ main(List<String> arguments) async {
   await _runCommand('pub', ['global', 'activate', 'pana'], exitOnError: true);
 
   // Dummy command to prevent a warning from the next command
-  await _runCommand('$flutter_path/bin/flutter', ['version']);
+  await _runCommand('$flutter_path/bin/flutter', ['config', '--no-analytics']);
 
   // Execute the analysis
   final String outputPana = await _runCommand(

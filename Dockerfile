@@ -11,7 +11,6 @@ RUN cd /app \
 RUN apt-get update \
     && apt-get -y install unzip \
     && git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter \
-    && /flutter/bin/flutter --version \
-    && /flutter/bin/flutter config --no-analytics
+    && /flutter/bin/flutter --version
 
 ENTRYPOINT ["dartaotruntime", "/main.dart.aot", "-f", "/flutter", "-p", "/github/workspace"]
