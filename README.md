@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1 # required
-      - uses: axel-op/dart_package_analyzer@v1.0
+      - uses: axel-op/dart_package_analyzer@v1
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }} # required
           eventPayload: ${{ toJson(github.event) }} # required
