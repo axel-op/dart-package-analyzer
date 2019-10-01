@@ -32,6 +32,9 @@ main(List<String> arguments) async {
   // Install pana package
   await _runCommand('pub', ['global', 'activate', 'pana'], exitOnError: true);
 
+  // Dummy command to prevent a warning from the next command
+  await _runCommand('flutter', ['version']);
+
   // Execute the analysis
   final String outputPana = await _runCommand(
       'pub',
