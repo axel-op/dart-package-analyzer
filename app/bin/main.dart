@@ -5,20 +5,22 @@ import 'package:app/app.dart';
 import 'package:app/event.dart';
 import 'package:app/result.dart';
 import 'package:args/args.dart';
+import 'package:meta/meta.dart';
 
 class _Argument {
   final String fullName;
   final String abbreviation;
-  const _Argument(this.fullName, this.abbreviation);
+  final bool nullable;
+  const _Argument(this.fullName, this.abbreviation, {@required this.nullable});
 }
 
 const List<_Argument> arguments = <_Argument>[
-  _Argument('package_path', 'p'),
-  _Argument('github_token', 't'),
-  _Argument('event_payload', 'e'),
-  _Argument('fluttersdk_path', 'f'),
-  _Argument('commit_sha', 'c'),
-  _Argument('max_score', 'm'),
+  _Argument('package_path', 'p', nullable: false),
+  _Argument('github_token', 't', nullable: false),
+  _Argument('event_payload', 'e', nullable: false),
+  _Argument('fluttersdk_path', 'f', nullable: false),
+  _Argument('commit_sha', 'c', nullable: false),
+  _Argument('max_score', 'm', nullable: true),
 ];
 
 dynamic main(List<String> args) async {
@@ -30,7 +32,7 @@ dynamic main(List<String> args) async {
       argparser.addOption(arg.fullName, abbr: arg.abbreviation));
   final ArgResults argresults = argparser.parse(args);
   arguments.forEach((_Argument arg) {
-    if (argresults[arg.fullName] == null) {
+    if (argresults[arg.fullName] == null && !arg.nullable) {
       stderr.writeln(
           'No value were given for the argument \'${arg.fullName}\'. Exiting.');
       exit(1);
@@ -42,9 +44,10 @@ dynamic main(List<String> args) async {
   final String githubToken = argresults['github_token'];
   final String commitSha = argresults['commit_sha'];
   final dynamic maxScoreUnknownType = argresults['max_score'];
-  final num maxScore = maxScoreUnknownType is String
-      ? num.parse(maxScoreUnknownType)
-      : maxScoreUnknownType;
+  final num maxScore =
+      maxScoreUnknownType != null && maxScoreUnknownType is String
+          ? num.parse(maxScoreUnknownType)
+          : maxScoreUnknownType;
 
   // Install pana package
   await _runCommand('pub', <String>['global', 'activate', 'pana'],
@@ -77,7 +80,9 @@ dynamic main(List<String> args) async {
   final String comment = buildComment(results, event, commitSha);
 
   // Post a comment on GitHub
-  if (results.healthScore > maxScore && results.maintenanceScore > maxScore) {
+  if (maxScore != null &&
+      results.healthScore > maxScore &&
+      results.maintenanceScore > maxScore) {
     stdout.writeln(
         'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.' +
             (results.lineSuggestions.isNotEmpty
