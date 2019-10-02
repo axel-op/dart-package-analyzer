@@ -45,12 +45,13 @@ String buildComment(Result result, Event event, String commitSha) {
   }
   if (result.healthSuggestions.isNotEmpty) {
     comment += '\n#### Health';
-    result.healthSuggestions.forEach((s) => comment += _stringSuggestion(s));
+    result.healthSuggestions
+        .forEach((Suggestion s) => comment += _stringSuggestion(s));
   }
   if (result.maintenanceSuggestions.isNotEmpty) {
     comment += '\n#### Maintenance';
     result.maintenanceSuggestions
-        .forEach((s) => comment += _stringSuggestion(s));
+        .forEach((Suggestion s) => comment += _stringSuggestion(s));
   }
   return comment;
 }
@@ -72,13 +73,13 @@ String _stringSuggestion(Suggestion suggestion) {
 
 /// Process the output of the pana command and returns the [Result]
 Result processOutput(Map<String, dynamic> output) {
-  final scores = output['scores'];
+  final dynamic scores = output['scores'];
   final String panaVersion = output['runtimeInfo']['panaVersion'];
   final double healthScore = scores['health'];
   final double maintenanceScore = scores['maintenance'];
-  final List<Suggestion> maintenanceSuggestions = [];
-  final List<Suggestion> healthSuggestions = [];
-  final List<LineSuggestion> lineSuggestions = [];
+  final List<Suggestion> maintenanceSuggestions = <Suggestion>[];
+  final List<Suggestion> healthSuggestions = <Suggestion>[];
+  final List<LineSuggestion> lineSuggestions = <LineSuggestion>[];
 
   if (output.containsKey('suggestions')) {
     final List<Map<String, dynamic>> suggestions =
@@ -100,14 +101,15 @@ Result processOutput(Map<String, dynamic> output) {
     for (final String file in dartFiles.keys) {
       final Map<String, dynamic> details = dartFiles[file];
       if (details.containsKey('codeProblems')) {
-        List<Map<String, dynamic>> problems =
+        final List<Map<String, dynamic>> problems =
             List.castFrom<dynamic, Map<String, dynamic>>(
                 details['codeProblems']);
-        lineSuggestions.addAll(problems.map((jsonObj) => LineSuggestion(
-              lineNumber: jsonObj['line'],
-              description: jsonObj['description'],
-              relativePath: jsonObj['file'],
-            )));
+        lineSuggestions.addAll(
+            problems.map((Map<String, dynamic> jsonObj) => LineSuggestion(
+                  lineNumber: jsonObj['line'],
+                  description: jsonObj['description'],
+                  relativePath: jsonObj['file'],
+                )));
       }
     }
   }
@@ -122,12 +124,10 @@ Result processOutput(Map<String, dynamic> output) {
   );
 }
 
-List<Suggestion> _parseSuggestions(List<Map<String, dynamic>> list) {
-  return list
-      .map((s) => Suggestion(
-            description: s['description'],
-            title: s['title'],
-            loss: s['score'],
-          ))
-      .toList();
-}
+List<Suggestion> _parseSuggestions(List<Map<String, dynamic>> list) => list
+    .map((Map<String, dynamic> s) => Suggestion(
+          description: s['description'],
+          title: s['title'],
+          loss: s['score'],
+        ))
+    .toList();
