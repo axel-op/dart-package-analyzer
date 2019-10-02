@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:app/app.dart';
 import 'package:app/event.dart';
+import 'package:app/github.dart';
 import 'package:app/result.dart';
+import 'package:app/utils.dart';
 import 'package:args/args.dart';
 import 'package:meta/meta.dart';
 
