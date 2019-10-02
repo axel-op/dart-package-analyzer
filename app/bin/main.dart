@@ -5,49 +5,72 @@ import 'package:app/app.dart';
 import 'package:app/event.dart';
 import 'package:app/result.dart';
 import 'package:args/args.dart';
+import 'package:meta/meta.dart';
 
-main(List<String> arguments) async {
+class _Argument {
+  final String fullName;
+  final String abbreviation;
+  final bool nullable;
+  const _Argument(this.fullName, this.abbreviation, {@required this.nullable});
+}
+
+const List<_Argument> arguments = <_Argument>[
+  _Argument('package_path', 'p', nullable: false),
+  _Argument('github_token', 't', nullable: false),
+  _Argument('event_payload', 'e', nullable: false),
+  _Argument('fluttersdk_path', 'f', nullable: false),
+  _Argument('commit_sha', 'c', nullable: false),
+  _Argument('max_score', 'm', nullable: true),
+];
+
+dynamic main(List<String> args) async {
   exitCode = 1;
 
   // Parse command arguments
-  final ArgParser argparser = ArgParser()
-    ..addOption('package_path', abbr: 'p')
-    ..addOption('github_token', abbr: 't')
-    ..addOption('event_payload', abbr: 'e')
-    ..addOption('fluttersdk_path', abbr: 'f')
-    ..addOption('commit_sha', abbr: 'c')
-    ..addOption('max_score', abbr: 'm');
-  final ArgResults argresults = argparser.parse(arguments);
-  final String package_path = argresults['package_path'];
-  final String flutter_path = argresults['fluttersdk_path'];
+  final ArgParser argparser = ArgParser();
+  arguments.forEach((_Argument arg) =>
+      argparser.addOption(arg.fullName, abbr: arg.abbreviation));
+  final ArgResults argresults = argparser.parse(args);
+  arguments.forEach((_Argument arg) {
+    if (argresults[arg.fullName] == null && !arg.nullable) {
+      stderr.writeln(
+          'No value were given for the argument \'${arg.fullName}\'. Exiting.');
+      exit(1);
+    }
+  });
+  final String packagePath = argresults['package_path'];
+  final String flutterPath = argresults['fluttersdk_path'];
   final String eventPayload = argresults['event_payload'];
   final String githubToken = argresults['github_token'];
   final String commitSha = argresults['commit_sha'];
   final dynamic maxScoreUnknownType = argresults['max_score'];
-  final num maxScore = maxScoreUnknownType is String
-      ? num.parse(maxScoreUnknownType)
-      : maxScoreUnknownType;
+  final num maxScore =
+      maxScoreUnknownType != null && maxScoreUnknownType is String
+          ? num.parse(maxScoreUnknownType)
+          : maxScoreUnknownType;
 
   // Install pana package
-  await _runCommand('pub', ['global', 'activate', 'pana'], exitOnError: true);
+  await _runCommand('pub', <String>['global', 'activate', 'pana'],
+      exitOnError: true);
 
   // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
-  await _runCommand('$flutter_path/bin/flutter', ['config', '--no-analytics']);
+  await _runCommand(
+      '$flutterPath/bin/flutter', <String>['config', '--no-analytics']);
 
   // Execute the analysis
   final String outputPana = await _runCommand(
       'pub',
-      [
+      <String>[
         'global',
         'run',
         'pana',
         '--scores',
         '--no-warning',
         '--flutter-sdk',
-        flutter_path,
+        flutterPath,
         '--source',
         'path',
-        package_path,
+        packagePath,
       ],
       exitOnError: true);
 
@@ -57,7 +80,9 @@ main(List<String> arguments) async {
   final String comment = buildComment(results, event, commitSha);
 
   // Post a comment on GitHub
-  if (results.healthScore > maxScore && results.maintenanceScore > maxScore) {
+  if (maxScore != null &&
+      results.healthScore > maxScore &&
+      results.maintenanceScore > maxScore) {
     stdout.writeln(
         'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.' +
             (results.lineSuggestions.isNotEmpty
@@ -69,7 +94,7 @@ main(List<String> arguments) async {
     await postCommitComment(comment,
         event: event,
         githubToken: githubToken,
-        commitSha: commitSha, onError: (e, s) async {
+        commitSha: commitSha, onError: (dynamic e, dynamic s) async {
       _writeErrors(e, s);
       exitCode = 1;
     });
@@ -82,7 +107,8 @@ main(List<String> arguments) async {
         githubToken: githubToken,
         commitSha: commitSha,
         lineNumber: suggestion.lineNumber,
-        fileRelativePath: suggestion.relativePath, onError: (e, s) async {
+        fileRelativePath: suggestion.relativePath,
+        onError: (dynamic e, dynamic s) async {
       _writeErrors(e, s);
       exitCode = 1;
     });
@@ -99,7 +125,7 @@ Future<String> _runCommand(String executable, List<String> arguments,
   try {
     final int code =
         await Process.start(executable, arguments, runInShell: true)
-            .then((process) {
+            .then((Process process) {
       addStreamErr = stderr.addStream(process.stderr);
       final Stream<List<int>> outBrStream = process.stdout.asBroadcastStream();
       addStreamOut = stdout.addStream(outBrStream);
@@ -110,11 +136,11 @@ Future<String> _runCommand(String executable, List<String> arguments,
       await _exitProgram(code);
     }
   } catch (e, s) {
-    await Future.wait([addStreamErr, addStreamOut]);
+    await Future.wait(<Future<dynamic>>[addStreamErr, addStreamOut]);
     _writeErrors(e, s);
     await _exitProgram(1);
   }
-  await Future.wait([addStreamErr, addStreamOut]);
+  await Future.wait(<Future<dynamic>>[addStreamErr, addStreamOut]);
   return (await output).join();
 }
 
@@ -123,6 +149,6 @@ void _writeErrors(dynamic error, dynamic stackTrace) {
 }
 
 Future<void> _exitProgram([int code]) async {
-  await Future.wait([stderr.done, stdout.done]);
+  await Future.wait(<Future<dynamic>>[stderr.done, stdout.done]);
   exit(code != null ? code : exitCode);
 }
