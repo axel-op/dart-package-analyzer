@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:app/app.dart' as app;
 import 'package:app/app.dart';
 import 'package:app/event.dart';
 import 'package:app/result.dart';
@@ -32,7 +31,7 @@ main(List<String> arguments) async {
   // Install pana package
   await _runCommand('pub', ['global', 'activate', 'pana'], exitOnError: true);
 
-  // Dummy command to prevent a warning from the next command
+  // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
   await _runCommand('$flutter_path/bin/flutter', ['config', '--no-analytics']);
 
   // Execute the analysis
@@ -54,13 +53,16 @@ main(List<String> arguments) async {
 
   final Map<String, dynamic> resultPana = jsonDecode(outputPana);
   final Event event = getEvent(jsonDecode(eventPayload));
-  final Result results = app.processOutput(resultPana);
-  final String comment = app.buildComment(results, event, commitSha);
+  final Result results = processOutput(resultPana);
+  final String comment = buildComment(results, event, commitSha);
 
   // Post a comment on GitHub
   if (results.healthScore > maxScore && results.maintenanceScore > maxScore) {
-    stdout.write(
-        'Health score and maintenance score are both higher than the maximum score, so no comment will be posted.');
+    stdout.writeln(
+        'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.' +
+            (results.lineSuggestions.isNotEmpty
+                ? ' However, specific comments are still posted under each line where static analysis has found an issue.'
+                : ''));
     exitCode = 0;
   } else {
     exitCode = 0;
@@ -75,7 +77,7 @@ main(List<String> arguments) async {
 
   // Post file-specific comments on GitHub
   for (final LineSuggestion suggestion in results.lineSuggestions) {
-    await app.postCommitComment(suggestion.description,
+    await postCommitComment(suggestion.description,
         event: event,
         githubToken: githubToken,
         commitSha: commitSha,
@@ -117,7 +119,7 @@ Future<String> _runCommand(String executable, List<String> arguments,
 }
 
 void _writeErrors(dynamic error, dynamic stackTrace) {
-  stderr.write(error.toString() + '\n' + stackTrace.toString());
+  stderr.writeln(error.toString() + '\n' + stackTrace.toString());
 }
 
 Future<void> _exitProgram([int code]) async {
