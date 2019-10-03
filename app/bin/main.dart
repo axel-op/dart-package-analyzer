@@ -75,6 +75,7 @@ dynamic main(List<String> args) async {
       ],
       exitOnError: true);
 
+  if (outputPana == null) throw ArgumentError.notNull('outputPana');
   final Map<String, dynamic> resultPana = jsonDecode(outputPana);
   final Event event = getEvent(jsonDecode(eventPayload));
   final Result results = processOutput(resultPana);
@@ -92,27 +93,32 @@ dynamic main(List<String> args) async {
     exitCode = 0;
   } else {
     exitCode = 0;
-    await postCommitComment(comment,
-        event: event,
-        githubToken: githubToken,
-        commitSha: commitSha, onError: (dynamic e, dynamic s) async {
-      _writeErrors(e, s);
-      exitCode = 1;
-    });
+    await postCommitComment(
+      comment,
+      event: event,
+      githubToken: githubToken,
+      commitSha: commitSha,
+      onError: (dynamic e, dynamic s) async {
+        _writeErrors(e, s);
+        exitCode = 1;
+      },
+    );
   }
 
   // Post file-specific comments on GitHub
   for (final LineSuggestion suggestion in results.lineSuggestions) {
-    await postCommitComment(suggestion.description,
-        event: event,
-        githubToken: githubToken,
-        commitSha: commitSha,
-        lineNumber: suggestion.lineNumber,
-        fileRelativePath: suggestion.relativePath,
-        onError: (dynamic e, dynamic s) async {
-      _writeErrors(e, s);
-      exitCode = 1;
-    });
+    await postCommitComment(
+      suggestion.description,
+      event: event,
+      githubToken: githubToken,
+      commitSha: commitSha,
+      lineNumber: suggestion.lineNumber,
+      fileRelativePath: suggestion.relativePath,
+      onError: (dynamic e, dynamic s) async {
+        _writeErrors(e, s);
+        exitCode = 1;
+      },
+    );
   }
 }
 
@@ -123,6 +129,8 @@ Future<String> _runCommand(String executable, List<String> arguments,
   Future<List<String>> output;
   Future<dynamic> addStreamOut;
   Future<dynamic> addStreamErr;
+  final Future<List<dynamic>> Function() freeStreams = () async =>
+      await Future.wait(<Future<dynamic>>[addStreamErr, addStreamOut]);
   try {
     final int code =
         await Process.start(executable, arguments, runInShell: true)
@@ -137,12 +145,12 @@ Future<String> _runCommand(String executable, List<String> arguments,
       await _exitProgram(code);
     }
   } catch (e, s) {
-    await Future.wait(<Future<dynamic>>[addStreamErr, addStreamOut]);
+    await freeStreams();
     _writeErrors(e, s);
     await _exitProgram(1);
   }
-  await Future.wait(<Future<dynamic>>[addStreamErr, addStreamOut]);
-  return (await output).join();
+  await freeStreams();
+  return (await output)?.join();
 }
 
 void _writeErrors(dynamic error, dynamic stackTrace) {

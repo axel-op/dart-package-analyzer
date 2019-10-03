@@ -22,8 +22,13 @@ Future<void> postCommitComment(
         .getRepository(RepositorySlug.full(event.repoSlug));
     final RepositoryCommit commit =
         await github.repositories.getCommit(repo.slug(), commitSha);
-    await github.repositories.createCommitComment(repo.slug(), commit,
-        body: comment, path: fileRelativePath, line: lineNumber);
+    await github.repositories.createCommitComment(
+      repo.slug(),
+      commit,
+      body: comment,
+      path: fileRelativePath,
+      line: lineNumber,
+    );
   } catch (e, s) {
     await onError(e, s);
   }
