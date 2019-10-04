@@ -18,6 +18,10 @@ inputs:
     description: 'No comment will be posted if both scores are over this max'
     required: false
     default: 100.0
+  relativePath:
+    description: 'Path of your package in your repository'
+    required: false
+    default: ''
 runs:
   using: 'docker'
   image: 'Dockerfile'
@@ -28,5 +32,7 @@ runs:
     - ${{ inputs.commitSha }}
     - --max_score
     - ${{ inputs.maxScoreToComment }}
+    - --package_path
+    - ${{ inputs.path }}
     - --event_payload
     - ${{ inputs.eventPayload }}

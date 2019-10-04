@@ -16,12 +16,13 @@ class _Argument {
 }
 
 const List<_Argument> arguments = <_Argument>[
-  _Argument('package_path', 'p', nullable: false),
+  _Argument('repo_path', 'r', nullable: false),
   _Argument('github_token', 't', nullable: false),
   _Argument('event_payload', 'e', nullable: false),
   _Argument('fluttersdk_path', 'f', nullable: false),
   _Argument('commit_sha', 'c', nullable: false),
   _Argument('max_score', 'm', nullable: true),
+  _Argument('package_path', 'p', nullable: true),
 ];
 
 dynamic main(List<String> args) async {
@@ -39,7 +40,7 @@ dynamic main(List<String> args) async {
       exit(1);
     }
   });
-  final String packagePath = argresults['package_path'];
+  final String repoPath = argresults['repo_path'];
   final String flutterPath = argresults['fluttersdk_path'];
   final String eventPayload = argresults['event_payload'];
   final String githubToken = argresults['github_token'];
@@ -49,6 +50,11 @@ dynamic main(List<String> args) async {
       maxScoreUnknownType != null && maxScoreUnknownType is String
           ? num.parse(maxScoreUnknownType)
           : maxScoreUnknownType;
+  String packagePathUnformatted = argresults['package_path'] ?? '';
+  if (!packagePathUnformatted.startsWith('/') && !repoPath.endsWith('/')) {
+    packagePathUnformatted = '/' + packagePathUnformatted;
+  }
+  final String sourcePath = repoPath + packagePathUnformatted;
 
   // Install pana package
   await _runCommand('pub', <String>['global', 'activate', 'pana'],
@@ -71,7 +77,7 @@ dynamic main(List<String> args) async {
         flutterPath,
         '--source',
         'path',
-        packagePath,
+        sourcePath,
       ],
       exitOnError: true);
 
