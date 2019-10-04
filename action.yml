@@ -33,6 +33,6 @@ runs:
     - --max_score
     - ${{ inputs.maxScoreToComment }}
     - --package_path
-    - ${{ inputs.path }}
+    - ${{ inputs.relativePath }}
     - --event_payload
     - ${{ inputs.eventPayload }}
