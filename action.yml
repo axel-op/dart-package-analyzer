@@ -28,11 +28,11 @@ runs:
   args:
     - --github_token
     - ${{ inputs.githubToken }}
-    - --event_payload
-    - ${{ inputs.eventPayload }}
     - --commit_sha
     - ${{ inputs.commitSha }}
     - --max_score
     - ${{ inputs.maxScoreToComment }}
     - --package_path
-    - ${{ inputs.path }}
+    - ${{ inputs.relativePath }}
+    - --event_payload
+    - ${{ inputs.eventPayload }}
