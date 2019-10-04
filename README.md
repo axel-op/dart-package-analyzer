@@ -1,10 +1,10 @@
 # Dart/Flutter package analyzer
 
-This action uses the [pana (Package ANAlysis) package](https://pub.dev/packages/pana) to compute the score that your Dart or Flutter package will have on the [Pub site](https://pub.dev), and post it as a commit comment, with suggestions for improvements. It also comments lines where code issues have been found. 
+This action uses the [pana (Package ANAlysis) package](https://pub.dev/packages/pana) to compute the score that your Dart or Flutter package will have on the [Pub site](https://pub.dev), and post it as a commit comment, with suggestions for improvements. 
 
 This package, amongst other things:
 * checks code formatting with `dartfmt` or `flutter format` (detected automatically),
-* validates the code by performing static analysis with [dartanalyzer](https://dart.dev/tools/dartanalyzer) and comments the lines with issues,
+* validates the code by performing static analysis with [dartanalyzer](https://dart.dev/tools/dartanalyzer),
 * checks for outdated dependencies,
 * validates the `pubscpec.yaml` file (dependencies, description's length...),
 * checks for required files (`CHANGELOG`, `README`, `example` folder...)
