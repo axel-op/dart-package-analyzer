@@ -4,6 +4,7 @@ class Result {
   final double healthScore;
   final double maintenanceScore;
   final String panaVersion;
+  final List<Suggestion> generalSuggestions;
   final List<Suggestion> maintenanceSuggestions;
   final List<Suggestion> healthSuggestions;
   final List<LineSuggestion> lineSuggestions;
@@ -12,10 +13,12 @@ class Result {
     @required this.healthScore,
     @required this.maintenanceScore,
     @required this.panaVersion,
+    @required this.generalSuggestions,
     @required this.maintenanceSuggestions,
     @required this.healthSuggestions,
     @required this.lineSuggestions,
-  })  : assert(maintenanceSuggestions != null),
+  })  : assert(generalSuggestions != null),
+        assert(maintenanceSuggestions != null),
         assert(healthSuggestions != null),
         assert(lineSuggestions != null);
 }

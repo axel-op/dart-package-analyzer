@@ -84,16 +84,16 @@ dynamic main(List<String> args) async {
   if (outputPana == null) throw ArgumentError.notNull('outputPana');
   final Map<String, dynamic> resultPana = jsonDecode(outputPana);
   final Event event = getEvent(jsonDecode(eventPayload));
-  final Result results = processOutput(resultPana);
-  final String comment = buildComment(results, event, commitSha);
+  final Result result = processOutput(resultPana);
+  final String comment = buildComment(result, event, commitSha);
 
   // Post a comment on GitHub
   if (maxScore != null &&
-      results.healthScore > maxScore &&
-      results.maintenanceScore > maxScore) {
+      result.healthScore > maxScore &&
+      result.maintenanceScore > maxScore) {
     stdout.writeln(
         'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.' +
-            (results.lineSuggestions.isNotEmpty
+            (result.lineSuggestions.isNotEmpty
                 ? ' However, specific comments are still posted under each line where static analysis has found an issue.'
                 : ''));
     exitCode = 0;
