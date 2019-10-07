@@ -88,12 +88,11 @@ _Diff _parseDiff(String diffStr) {
     } else if (currentFile != null &&
         diffPosition != null &&
         nextLineInFile != null) {
-      //diffPosition += 1;
+      diffPosition += 1;
       stderr.writeln('dp:$diffPosition,l:$nextLineInFile|$line');
       if (line.startsWith('+') || line.startsWith(' ')) {
         diff._files.putIfAbsent(
             currentFile, () => <int, int>{})[nextLineInFile] = diffPosition;
-        diffPosition += 1; // TODO probably incorrect
         nextLineInFile += 1;
       }
     }
