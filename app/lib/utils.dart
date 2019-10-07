@@ -9,8 +9,7 @@ String buildComment(Result result, Event event, String commitSha) {
     'Maintenance': result.maintenanceSuggestions,
   };
 
-  String comment = '## Package analysis results for commit $commitSha';
-  comment +=
+  String comment = '## Package analysis results for commit $commitSha'
       '\n(version of [pana](https://pub.dev/packages/pana) used: ${result.panaVersion})'
       '\n\n* Health score is **${result.healthScore.toString()} / 100.0**'
       '\n* Maintenance score is **${result.maintenanceScore.toString()} / 100.0**'

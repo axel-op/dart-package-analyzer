@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:app/event.dart';
 import 'package:github/server.dart' hide Event;
 import 'package:meta/meta.dart';
@@ -31,9 +29,7 @@ Future<void> postCommitComment(
         event: event,
         githubToken: githubToken,
       );
-      if (diff._files.containsKey(fileRelativePath)) {
-        position = diff._files[fileRelativePath][lineNumber];
-      }
+      position = diff.getPosition(fileRelativePath, lineNumber);
     }
     if (lineNumber == null || position != null) {
       await github.repositories.createCommitComment(
@@ -89,10 +85,12 @@ _Diff _parseDiff(String diffStr) {
         diffPosition != null &&
         nextLineInFile != null) {
       diffPosition += 1;
-      stderr.writeln('dp:$diffPosition,l:$nextLineInFile|$line');
       if (line.startsWith('+') || line.startsWith(' ')) {
-        diff._files.putIfAbsent(
-            currentFile, () => <int, int>{})[nextLineInFile] = diffPosition;
+        diff._setPosition(
+          currentFile,
+          lineInFile: nextLineInFile,
+          position: diffPosition,
+        );
         nextLineInFile += 1;
       }
     }
@@ -108,4 +106,11 @@ class _Diff {
     if (lines == null) return null;
     return lines[lineInFile];
   }
+
+  void _setPosition(
+    String file, {
+    @required int lineInFile,
+    @required int position,
+  }) =>
+      _files.putIfAbsent(file, () => <int, int>{})[lineInFile] = position;
 }

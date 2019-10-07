@@ -44,6 +44,10 @@ dynamic main(List<String> args) async {
     exitOnError: true,
   );
 
+  if (outputPana == null) {
+    stderr.writeln('The pana command has returned no valid output. Exiting.');
+    exit(1);
+  }
   final Map<String, dynamic> resultPana = jsonDecode(outputPana);
   final Event event = getEvent(jsonDecode(arguments.eventPayload));
   final Result result = processOutput(resultPana);
@@ -102,7 +106,7 @@ Future<String> _runCommand(
   try {
     final int code =
         await Process.start(executable, arguments, runInShell: true)
-            .then((Process process) {
+            .then((final Process process) {
       addStreamErr = stderr.addStream(process.stderr);
       final Stream<List<int>> outBrStream = process.stdout.asBroadcastStream();
       addStreamOut = stdout.addStream(outBrStream);
