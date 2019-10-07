@@ -81,7 +81,7 @@ dynamic main(List<String> args) async {
       githubToken: arguments.githubToken,
       commitSha: arguments.commitSha,
       lineNumber: suggestion.lineNumber,
-      fileRelativePath: '${arguments.packagePath}/suggestion.relativePath',
+      fileRelativePath: '${arguments.packagePath}/${suggestion.relativePath}',
       onError: (dynamic e, dynamic s) async {
         _writeErrors(e, s);
         exitCode = 1;
