@@ -16,11 +16,10 @@ Future<void> postCommitComment(
   @required final String commitSha,
   @required final String githubToken,
   final int lineNumber,
-  String fileRelativePath,
+  final String fileRelativePath,
   @required Future<void> Function(dynamic error, dynamic stack) onError,
 }) async {
   try {
-    if (fileRelativePath != null) fileRelativePath = 'b/$fileRelativePath';
     final GitHub github = _getClient(githubToken);
     final RepositorySlug slug = RepositorySlug.full(event.repoSlug);
     final RepositoryCommit commit =
