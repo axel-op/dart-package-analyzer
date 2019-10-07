@@ -31,9 +31,11 @@ jobs:
           githubToken: ${{ secrets.GITHUB_TOKEN }} # required
           eventPayload: ${{ toJson(github.event) }} # required
           commitSha: ${{ github.sha }} # required
-          maxScoreToComment: 99.99 # not required
+          maxScoreToComment: 99.99
+          relativePath: 'mypackage/v1'
 ```
 
 * `githubToken`, `eventPayload`, and `commitSha` inputs are required to post a comment on GitHub.
 * Use `maxScoreToComment` if you only want to have a comment if your score is lower than this. If you don't specify it, a comment will be posted for every commit that triggers the workflow. In this example, a comment won't be posted if the score is above 99.99, that is, if it equals 100. 
+* If your package isn't at the root of the repository, use `relativePath` to indicate its location. 
 
