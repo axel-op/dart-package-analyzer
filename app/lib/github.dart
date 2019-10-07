@@ -65,6 +65,7 @@ _Diff _parseDiff(String diffStr) {
   final _Diff diff = _Diff();
   String currentFile;
   int diffPosition;
+  int nextLineInFile;
   for (final line in diffStr.split('\n')) {
     if (line.startsWith('diff')) {
       currentFile = null;
@@ -74,20 +75,29 @@ _Diff _parseDiff(String diffStr) {
     } else if (line.startsWith('@@') &&
         currentFile != null &&
         diffPosition != null) {
-      diffPosition += 1;
+      //diffPosition += 1;
       final List<String> indexes = RegExp(r'\+[0-9]+,[0-9]+')
           .firstMatch(line)
           .group(0)
           .substring(1)
           .split(',');
-      final int nextLine = int.parse(indexes[0]);
-      final int numberOfLines = int.parse(indexes[1]);
+      nextLineInFile = int.parse(indexes[0]);
+      /*final int numberOfLines = int.parse(indexes[1]);
       for (int lineInFile = nextLine;
           lineInFile < nextLine + numberOfLines;
           lineInFile += 1) {
         diffPosition += 1;
         diff._files.putIfAbsent(currentFile, () => <int, int>{})[lineInFile] =
             diffPosition;
+      }*/
+    } else if (currentFile != null &&
+        diffPosition != null &&
+        nextLineInFile != null) {
+      diffPosition += 1;
+      if (line.startsWith('+ ') || line.startsWith('  ')) {
+        diff._files.putIfAbsent(
+            currentFile, () => <int, int>{})[nextLineInFile] = diffPosition;
+        nextLineInFile += 1;
       }
     }
   }
