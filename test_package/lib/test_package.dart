@@ -1,7 +1,6 @@
 library test_package;
 
 class Test {
-  // dummy comment
   final int valueTest2;
   const Test({
     @deprecated this.valueTest2,
@@ -23,13 +22,13 @@ class Calculator {
 
 class Test3 {
   @deprecated
-  final valueDeprecated;
-  const Test3(@deprecated this.valueDeprecated);
+  final value;
+  const Test3(@deprecated this.value);
 }
 
 void dummyFunction() {
   const t3 = Test3(1);
-  final sum = t3.valueDeprecated + 1;
+  final sum = t3.value + 1;
 }
 
 class Calculator2 {

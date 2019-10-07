@@ -16,10 +16,11 @@ Future<void> postCommitComment(
   @required final String commitSha,
   @required final String githubToken,
   final int lineNumber,
-  final String fileRelativePath,
+  String fileRelativePath,
   @required Future<void> Function(dynamic error, dynamic stack) onError,
 }) async {
   try {
+    if (fileRelativePath != null) fileRelativePath = 'b/$fileRelativePath';
     final GitHub github = _getClient(githubToken);
     final RepositorySlug slug = RepositorySlug.full(event.repoSlug);
     final RepositoryCommit commit =
@@ -72,7 +73,7 @@ _Diff _parseDiff(String diffStr) {
     if (line.startsWith('diff')) {
       currentFile = null;
     } else if (line.startsWith('+++ ')) {
-      const String prefix = r'\b';
+      const String prefix = r'b/';
       currentFile = line.substring(4).substring(prefix.length);
       diffPosition = 0;
     } else if (line.startsWith('@@') &&
