@@ -32,7 +32,7 @@ linter:
 
     - prefer_typing_uninitialized_variables
     - always_declare_return_types
-    - always_specify_types
+    #- always_specify_types
 
     - annotate_overrides
 
