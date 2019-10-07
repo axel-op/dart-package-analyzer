@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:app/event.dart';
 import 'package:github/server.dart' hide Event;
 import 'package:meta/meta.dart';
@@ -82,21 +84,15 @@ _Diff _parseDiff(String diffStr) {
           .substring(1)
           .split(',');
       nextLineInFile = int.parse(indexes[0]);
-      /*final int numberOfLines = int.parse(indexes[1]);
-      for (int lineInFile = nextLine;
-          lineInFile < nextLine + numberOfLines;
-          lineInFile += 1) {
-        diffPosition += 1;
-        diff._files.putIfAbsent(currentFile, () => <int, int>{})[lineInFile] =
-            diffPosition;
-      }*/
     } else if (currentFile != null &&
         diffPosition != null &&
         nextLineInFile != null) {
-      diffPosition += 1;
+      //diffPosition += 1;
+      stderr.writeln('dp:$diffPosition,l:$nextLineInFile|$line');
       if (line.startsWith('+ ') || line.startsWith('  ')) {
         diff._files.putIfAbsent(
             currentFile, () => <int, int>{})[nextLineInFile] = diffPosition;
+        diffPosition += 1; // TODO probably incorrect
         nextLineInFile += 1;
       }
     }
