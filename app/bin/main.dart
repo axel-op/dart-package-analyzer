@@ -30,10 +30,10 @@ dynamic main(List<String> args) async {
 
   // Parse command arguments
   final ArgParser argparser = ArgParser();
-  arguments.forEach((_Argument arg) =>
-      argparser.addOption(arg.fullName, abbr: arg.abbreviation));
+  arguments.forEach(
+      (arg) => argparser.addOption(arg.fullName, abbr: arg.abbreviation));
   final ArgResults argresults = argparser.parse(args);
-  arguments.forEach((_Argument arg) {
+  arguments.forEach((arg) {
     if (argresults[arg.fullName] == null && !arg.nullable) {
       stderr.writeln(
           'No value were given for the argument \'${arg.fullName}\'. Exiting.');
@@ -57,29 +57,35 @@ dynamic main(List<String> args) async {
   final String sourcePath = repoPath + packagePathUnformatted;
 
   // Install pana package
-  await _runCommand('pub', <String>['global', 'activate', 'pana'],
-      exitOnError: true);
+  await _runCommand(
+    'pub',
+    const <String>['global', 'activate', 'pana'],
+    exitOnError: true,
+  );
 
   // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
   await _runCommand(
-      '$flutterPath/bin/flutter', <String>['config', '--no-analytics']);
+    '$flutterPath/bin/flutter',
+    const <String>['config', '--no-analytics'],
+  );
 
   // Execute the analysis
   final String outputPana = await _runCommand(
-      'pub',
-      <String>[
-        'global',
-        'run',
-        'pana',
-        '--scores',
-        '--no-warning',
-        '--flutter-sdk',
-        flutterPath,
-        '--source',
-        'path',
-        sourcePath,
-      ],
-      exitOnError: true);
+    'pub',
+    <String>[
+      'global',
+      'run',
+      'pana',
+      '--scores',
+      '--no-warning',
+      '--flutter-sdk',
+      flutterPath,
+      '--source',
+      'path',
+      sourcePath,
+    ],
+    exitOnError: true,
+  );
 
   if (outputPana == null) throw ArgumentError.notNull('outputPana');
   final Map<String, dynamic> resultPana = jsonDecode(outputPana);
@@ -130,8 +136,11 @@ dynamic main(List<String> args) async {
 
 /// Runs a command and prints its outputs to stderr and stdout while running.
 /// Returns the sdtout output in a String.
-Future<String> _runCommand(String executable, List<String> arguments,
-    {bool exitOnError = false}) async {
+Future<String> _runCommand(
+  String executable,
+  List<String> arguments, {
+  bool exitOnError = false,
+}) async {
   Future<List<String>> output;
   Future<dynamic> addStreamOut;
   Future<dynamic> addStreamErr;

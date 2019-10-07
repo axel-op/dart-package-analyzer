@@ -1,6 +1,6 @@
 # Dart/Flutter package analyzer
 
-This action uses the [pana (Package ANAlysis) package](https://pub.dev/packages/pana) to compute the score that your Dart or Flutter package will have on the [Pub site](https://pub.dev), and post it as a commit comment, with suggestions for improvements. 
+This action uses the [pana (Package ANAlysis) package](https://pub.dev/packages/pana) to compute the score that your Dart or Flutter package will have on the [Pub site](https://pub.dev/help), and post it as a commit comment, with suggestions for improvements. 
 
 This package, amongst other things:
 * checks code formatting with `dartfmt` or `flutter format` (detected automatically),
@@ -26,13 +26,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1 # required
-      - uses: axel-op/dart_package_analyzer@master
+      - uses: axel-op/dart_package_analyzer@stable
         with:
-          githubToken: ${{ secrets.GITHUB_TOKEN }} # required
-          eventPayload: ${{ toJson(github.event) }} # required
-          commitSha: ${{ github.sha }} # required
+          # Required:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          eventPayload: ${{ toJson(github.event) }}
+          commitSha: ${{ github.sha }}
+          # Optional:
           maxScoreToComment: 99.99
-          relativePath: 'mypackage/v1'
+          relativePath: 'packages/mypackage/'
 ```
 
 * `githubToken`, `eventPayload`, and `commitSha` inputs are required to post a comment on GitHub.
