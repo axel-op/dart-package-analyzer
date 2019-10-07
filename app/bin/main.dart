@@ -1,62 +1,17 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:app/args.dart';
 import 'package:app/event.dart';
 import 'package:app/github.dart';
 import 'package:app/result.dart';
 import 'package:app/utils.dart';
-import 'package:args/args.dart';
-import 'package:meta/meta.dart';
-
-class _Argument {
-  final String fullName;
-  final String abbreviation;
-  final bool nullable;
-  const _Argument(this.fullName, this.abbreviation, {@required this.nullable});
-}
-
-const List<_Argument> arguments = <_Argument>[
-  _Argument('repo_path', 'r', nullable: false),
-  _Argument('github_token', 't', nullable: false),
-  _Argument('event_payload', 'e', nullable: false),
-  _Argument('fluttersdk_path', 'f', nullable: false),
-  _Argument('commit_sha', 'c', nullable: false),
-  _Argument('max_score', 'm', nullable: true),
-  _Argument('package_path', 'p', nullable: true),
-];
 
 dynamic main(List<String> args) async {
   exitCode = 1;
 
   // Parse command arguments
-  final ArgParser argparser = ArgParser();
-  arguments.forEach(
-      (arg) => argparser.addOption(arg.fullName, abbr: arg.abbreviation));
-  final ArgResults argresults = argparser.parse(args);
-  arguments.forEach((arg) {
-    if (argresults[arg.fullName] == null && !arg.nullable) {
-      stderr.writeln(
-          'No value were given for the argument \'${arg.fullName}\'. Exiting.');
-      exit(1);
-    }
-  });
-  final String repoPath = argresults['repo_path'];
-  final String flutterPath = argresults['fluttersdk_path'];
-  final String eventPayload = argresults['event_payload'];
-  final String githubToken = argresults['github_token'];
-  final String commitSha = argresults['commit_sha'];
-  final dynamic maxScoreUnknownType = argresults['max_score'];
-  final num maxScore =
-      maxScoreUnknownType != null && maxScoreUnknownType is String
-          ? num.parse(maxScoreUnknownType)
-          : maxScoreUnknownType;
-  String packagePath = argresults['package_path'] ?? '';
-  if (!packagePath.startsWith('/') && !repoPath.endsWith('/')) {
-    packagePath = '/' + packagePath;
-  } else if (packagePath.startsWith('/') && repoPath.endsWith('/')) {
-    packagePath = packagePath.substring(1);
-  }
-  final String sourcePath = repoPath + packagePath;
+  final Arguments arguments = parseArgs(args);
 
   // Install pana package
   await _runCommand(
@@ -67,7 +22,7 @@ dynamic main(List<String> args) async {
 
   // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
   await _runCommand(
-    '$flutterPath/bin/flutter',
+    '${arguments.flutterPath}/bin/flutter',
     const <String>['config', '--no-analytics'],
   );
 
@@ -81,27 +36,27 @@ dynamic main(List<String> args) async {
       '--scores',
       '--no-warning',
       '--flutter-sdk',
-      flutterPath,
+      arguments.flutterPath,
       '--source',
       'path',
-      sourcePath,
+      arguments.sourcePath,
     ],
     exitOnError: true,
   );
 
   if (outputPana == null) throw ArgumentError.notNull('outputPana');
   final Map<String, dynamic> resultPana = jsonDecode(outputPana);
-  final Event event = getEvent(jsonDecode(eventPayload));
+  final Event event = getEvent(jsonDecode(arguments.eventPayload));
   final Result result = processOutput(resultPana);
-  final String comment = buildComment(result, event, commitSha);
+  final String comment = buildComment(result, event, arguments.commitSha);
 
   const String noComment =
       'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.';
 
   // Post a comment on GitHub
-  if (maxScore != null &&
-      result.healthScore > maxScore &&
-      result.maintenanceScore > maxScore) {
+  if (arguments.maxScoreToComment != null &&
+      result.healthScore > arguments.maxScoreToComment &&
+      result.maintenanceScore > arguments.maxScoreToComment) {
     stdout.writeln(noComment);
     exitCode = 0;
   } else {
@@ -109,8 +64,8 @@ dynamic main(List<String> args) async {
     await postCommitComment(
       comment,
       event: event,
-      githubToken: githubToken,
-      commitSha: commitSha,
+      githubToken: arguments.githubToken,
+      commitSha: arguments.commitSha,
       onError: (dynamic e, dynamic s) async {
         _writeErrors(e, s);
         exitCode = 1;
@@ -123,13 +78,10 @@ dynamic main(List<String> args) async {
     await postCommitComment(
       suggestion.description,
       event: event,
-      githubToken: githubToken,
-      commitSha: commitSha,
+      githubToken: arguments.githubToken,
+      commitSha: arguments.commitSha,
       lineNumber: suggestion.lineNumber,
-      fileRelativePath:
-          packagePath.substring(packagePath.startsWith('/') ? 1 : 0) +
-              (packagePath.endsWith('/') ? '' : '/') +
-              suggestion.relativePath,
+      fileRelativePath: '${arguments.packagePath}/suggestion.relativePath',
       onError: (dynamic e, dynamic s) async {
         _writeErrors(e, s);
         exitCode = 1;
