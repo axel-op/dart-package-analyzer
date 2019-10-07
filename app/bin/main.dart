@@ -117,8 +117,7 @@ dynamic main(List<String> args) async {
   }
 
   // Post file-specific comments on GitHub
-  /* Deactivated for now, as the API deprecated the line parameter, and should now be given the diff's position
-  for (final LineSuggestion suggestion in results.lineSuggestions) {
+  for (final LineSuggestion suggestion in result.lineSuggestions) {
     await postCommitComment(
       suggestion.description,
       event: event,
@@ -131,7 +130,7 @@ dynamic main(List<String> args) async {
         exitCode = 1;
       },
     );
-  }*/
+  }
 }
 
 /// Runs a command and prints its outputs to stderr and stdout while running.
