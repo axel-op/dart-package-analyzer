@@ -72,7 +72,8 @@ _Diff _parseDiff(String diffStr) {
     if (line.startsWith('diff')) {
       currentFile = null;
     } else if (line.startsWith('+++ ')) {
-      currentFile = line.substring(4).substring(2);
+      const String prefix = r'\b';
+      currentFile = line.substring(4).substring(prefix.length);
       diffPosition = 0;
     } else if (line.startsWith('@@') &&
         currentFile != null &&
@@ -89,7 +90,7 @@ _Diff _parseDiff(String diffStr) {
         nextLineInFile != null) {
       //diffPosition += 1;
       stderr.writeln('dp:$diffPosition,l:$nextLineInFile|$line');
-      if (line.startsWith('+ ') || line.startsWith('  ')) {
+      if (line.startsWith('+') || line.startsWith(' ')) {
         diff._files.putIfAbsent(
             currentFile, () => <int, int>{})[nextLineInFile] = diffPosition;
         diffPosition += 1; // TODO probably incorrect
