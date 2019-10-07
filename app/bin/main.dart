@@ -87,15 +87,14 @@ dynamic main(List<String> args) async {
   final Result result = processOutput(resultPana);
   final String comment = buildComment(result, event, commitSha);
 
+  const String noComment =
+      'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.';
+
   // Post a comment on GitHub
   if (maxScore != null &&
       result.healthScore > maxScore &&
       result.maintenanceScore > maxScore) {
-    stdout.writeln(
-        'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.' +
-            (result.lineSuggestions.isNotEmpty
-                ? ' However, specific comments are still posted under each line where static analysis has found an issue.'
-                : ''));
+    stdout.writeln(noComment);
     exitCode = 0;
   } else {
     exitCode = 0;
