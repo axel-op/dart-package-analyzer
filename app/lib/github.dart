@@ -78,6 +78,7 @@ _Diff _parseDiff(String diffStr) {
     } else if (line.startsWith('@@') &&
         currentFile != null &&
         diffPosition != null) {
+      if (diffPosition != 0) diffPosition += 1;
       final List<String> indexes = RegExp(r'\+[0-9]+,[0-9]+')
           .firstMatch(line)
           .group(0)
