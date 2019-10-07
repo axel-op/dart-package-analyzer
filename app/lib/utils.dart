@@ -32,14 +32,14 @@ String _stringSuggestion(Suggestion suggestion) {
   String str = '\n* ';
   if (suggestion.title != null || suggestion.loss != null) {
     str += '**';
-    if (suggestion.title != null) str += '${suggestion.title}';
+    if (suggestion.title != null) str += '${suggestion.title}'.trim();
     if (suggestion.loss != null) {
       str += ' (${suggestion.loss.toString()} points)';
     }
     str += '**: ';
   }
   ;
-  str += suggestion.description.replaceAll(RegExp(r'(\n)+'), '\n  * ');
+  str += suggestion.description.replaceAll(RegExp(r'(\n *)+'), '\n  * ');
   return str;
 }
 
@@ -82,12 +82,11 @@ Result processOutput(Map<String, dynamic> output) {
         final List<Map<String, dynamic>> problems =
             List.castFrom<dynamic, Map<String, dynamic>>(
                 details['codeProblems']);
-        lineSuggestions.addAll(
-            problems.map((Map<String, dynamic> jsonObj) => LineSuggestion(
-                  lineNumber: jsonObj['line'],
-                  description: jsonObj['description'],
-                  relativePath: jsonObj['file'],
-                )));
+        lineSuggestions.addAll(problems.map((jsonObj) => LineSuggestion(
+              lineNumber: jsonObj['line'],
+              description: jsonObj['description'],
+              relativePath: jsonObj['file'],
+            )));
       }
     }
   }
