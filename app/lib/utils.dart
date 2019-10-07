@@ -13,7 +13,7 @@ String buildComment(Result result, Event event, String commitSha) {
       '\n(version of [pana](https://pub.dev/packages/pana) used: ${result.panaVersion})'
       '\n\n* Health score is **${result.healthScore.toString()} / 100.0**'
       '\n* Maintenance score is **${result.maintenanceScore.toString()} / 100.0**'
-      '\n*Please note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*';
+      '\n\n*Please note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*';
   if (suggestions.values.where((l) => l.isNotEmpty).isNotEmpty) {
     comment += '\n\n### Issues';
   }

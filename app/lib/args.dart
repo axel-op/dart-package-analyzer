@@ -96,7 +96,7 @@ Arguments parseArgs(List<String> args) {
         abbr: arg.abbr,
       ));
   final ArgResults argResults = argParser.parse(args);
-  _arguments.forEach((arg) {
+  _arguments.forEach((final arg) {
     final dynamic result = argResults[arg.fullName];
     if ((result == null && !arg.nullable) ||
         (result is String && result.isEmpty && !arg.canBeEmpty)) {
