@@ -50,11 +50,13 @@ dynamic main(List<String> args) async {
       maxScoreUnknownType != null && maxScoreUnknownType is String
           ? num.parse(maxScoreUnknownType)
           : maxScoreUnknownType;
-  String packagePathUnformatted = argresults['package_path'] ?? '';
-  if (!packagePathUnformatted.startsWith('/') && !repoPath.endsWith('/')) {
-    packagePathUnformatted = '/' + packagePathUnformatted;
+  String packagePath = argresults['package_path'] ?? '';
+  if (!packagePath.startsWith('/') && !repoPath.endsWith('/')) {
+    packagePath = '/' + packagePath;
+  } else if (packagePath.startsWith('/') && repoPath.endsWith('/')) {
+    packagePath = packagePath.substring(1);
   }
-  final String sourcePath = repoPath + packagePathUnformatted;
+  final String sourcePath = repoPath + packagePath;
 
   // Install pana package
   await _runCommand(
@@ -124,7 +126,10 @@ dynamic main(List<String> args) async {
       githubToken: githubToken,
       commitSha: commitSha,
       lineNumber: suggestion.lineNumber,
-      fileRelativePath: suggestion.relativePath,
+      fileRelativePath:
+          packagePath.substring(packagePath.startsWith('/') ? 1 : 0) +
+              (packagePath.endsWith('/') ? '' : '/') +
+              suggestion.relativePath,
       onError: (dynamic e, dynamic s) async {
         _writeErrors(e, s);
         exitCode = 1;

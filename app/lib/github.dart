@@ -33,13 +33,15 @@ Future<void> postCommitComment(
         position = diff._files[fileRelativePath][lineNumber];
       }
     }
-    await github.repositories.createCommitComment(
-      slug,
-      commit,
-      body: comment,
-      path: fileRelativePath,
-      position: position,
-    );
+    if (lineNumber == null || position != null) {
+      await github.repositories.createCommitComment(
+        slug,
+        commit,
+        body: comment,
+        path: fileRelativePath,
+        position: position,
+      );
+    }
   } catch (e, s) {
     await onError(e, s);
   }

@@ -7,8 +7,8 @@ class Calculator {
 }
 
 class Test {
-  final int value;
+  final int valueTest;
   const Test({
-    @deprecated this.value,
+    @deprecated this.valueTest,
   });
 }
