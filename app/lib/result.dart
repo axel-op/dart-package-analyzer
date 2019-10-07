@@ -28,16 +28,20 @@ class Suggestion {
   final String description;
   final String title;
 
-  Suggestion({this.loss, @required this.description, this.title});
+  Suggestion({
+    this.loss,
+    @required this.description,
+    this.title,
+  });
 }
 
 class LineSuggestion extends Suggestion {
   final int lineNumber;
   final String relativePath;
 
-  LineSuggestion(
-      {@required String description,
-      @required this.lineNumber,
-      @required this.relativePath})
-      : super(description: description);
+  LineSuggestion({
+    @required String description,
+    @required this.lineNumber,
+    @required this.relativePath,
+  }) : super(description: description);
 }

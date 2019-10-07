@@ -4,17 +4,14 @@ import 'package:meta/meta.dart';
 
 /// Post the comment as a commit comment on GitHub
 Future<void> postCommitComment(
-    String comment,
-    {@required
-        final Event event,
-    @required
-        final String commitSha,
-    @required
-        final String githubToken,
-    final int lineNumber,
-    final String fileRelativePath,
-    @required
-        Future<void> Function(dynamic error, dynamic stack) onError}) async {
+  String comment, {
+  @required final Event event,
+  @required final String commitSha,
+  @required final String githubToken,
+  final int lineNumber,
+  final String fileRelativePath,
+  @required Future<void> Function(dynamic error, dynamic stack) onError,
+}) async {
   try {
     final GitHub github =
         createGitHubClient(auth: Authentication.withToken(githubToken));

@@ -28,7 +28,10 @@ class Push extends Event {
   Push._({
     @required String repoId,
     @required String repoSlug,
-  }) : super._(repoId: repoId, repoSlug: repoSlug);
+  }) : super._(
+          repoId: repoId,
+          repoSlug: repoSlug,
+        );
 }
 
 class PullRequest extends Event {

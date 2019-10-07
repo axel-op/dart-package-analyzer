@@ -30,10 +30,10 @@ dynamic main(List<String> args) async {
 
   // Parse command arguments
   final ArgParser argparser = ArgParser();
-  arguments.forEach((_Argument arg) =>
-      argparser.addOption(arg.fullName, abbr: arg.abbreviation));
+  arguments.forEach(
+      (arg) => argparser.addOption(arg.fullName, abbr: arg.abbreviation));
   final ArgResults argresults = argparser.parse(args);
-  arguments.forEach((_Argument arg) {
+  arguments.forEach((arg) {
     if (argresults[arg.fullName] == null && !arg.nullable) {
       stderr.writeln(
           'No value were given for the argument \'${arg.fullName}\'. Exiting.');
@@ -57,44 +57,49 @@ dynamic main(List<String> args) async {
   final String sourcePath = repoPath + packagePathUnformatted;
 
   // Install pana package
-  await _runCommand('pub', <String>['global', 'activate', 'pana'],
-      exitOnError: true);
+  await _runCommand(
+    'pub',
+    const <String>['global', 'activate', 'pana'],
+    exitOnError: true,
+  );
 
   // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
   await _runCommand(
-      '$flutterPath/bin/flutter', <String>['config', '--no-analytics']);
+    '$flutterPath/bin/flutter',
+    const <String>['config', '--no-analytics'],
+  );
 
   // Execute the analysis
   final String outputPana = await _runCommand(
-      'pub',
-      <String>[
-        'global',
-        'run',
-        'pana',
-        '--scores',
-        '--no-warning',
-        '--flutter-sdk',
-        flutterPath,
-        '--source',
-        'path',
-        sourcePath,
-      ],
-      exitOnError: true);
+    'pub',
+    <String>[
+      'global',
+      'run',
+      'pana',
+      '--scores',
+      '--no-warning',
+      '--flutter-sdk',
+      flutterPath,
+      '--source',
+      'path',
+      sourcePath,
+    ],
+    exitOnError: true,
+  );
 
   final Map<String, dynamic> resultPana = jsonDecode(outputPana);
   final Event event = getEvent(jsonDecode(eventPayload));
-  final Result results = processOutput(resultPana);
-  final String comment = buildComment(results, event, commitSha);
+  final Result result = processOutput(resultPana);
+  final String comment = buildComment(result, event, commitSha);
+
+  const String noComment =
+      'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.';
 
   // Post a comment on GitHub
   if (maxScore != null &&
-      results.healthScore > maxScore &&
-      results.maintenanceScore > maxScore) {
-    stdout.writeln(
-        'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.' +
-            (results.lineSuggestions.isNotEmpty
-                ? ' However, specific comments are still posted under each line where static analysis has found an issue.'
-                : ''));
+      result.healthScore > maxScore &&
+      result.maintenanceScore > maxScore) {
+    stdout.writeln(noComment);
     exitCode = 0;
   } else {
     exitCode = 0;
@@ -124,8 +129,11 @@ dynamic main(List<String> args) async {
 
 /// Runs a command and prints its outputs to stderr and stdout while running.
 /// Returns the sdtout output in a String.
-Future<String> _runCommand(String executable, List<String> arguments,
-    {bool exitOnError = false}) async {
+Future<String> _runCommand(
+  String executable,
+  List<String> arguments, {
+  bool exitOnError = false,
+}) async {
   Future<List<String>> output;
   Future<dynamic> addStreamOut;
   Future<dynamic> addStreamErr;
