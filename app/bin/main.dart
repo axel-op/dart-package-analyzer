@@ -1,9 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:app/args.dart';
-import 'package:app/event.dart';
 import 'package:app/github.dart';
+import 'package:app/inputs.dart';
 import 'package:app/result.dart';
 import 'package:app/utils.dart';
 
@@ -11,7 +10,7 @@ dynamic main(List<String> args) async {
   exitCode = 1;
 
   // Parse command arguments
-  final Arguments arguments = parseArgs(args);
+  final Inputs arguments = getInputs();
 
   // Install pana package
   await _runCommand(
@@ -49,16 +48,17 @@ dynamic main(List<String> args) async {
     exit(1);
   }
   final Map<String, dynamic> resultPana = jsonDecode(outputPana);
-  final Event event = getEvent(jsonDecode(arguments.eventPayload));
   final Result result = processOutput(resultPana);
-  final String comment = buildComment(result, event, arguments.commitSha);
+  final String comment = buildComment(
+    result: result,
+    commitSha: arguments.commitSha,
+  );
 
   const String noComment =
       'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.';
 
   // Post a comment on GitHub
-  if (arguments.maxScoreToComment != null &&
-      result.healthScore > arguments.maxScoreToComment &&
+  if (result.healthScore > arguments.maxScoreToComment &&
       result.maintenanceScore > arguments.maxScoreToComment) {
     stdout.writeln(noComment);
     exitCode = 0;
@@ -66,7 +66,7 @@ dynamic main(List<String> args) async {
     exitCode = 0;
     await postCommitComment(
       comment,
-      event: event,
+      repositorySlug: arguments.repositorySlug,
       githubToken: arguments.githubToken,
       commitSha: arguments.commitSha,
       onError: (dynamic e, dynamic s) async {
@@ -80,7 +80,7 @@ dynamic main(List<String> args) async {
   for (final LineSuggestion suggestion in result.lineSuggestions) {
     await postCommitComment(
       suggestion.description,
-      event: event,
+      repositorySlug: arguments.repositorySlug,
       githubToken: arguments.githubToken,
       commitSha: arguments.commitSha,
       lineNumber: suggestion.lineNumber,

@@ -8,12 +8,6 @@ inputs:
   githubToken:
     description: 'Token to connect to Github. Use secrets.GITHUB_TOKEN'
     required: true
-  eventPayload:
-    description: 'Use toJson(github.event)'
-    required: true
-  commitSha:
-    description: 'Use github.sha'
-    required: true
   maxScoreToComment:
     description: 'No comment will be posted if both scores are over this max'
     required: false
@@ -25,14 +19,3 @@ inputs:
 runs:
   using: 'docker'
   image: 'Dockerfile'
-  args:
-    - --github_token
-    - ${{ inputs.githubToken }}
-    - --commit_sha
-    - ${{ inputs.commitSha }}
-    - --max_score
-    - ${{ inputs.maxScoreToComment }}
-    - --package_path
-    - ${{ inputs.relativePath }}
-    - --event_payload
-    - ${{ inputs.eventPayload }}
