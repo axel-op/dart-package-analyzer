@@ -1,5 +1,4 @@
-import 'package:app/event.dart';
-import 'package:github/server.dart' hide Event;
+import 'package:github/server.dart';
 import 'package:meta/meta.dart';
 
 final Map<String, Future<_Diff>> _diffs = {};
@@ -10,7 +9,7 @@ GitHub _getClient(String token) =>
 /// Post the comment as a commit comment on GitHub
 Future<void> postCommitComment(
   String comment, {
-  @required final Event event,
+  @required final String repositorySlug,
   @required final String commitSha,
   @required final String githubToken,
   final int lineNumber,
@@ -19,14 +18,14 @@ Future<void> postCommitComment(
 }) async {
   try {
     final GitHub github = _getClient(githubToken);
-    final RepositorySlug slug = RepositorySlug.full(event.repoSlug);
+    final RepositorySlug slug = RepositorySlug.full(repositorySlug);
     final RepositoryCommit commit =
         await github.repositories.getCommit(slug, commitSha);
     int position;
     if (lineNumber != null) {
       final _Diff diff = await _getDiff(
         commitSha: commitSha,
-        event: event,
+        repositorySlug: slug,
         githubToken: githubToken,
       );
       position = diff.getPosition(fileRelativePath, lineNumber);
@@ -49,13 +48,14 @@ Future<void> postCommitComment(
 Future<_Diff> _getDiff({
   @required String commitSha,
   @required String githubToken,
-  @required Event event,
+  @required RepositorySlug repositorySlug,
 }) async =>
     _diffs.putIfAbsent(commitSha, () async {
       final GitHub client = _getClient(githubToken);
-      final RepositorySlug slug = RepositorySlug.full(event.repoSlug);
-      return _parseDiff(
-          await client.repositories.getCommitDiff(slug, commitSha));
+      return _parseDiff(await client.repositories.getCommitDiff(
+        repositorySlug,
+        commitSha,
+      ));
     });
 
 /// Parses a diff and returns a [_Diff] object

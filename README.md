@@ -30,8 +30,6 @@ jobs:
         with:
           # Required:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
-          eventPayload: ${{ toJson(github.event) }}
-          commitSha: ${{ github.sha }}
           # Optional:
           maxScoreToComment: 99.99
           relativePath: 'packages/mypackage/'

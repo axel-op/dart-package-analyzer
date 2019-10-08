@@ -1,10 +1,9 @@
 library test_package;
 
 class Test {
-  // dummy comment
-  final int valueTest2;
+  final int valueTest;
   const Test({
-    @deprecated this.valueTest2,
+    @deprecated this.valueTest,
   });
 }
 
@@ -35,4 +34,9 @@ void dummyFunction() {
 class Calculator2 {
   /// Returns [value] plus 1.
   int addOne(int value) => value + 1;
+}
+
+void dummyFunction2() {
+  const t3 = Test3(1);
+  final sumTest = t3.value + 1;
 }

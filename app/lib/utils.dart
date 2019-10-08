@@ -1,8 +1,11 @@
-import 'package:app/event.dart';
 import 'package:app/result.dart';
+import 'package:meta/meta.dart';
 
 /// Build message to be posted on GitHub
-String buildComment(Result result, Event event, String commitSha) {
+String buildComment({
+  @required Result result,
+  @required String commitSha,
+}) {
   final Map<String, List<Suggestion>> suggestions = {
     'General': result.generalSuggestions,
     'Health': result.healthSuggestions,
