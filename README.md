@@ -1,9 +1,9 @@
 # Dart/Flutter package analyzer
 
-This action uses the [pana (Package ANAlysis) package](https://pub.dev/packages/pana) to compute the score that your Dart or Flutter package will have on the [Pub site](https://pub.dev), and post it as a commit comment, with suggestions for improvements. 
+This action uses the [pana (Package ANAlysis) package](https://pub.dev/packages/pana) to compute the score that your Dart or Flutter package will have on the [Pub site](https://pub.dev/help), and posts it as a commit comment, with suggestions for improvements. 
 
 This package, amongst other things:
-* checks code formatting with `dartfmt` or `flutter format` (detected automatically),
+* checks code formatting with [`dartfmt`](https://dart.dev/tools/dartfmt) or [`flutter format`](https://flutter.dev/docs/development/tools/formatting#automatically-formatting-code-with-the-flutter-command) (detected automatically),
 * validates the code by performing static analysis with [dartanalyzer](https://dart.dev/tools/dartanalyzer),
 * checks for outdated dependencies,
 * validates the `pubscpec.yaml` file (dependencies, description's length...),
@@ -28,11 +28,11 @@ jobs:
       - uses: actions/checkout@v1 # required
       - uses: axel-op/dart_package_analyzer@stable
         with:
-          githubToken: ${{ secrets.GITHUB_TOKEN }} # required
-          eventPayload: ${{ toJson(github.event) }} # required
-          commitSha: ${{ github.sha }} # required
+          # Required:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          # Optional:
           maxScoreToComment: 99.99
-          relativePath: 'mypackage/v1'
+          relativePath: 'packages/mypackage/'
 ```
 
 * `githubToken`, `eventPayload`, and `commitSha` inputs are required to post a comment on GitHub.

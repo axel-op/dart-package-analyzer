@@ -1,109 +1,74 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:app/event.dart';
 import 'package:app/github.dart';
+import 'package:app/inputs.dart';
 import 'package:app/result.dart';
 import 'package:app/utils.dart';
-import 'package:args/args.dart';
-import 'package:meta/meta.dart';
-
-class _Argument {
-  final String fullName;
-  final String abbreviation;
-  final bool nullable;
-  const _Argument(this.fullName, this.abbreviation, {@required this.nullable});
-}
-
-const List<_Argument> arguments = <_Argument>[
-  _Argument('repo_path', 'r', nullable: false),
-  _Argument('github_token', 't', nullable: false),
-  _Argument('event_payload', 'e', nullable: false),
-  _Argument('fluttersdk_path', 'f', nullable: false),
-  _Argument('commit_sha', 'c', nullable: false),
-  _Argument('max_score', 'm', nullable: true),
-  _Argument('package_path', 'p', nullable: true),
-];
 
 dynamic main(List<String> args) async {
   exitCode = 1;
 
   // Parse command arguments
-  final ArgParser argparser = ArgParser();
-  arguments.forEach((_Argument arg) =>
-      argparser.addOption(arg.fullName, abbr: arg.abbreviation));
-  final ArgResults argresults = argparser.parse(args);
-  arguments.forEach((_Argument arg) {
-    if (argresults[arg.fullName] == null && !arg.nullable) {
-      stderr.writeln(
-          'No value were given for the argument \'${arg.fullName}\'. Exiting.');
-      exit(1);
-    }
-  });
-  final String repoPath = argresults['repo_path'];
-  final String flutterPath = argresults['fluttersdk_path'];
-  final String eventPayload = argresults['event_payload'];
-  final String githubToken = argresults['github_token'];
-  final String commitSha = argresults['commit_sha'];
-  final dynamic maxScoreUnknownType = argresults['max_score'];
-  final num maxScore =
-      maxScoreUnknownType != null && maxScoreUnknownType is String
-          ? num.parse(maxScoreUnknownType)
-          : maxScoreUnknownType;
-  String packagePathUnformatted = argresults['package_path'] ?? '';
-  if (!packagePathUnformatted.startsWith('/') && !repoPath.endsWith('/')) {
-    packagePathUnformatted = '/' + packagePathUnformatted;
-  }
-  final String sourcePath = repoPath + packagePathUnformatted;
+  final Inputs arguments = getInputs();
 
   // Install pana package
-  await _runCommand('pub', <String>['global', 'activate', 'pana'],
-      exitOnError: true);
+  await _runCommand(
+    'pub',
+    const <String>['global', 'activate', 'pana'],
+    exitOnError: true,
+  );
 
   // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
   await _runCommand(
-      '$flutterPath/bin/flutter', <String>['config', '--no-analytics']);
+    '${arguments.flutterPath}/bin/flutter',
+    const <String>['config', '--no-analytics'],
+  );
 
   // Execute the analysis
   final String outputPana = await _runCommand(
-      'pub',
-      <String>[
-        'global',
-        'run',
-        'pana',
-        '--scores',
-        '--no-warning',
-        '--flutter-sdk',
-        flutterPath,
-        '--source',
-        'path',
-        sourcePath,
-      ],
-      exitOnError: true);
+    'pub',
+    <String>[
+      'global',
+      'run',
+      'pana',
+      '--scores',
+      '--no-warning',
+      '--flutter-sdk',
+      arguments.flutterPath,
+      '--source',
+      'path',
+      arguments.sourcePath,
+    ],
+    exitOnError: true,
+  );
 
-  if (outputPana == null) throw ArgumentError.notNull('outputPana');
+  if (outputPana == null) {
+    stderr.writeln('The pana command has returned no valid output. Exiting.');
+    exit(1);
+  }
   final Map<String, dynamic> resultPana = jsonDecode(outputPana);
-  final Event event = getEvent(jsonDecode(eventPayload));
   final Result result = processOutput(resultPana);
-  final String comment = buildComment(result, event, commitSha);
+  final String comment = buildComment(
+    result: result,
+    commitSha: arguments.commitSha,
+  );
+
+  const String noComment =
+      'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.';
 
   // Post a comment on GitHub
-  if (maxScore != null &&
-      result.healthScore > maxScore &&
-      result.maintenanceScore > maxScore) {
-    stdout.writeln(
-        'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.' +
-            (result.lineSuggestions.isNotEmpty
-                ? ' However, specific comments are still posted under each line where static analysis has found an issue.'
-                : ''));
+  if (result.healthScore > arguments.maxScoreToComment &&
+      result.maintenanceScore > arguments.maxScoreToComment) {
+    stdout.writeln(noComment);
     exitCode = 0;
   } else {
     exitCode = 0;
     await postCommitComment(
       comment,
-      event: event,
-      githubToken: githubToken,
-      commitSha: commitSha,
+      repositorySlug: arguments.repositorySlug,
+      githubToken: arguments.githubToken,
+      commitSha: arguments.commitSha,
       onError: (dynamic e, dynamic s) async {
         _writeErrors(e, s);
         exitCode = 1;
@@ -112,15 +77,14 @@ dynamic main(List<String> args) async {
   }
 
   // Post file-specific comments on GitHub
-  /* Deactivated for now, as the API deprecated the line parameter, and should now be given the diff's position
-  for (final LineSuggestion suggestion in results.lineSuggestions) {
+  /*for (final LineSuggestion suggestion in result.lineSuggestions) {
     await postCommitComment(
       suggestion.description,
-      event: event,
-      githubToken: githubToken,
-      commitSha: commitSha,
+      repositorySlug: arguments.repositorySlug,
+      githubToken: arguments.githubToken,
+      commitSha: arguments.commitSha,
       lineNumber: suggestion.lineNumber,
-      fileRelativePath: suggestion.relativePath,
+      fileRelativePath: '${arguments.packagePath}/${suggestion.relativePath}',
       onError: (dynamic e, dynamic s) async {
         _writeErrors(e, s);
         exitCode = 1;
@@ -131,8 +95,11 @@ dynamic main(List<String> args) async {
 
 /// Runs a command and prints its outputs to stderr and stdout while running.
 /// Returns the sdtout output in a String.
-Future<String> _runCommand(String executable, List<String> arguments,
-    {bool exitOnError = false}) async {
+Future<String> _runCommand(
+  String executable,
+  List<String> arguments, {
+  bool exitOnError = false,
+}) async {
   Future<List<String>> output;
   Future<dynamic> addStreamOut;
   Future<dynamic> addStreamErr;
@@ -141,7 +108,7 @@ Future<String> _runCommand(String executable, List<String> arguments,
   try {
     final int code =
         await Process.start(executable, arguments, runInShell: true)
-            .then((Process process) {
+            .then((final Process process) {
       addStreamErr = stderr.addStream(process.stderr);
       final Stream<List<int>> outBrStream = process.stdout.asBroadcastStream();
       addStreamOut = stdout.addStream(outBrStream);

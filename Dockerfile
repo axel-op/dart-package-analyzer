@@ -1,4 +1,4 @@
-FROM google/dart:2.5
+FROM google/dart:2
 
 COPY app/ /app/
 
@@ -13,4 +13,4 @@ RUN apt-get update \
     && git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter \
     && /flutter/bin/flutter --version
 
-ENTRYPOINT ["dartaotruntime", "/main.dart.aot", "-f", "/flutter", "-r", "/github/workspace"]
+ENTRYPOINT ["dartaotruntime", "/main.dart.aot"]
