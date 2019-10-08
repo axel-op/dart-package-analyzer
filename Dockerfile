@@ -1,4 +1,4 @@
-FROM google/dart:2.5
+FROM google/dart:2
 
 COPY app/ /app/
 
