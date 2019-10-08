@@ -77,7 +77,7 @@ dynamic main(List<String> args) async {
   }
 
   // Post file-specific comments on GitHub
-  /*for (final LineSuggestion suggestion in result.lineSuggestions) {
+  for (final LineSuggestion suggestion in result.lineSuggestions) {
     await postCommitComment(
       suggestion.description,
       repositorySlug: arguments.repositorySlug,
@@ -90,7 +90,7 @@ dynamic main(List<String> args) async {
         exitCode = 1;
       },
     );
-  }*/
+  }
 }
 
 /// Runs a command and prints its outputs to stderr and stdout while running.
