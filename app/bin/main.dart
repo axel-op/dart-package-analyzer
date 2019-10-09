@@ -1,18 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:app/comments.dart';
 import 'package:app/github.dart';
 import 'package:app/inputs.dart';
 import 'package:app/result.dart';
-import 'package:app/utils.dart';
 
 dynamic main(List<String> args) async {
   exitCode = 1;
 
-  // Parse command arguments
-  final Inputs arguments = getInputs();
+  // Parsing command arguments
+  final Inputs inputs = getInputs();
 
-  // Install pana package
+  // Installing pana package
   await _runCommand(
     'pub',
     const <String>['global', 'activate', 'pana'],
@@ -21,11 +21,11 @@ dynamic main(List<String> args) async {
 
   // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
   await _runCommand(
-    '${arguments.flutterPath}/bin/flutter',
+    '${inputs.flutterPath}/bin/flutter',
     const <String>['config', '--no-analytics'],
   );
 
-  // Execute the analysis
+  // Executing the analysis
   final String outputPana = await _runCommand(
     'pub',
     <String>[
@@ -35,10 +35,10 @@ dynamic main(List<String> args) async {
       '--scores',
       '--no-warning',
       '--flutter-sdk',
-      arguments.flutterPath,
+      inputs.flutterPath,
       '--source',
       'path',
-      arguments.sourcePath,
+      inputs.sourcePath,
     ],
     exitOnError: true,
   );
@@ -48,48 +48,35 @@ dynamic main(List<String> args) async {
     exit(1);
   }
   final Map<String, dynamic> resultPana = jsonDecode(outputPana);
-  final Result result = processOutput(resultPana);
-  final String comment = buildComment(
-    result: result,
-    commitSha: arguments.commitSha,
+  final Result result = Result.fromOutput(resultPana);
+  final List<Comment> comments = Comment.fromResult(
+    result,
+    pathPrefix: inputs.packagePath,
+    commitSha: inputs.commitSha,
   );
 
   const String noComment =
       'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.';
 
-  // Post a comment on GitHub
-  if (result.healthScore > arguments.maxScoreToComment &&
-      result.maintenanceScore > arguments.maxScoreToComment) {
+  // Posting comments on GitHub
+  if (result.healthScore > inputs.maxScoreToComment &&
+      result.maintenanceScore > inputs.maxScoreToComment) {
     stdout.writeln(noComment);
     exitCode = 0;
   } else {
     exitCode = 0;
-    await postCommitComment(
-      comment,
-      repositorySlug: arguments.repositorySlug,
-      githubToken: arguments.githubToken,
-      commitSha: arguments.commitSha,
-      onError: (dynamic e, dynamic s) async {
-        _writeErrors(e, s);
-        exitCode = 1;
-      },
-    );
-  }
-
-  // Post file-specific comments on GitHub
-  for (final LineSuggestion suggestion in result.lineSuggestions) {
-    await postCommitComment(
-      suggestion.description,
-      repositorySlug: arguments.repositorySlug,
-      githubToken: arguments.githubToken,
-      commitSha: arguments.commitSha,
-      lineNumber: suggestion.lineNumber,
-      fileRelativePath: '${arguments.packagePath}/${suggestion.relativePath}',
-      onError: (dynamic e, dynamic s) async {
-        _writeErrors(e, s);
-        exitCode = 1;
-      },
-    );
+    for (final Comment comment in comments) {
+      await postCommitComment(
+        comment,
+        commitSha: inputs.commitSha,
+        repositorySlug: inputs.repositorySlug,
+        githubToken: inputs.githubToken,
+        onError: (e, s) async {
+          _writeErrors(e, s);
+          exitCode = 1;
+        },
+      );
+    }
   }
 }
 
