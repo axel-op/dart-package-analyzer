@@ -12,6 +12,9 @@ dynamic main(List<String> args) async {
   // Parsing command arguments
   final Inputs inputs = getInputs();
 
+  // Displaying commit SHA
+  stderr.writeln('This action will be run for commit ${inputs.commitSha}');
+
   // Installing pana package
   await _runCommand(
     'pub',
