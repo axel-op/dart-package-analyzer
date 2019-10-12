@@ -1,4 +1,4 @@
-name: CI
+name: Test
 
 on:
   push:
@@ -15,6 +15,4 @@ jobs:
     - uses: axel-op/dart_package_analyzer@master
       with:
         githubToken: ${{ secrets.GITHUB_TOKEN }}
-        eventPayload: ${{ toJson(github.event) }}
-        commitSha: ${{ github.sha }}
         relativePath: 'test_package'

@@ -36,6 +36,8 @@ linter:
 
     - annotate_overrides
 
+    - valid_regexps
+
 #analyzer:
 #   exclude:
 #     - path/to/excluded/files/**

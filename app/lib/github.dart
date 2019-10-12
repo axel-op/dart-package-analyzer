@@ -1,3 +1,4 @@
+import 'package:app/comments.dart';
 import 'package:github/server.dart';
 import 'package:meta/meta.dart';
 
@@ -6,36 +7,33 @@ final Map<String, Future<_Diff>> _diffs = {};
 GitHub _getClient(String token) =>
     createGitHubClient(auth: Authentication.withToken(token));
 
-/// Post the comment as a commit comment on GitHub
+/// Posts the comment as a commit comment on GitHub
 Future<void> postCommitComment(
-  String comment, {
+  Comment comment, {
   @required final String repositorySlug,
-  @required final String commitSha,
   @required final String githubToken,
-  final int lineNumber,
-  final String fileRelativePath,
   @required Future<void> Function(dynamic error, dynamic stack) onError,
 }) async {
   try {
     final GitHub github = _getClient(githubToken);
     final RepositorySlug slug = RepositorySlug.full(repositorySlug);
     final RepositoryCommit commit =
-        await github.repositories.getCommit(slug, commitSha);
+        await github.repositories.getCommit(slug, comment.commitSha);
     int position;
-    if (lineNumber != null) {
+    if (comment.lineInFile != null) {
       final _Diff diff = await _getDiff(
-        commitSha: commitSha,
+        commitSha: comment.commitSha,
         repositorySlug: slug,
         githubToken: githubToken,
       );
-      position = diff.getPosition(fileRelativePath, lineNumber);
+      position = diff.getPosition(comment.file, comment.lineInFile);
     }
-    if (lineNumber == null || position != null) {
+    if (comment.lineInFile == null || position != null) {
       await github.repositories.createCommitComment(
         slug,
         commit,
-        body: comment,
-        path: fileRelativePath,
+        body: comment.body,
+        path: comment.file,
         position: position,
       );
     }
