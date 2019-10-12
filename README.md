@@ -35,7 +35,7 @@ jobs:
           relativePath: 'packages/mypackage/'
 ```
 
-* `githubToken` input is required to post a comment on GitHub.
-* Use `maxScoreToComment` if you only want to have a comment if your score is lower than this. If you don't specify it, a comment will be posted for every commit that triggers the workflow. In this example, a comment won't be posted if the score is above 99.99, that is, if it equals 100. 
+* `githubToken` input is required to post a comment on GitHub. **Note:** this secret is already provided by GitHub and you don't have to set it up yourself. 
+* Use `maxScoreToComment` if you only want to have a comment if your score is lower (or equals) than this. If you don't specify it, a comment will be posted for every commit that triggers the workflow. In this example, a comment won't be posted if the score is above 99.99, that is, if it equals 100. 
 * If your package isn't at the root of the repository, use `relativePath` to indicate its location. 
 
