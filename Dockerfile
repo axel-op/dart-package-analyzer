@@ -1,4 +1,4 @@
-FROM google/dart:2
+FROM axelop/dart-with-flutter
 
 COPY app/ /app/
 
@@ -6,11 +6,5 @@ COPY app/ /app/
 RUN cd /app \
     && pub get \
     && dart2aot /app/bin/main.dart /main.dart.aot
-
-# Install Flutter
-RUN apt-get update \
-    && apt-get -y install unzip \
-    && git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter \
-    && /flutter/bin/flutter --version
 
 ENTRYPOINT ["dartaotruntime", "/main.dart.aot"]

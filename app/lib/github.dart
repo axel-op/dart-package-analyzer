@@ -11,7 +11,6 @@ GitHub _getClient(String token) =>
 Future<void> postCommitComment(
   Comment comment, {
   @required final String repositorySlug,
-  @required final String commitSha,
   @required final String githubToken,
   @required Future<void> Function(dynamic error, dynamic stack) onError,
 }) async {
@@ -19,11 +18,11 @@ Future<void> postCommitComment(
     final GitHub github = _getClient(githubToken);
     final RepositorySlug slug = RepositorySlug.full(repositorySlug);
     final RepositoryCommit commit =
-        await github.repositories.getCommit(slug, commitSha);
+        await github.repositories.getCommit(slug, comment.commitSha);
     int position;
     if (comment.lineInFile != null) {
       final _Diff diff = await _getDiff(
-        commitSha: commitSha,
+        commitSha: comment.commitSha,
         repositorySlug: slug,
         githubToken: githubToken,
       );
