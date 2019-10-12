@@ -1,6 +1,9 @@
 name: Docker image update
 
 on:
+  push:
+    branches:
+      - 'stable'
   schedule:
     - cron: '0 0 * * *'
 
@@ -19,6 +22,6 @@ jobs:
           sudo apt update
           apt-cache policy docker-ce
           sudo apt install docker-ce
-          sudo docker login --username=axelop --password=${{ secrets.DOCKER_TOKEN }}
-          sudo docker build -f Dockerfile-parent -t axelop/dart-with-flutter .
-          sudo docker push axelop/dart-with-flutter
+          echo ${{ secrets.DOCKER_TOKEN }} | sudo docker login --username=axelop --password-stdin
+          sudo docker build -f Dockerfile-parent -t axelop/dart_package_analyzer .
+          sudo docker push axelop/dart_package_analyzer

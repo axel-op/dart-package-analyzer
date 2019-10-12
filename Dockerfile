@@ -1,10 +1,3 @@
-FROM axelop/dart-with-flutter
-
-COPY app/ /app/
-
-# Compile the Dart application that manages this action
-RUN cd /app \
-    && pub get \
-    && dart2aot /app/bin/main.dart /main.dart.aot
+FROM axelop/dart_package_analyzer
 
 ENTRYPOINT ["dartaotruntime", "/main.dart.aot"]
