@@ -71,7 +71,6 @@ dynamic main(List<String> args) async {
     for (final Comment comment in comments) {
       await postCommitComment(
         comment,
-        commitSha: inputs.commitSha,
         repositorySlug: inputs.repositorySlug,
         githubToken: inputs.githubToken,
         onError: (e, s) async {

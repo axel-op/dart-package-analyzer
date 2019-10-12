@@ -1,0 +1,28 @@
+name: Docker image update
+
+on:
+  push:
+    branches:
+      - 'stable'
+      - 'master' # TODO remove
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - run: |
+          sudo apt update
+          sudo apt install apt-transport-https ca-certificates curl software-properties-common
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+          sudo apt update
+          apt-cache policy docker-ce
+          sudo apt install docker-ce
+          sudo docker login --username=axelop --password=${{ secrets.DOCKER_TOKEN }}
+          sudo docker build -f Dockerfile-parent -t axelop/dart_package_analyzer .
+          sudo docker push axelop/dart_package_analyzer

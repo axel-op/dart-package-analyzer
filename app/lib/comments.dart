@@ -3,11 +3,13 @@ import 'package:meta/meta.dart';
 
 class Comment {
   final String body;
+  final String commitSha;
   final String file;
   final int lineInFile;
 
   Comment._({
     @required this.body,
+    @required this.commitSha,
     this.file,
     this.lineInFile,
   });
@@ -19,18 +21,25 @@ class Comment {
   }) =>
       [
         Comment._(
-            body: _buildGeneralComment(result: result, commitSha: commitSha))
-      ]..addAll(result.lineSuggestions
-          .map((s) => Comment._fromLineSuggestion(s, pathPrefix: pathPrefix)));
+          body: _buildGeneralComment(result: result, commitSha: commitSha),
+          commitSha: commitSha,
+        )
+      ]..addAll(result.lineSuggestions.map((s) => Comment._fromLineSuggestion(
+            s,
+            pathPrefix: pathPrefix,
+            commitSha: commitSha,
+          )));
 
   factory Comment._fromLineSuggestion(
     LineSuggestion suggestion, {
     @required String pathPrefix,
+    @required String commitSha,
   }) =>
       Comment._(
         body: suggestion.description,
         file: '$pathPrefix/${suggestion.file}',
         lineInFile: suggestion.line,
+        commitSha: commitSha,
       );
 }
 
