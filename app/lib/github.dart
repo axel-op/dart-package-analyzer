@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:app/comments.dart';
 import 'package:github/server.dart';
 import 'package:meta/meta.dart';
 
+final bool testing = Platform.environment['TESTING'] == 'true';
 final Map<String, Future<_Diff>> _diffs = {};
 
 GitHub _getClient(String token) =>
@@ -29,13 +33,24 @@ Future<void> postCommitComment(
       position = diff.getPosition(comment.file, comment.lineInFile);
     }
     if (comment.lineInFile == null || position != null) {
-      await github.repositories.createCommitComment(
-        slug,
-        commit,
-        body: comment.body,
-        path: comment.file,
-        position: position,
-      );
+      if (testing) {
+        stderr.writeln('A comment would be posted with' +
+            const JsonEncoder.withIndent('\t').convert(
+              jsonEncode(<String, dynamic>{
+                'path': comment.file,
+                'position': position,
+                'body': comment.body,
+              }),
+            ));
+      } else {
+        await github.repositories.createCommitComment(
+          slug,
+          commit,
+          body: comment.body,
+          path: comment.file,
+          position: position,
+        );
+      }
     }
   } catch (e, s) {
     await onError(e, s);
