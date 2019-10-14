@@ -17,6 +17,12 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
+    - name: Install Flutter
+      run: |
+        sudo apt-get update
+        apt-get -y install unzip
+        git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter
+        /flutter/bin/flutter --version
     - name: Test
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
