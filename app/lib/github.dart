@@ -34,8 +34,8 @@ Future<void> postCommitComment(
     }
     if (comment.lineInFile == null || position != null) {
       if (testing) {
-        stderr.writeln('A comment would be posted with' +
-            const JsonEncoder.withIndent('\t').convert(
+        stderr.writeln('A comment would be posted with ' +
+            const JsonEncoder.withIndent('  ').convert(
               jsonEncode(<String, dynamic>{
                 'path': comment.file,
                 'position': position,
