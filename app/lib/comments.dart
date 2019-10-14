@@ -54,7 +54,8 @@ String _buildGeneralComment({
     'Maintenance': result.maintenanceSuggestions,
   };
 
-  String comment = '## Package analysis results for commit $commitSha'
+  String comment = '## Package analysis results for `${result.packageName}`'
+      '\nCommit: $commitSha'
       '\nVersions: [PANA](https://pub.dev/packages/pana) ${result.panaVersion}'
       ' – Dart ${result.dartSdkVersion}'
       ' – Flutter ${result.flutterVersion} with Dart ${result.dartSdkInFlutterVersion}'
