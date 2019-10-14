@@ -72,10 +72,12 @@ Inputs getInputs() {
     repoPath = repoPath.substring(0, repoPath.length - 1);
   }
   String packagePath = packagePathInput.value ?? '';
-  packagePath = packagePath.substring(
-    packagePath.startsWith('/') ? 1 : 0,
-    packagePath.length - (packagePath.endsWith('/') ? 1 : 0),
-  );
+  if (packagePath.startsWith('/')) {
+    packagePath = packagePath.substring(1);
+  }
+  if (packagePath.endsWith('/')) {
+    packagePath = packagePath.substring(0, packagePath.length - 1);
+  }
 
   return Inputs._(
     commitSha: commitSha,
