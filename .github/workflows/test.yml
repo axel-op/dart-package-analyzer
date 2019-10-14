@@ -19,8 +19,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: Test
       env:
-        githubToken: ${{ secrets.GITHUB_TOKEN }}
-        relativePath: 'test_package'
+        INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
+        INPUT_RELATIVEPATH: 'test_package'
       run: |
         cd app
         pub get
