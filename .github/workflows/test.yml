@@ -22,7 +22,7 @@ jobs:
         githubToken: ${{ secrets.GITHUB_TOKEN }}
         relativePath: 'test_package'
       run: |
-        cd /app
+        cd app
         pub get
-        dart2aot /app/bin/main.dart /main.dart.aot
+        dart2aot bin/main.dart /main.dart.aot
         dartaotruntime /main.dart.aot
