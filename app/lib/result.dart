@@ -4,6 +4,9 @@ class Result {
   final double healthScore;
   final double maintenanceScore;
   final String panaVersion;
+  final String flutterVersion;
+  final String dartSdkVersion;
+  final String dartSdkInFlutterVersion;
   final List<Suggestion> generalSuggestions;
   final List<Suggestion> healthSuggestions;
   final List<Suggestion> maintenanceSuggestions;
@@ -17,6 +20,9 @@ class Result {
     @required this.healthSuggestions,
     @required this.maintenanceSuggestions,
     @required this.lineSuggestions,
+    @required this.dartSdkInFlutterVersion,
+    @required this.dartSdkVersion,
+    @required this.flutterVersion,
   });
 
   factory Result.fromOutput(Map<String, dynamic> output) =>
@@ -66,7 +72,12 @@ class LineSuggestion extends Suggestion {
 /// Processes the output of pana command and returns the [Result]
 Result _processOutput(Map<String, dynamic> output) {
   final dynamic scores = output['scores'];
-  final String panaVersion = output['runtimeInfo']['panaVersion'];
+  final Map<String, dynamic> runtimeInfo = output['runtimeInfo'];
+  final String panaVersion = runtimeInfo['panaVersion'];
+  final String dartSdkVersion = runtimeInfo['sdkVersion'];
+  final Map<String, dynamic> flutterInfo = runtimeInfo['flutterVersions'];
+  final String flutterVersion = flutterInfo['frameworkVersion'];
+  final String dartInFlutterVersion = flutterInfo['dartSdkVersion'];
   final double healthScore = scores['health'];
   final double maintenanceScore = scores['maintenance'];
   final List<Suggestion> generalSuggestions = <Suggestion>[];
@@ -117,6 +128,9 @@ Result _processOutput(Map<String, dynamic> output) {
     healthSuggestions: healthSuggestions,
     maintenanceSuggestions: maintenanceSuggestions,
     lineSuggestions: lineSuggestions,
+    flutterVersion: flutterVersion,
+    dartSdkInFlutterVersion: dartInFlutterVersion,
+    dartSdkVersion: dartSdkVersion,
   );
 }
 

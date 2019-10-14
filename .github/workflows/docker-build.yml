@@ -23,7 +23,6 @@ jobs:
           sudo apt update
           apt-cache policy docker-ce
           sudo apt install docker-ce
-          sudo apt -y upgrade
           sudo apt -y autoremove
           echo ${{ secrets.DOCKER_TOKEN }} | sudo docker login --username=axelop --password-stdin
           sudo docker build -f Dockerfile-parent -t axelop/dart_package_analyzer .
