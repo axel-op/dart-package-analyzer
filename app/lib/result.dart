@@ -1,6 +1,7 @@
 import 'package:meta/meta.dart';
 
 class Result {
+  final String packageName;
   final double healthScore;
   final double maintenanceScore;
   final String panaVersion;
@@ -13,6 +14,7 @@ class Result {
   final List<LineSuggestion> lineSuggestions;
 
   Result._({
+    @required this.packageName,
     @required this.healthScore,
     @required this.maintenanceScore,
     @required this.panaVersion,
@@ -71,13 +73,14 @@ class LineSuggestion extends Suggestion {
 
 /// Processes the output of pana command and returns the [Result]
 Result _processOutput(Map<String, dynamic> output) {
-  final dynamic scores = output['scores'];
+  final String packageName = output['packageName'];
   final Map<String, dynamic> runtimeInfo = output['runtimeInfo'];
   final String panaVersion = runtimeInfo['panaVersion'];
   final String dartSdkVersion = runtimeInfo['sdkVersion'];
   final Map<String, dynamic> flutterInfo = runtimeInfo['flutterVersions'];
   final String flutterVersion = flutterInfo['frameworkVersion'];
   final String dartInFlutterVersion = flutterInfo['dartSdkVersion'];
+  final Map<String, dynamic> scores = output['scores'];
   final double healthScore = scores['health'];
   final double maintenanceScore = scores['maintenance'];
   final List<Suggestion> generalSuggestions = <Suggestion>[];
@@ -121,6 +124,7 @@ Result _processOutput(Map<String, dynamic> output) {
   }
 
   return Result._(
+    packageName: packageName,
     panaVersion: panaVersion,
     maintenanceScore: maintenanceScore,
     healthScore: healthScore,
