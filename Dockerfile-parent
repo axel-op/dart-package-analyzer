@@ -1,14 +1,16 @@
-FROM google/dart:latest
-
-# Install Flutter
-RUN apt-get update \
-    && apt-get -y install unzip \
-    && git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter \
-    && /flutter/bin/flutter --version
+FROM google/dart:2
 
 COPY app/ /app/
 
 # Compile the Dart application that manages this action
 RUN cd /app \
     && pub get \
-    && dart2aot /app/bin/main.dart /main.dart.aot
+    && dart2aot /app/bin/main.dart /main.dart.aot \
+    && cd / \
+    && rm -r /app
+
+# Install Flutter
+RUN apt-get update \
+    && apt-get -y install unzip \
+    && git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter \
+    && /flutter/bin/flutter --version
