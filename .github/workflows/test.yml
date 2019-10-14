@@ -1,3 +1,5 @@
+# This workflow is for internal testing only. Please follow the README's instructions to use this action in your project. 
+
 name: Test
 
 on:
@@ -9,10 +11,18 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+
+    container:
+      image:  google/dart:latest
     
     steps:
     - uses: actions/checkout@v1
-    - uses: axel-op/dart_package_analyzer@master
-      with:
+    - name: Test
+      env:
         githubToken: ${{ secrets.GITHUB_TOKEN }}
         relativePath: 'test_package'
+      run: |
+        cd /app
+        pub get
+        dart2aot /app/bin/main.dart /main.dart.aot
+        dartaotruntime /main.dart.aot
