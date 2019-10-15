@@ -20,11 +20,14 @@ jobs:
       - name: Build and push Docker image
         run: |
           sudo apt-get update
-          sudo apt-get -y remove moby-engine moby-cli
-          sudo apt-get -y install docker.io
+          sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+          sudo apt-get update
+          apt-cache policy docker-ce
+          sudo apt-get install docker-ce
           FLUTTER_SHA=$(git ls-remote git://github.com/flutter/flutter.git refs/heads/stable | cut -f 1)
           echo $FLUTTER_SHA is the last commit in the stable branch of Flutter
-          sudo service docker start
           echo ${{ secrets.DOCKER_TOKEN }} | sudo docker login --username=axelop --password-stdin
           IMAGE=axelop/dart_package_analyzer
           if DOCKER_CLI_EXPERIMENTAL=enabled docker manifest inspect $IMAGE:$FLUTTER_SHA > /dev/null; then echo No new stable version of Flutter; exit 0; fi
