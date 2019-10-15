@@ -20,7 +20,7 @@ jobs:
       - name: Build and push Docker image
         run: |
           sudo apt-get update
-          sudo apt-get -y remove moby-engine
+          sudo apt-get -y remove moby-engine moby-cli
           sudo apt-get -y install docker.io
           FLUTTER_SHA=$(git ls-remote git://github.com/flutter/flutter.git refs/heads/stable | cut -f 1)
           echo $FLUTTER_SHA is the last commit in the stable branch of Flutter
