@@ -24,6 +24,7 @@ jobs:
           sudo apt-get -y install docker.io
           FLUTTER_SHA=$(git ls-remote git://github.com/flutter/flutter.git refs/heads/stable | cut -f 1)
           echo $FLUTTER_SHA is the last commit in the stable branch of Flutter
+          sudo service docker start
           echo ${{ secrets.DOCKER_TOKEN }} | sudo docker login --username=axelop --password-stdin
           IMAGE=axelop/dart_package_analyzer
           if DOCKER_CLI_EXPERIMENTAL=enabled docker manifest inspect $IMAGE:$FLUTTER_SHA > /dev/null; then echo No new stable version of Flutter; exit 0; fi
