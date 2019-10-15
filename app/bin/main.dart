@@ -16,6 +16,7 @@ dynamic main(List<String> args) async {
   stderr.writeln('This action will be run for commit ${inputs.commitSha}');
 
   // Installing pana package
+  stderr.writeln('Activating pana package...');
   await _runCommand(
     'pub',
     const <String>['global', 'activate', 'pana'],
@@ -29,6 +30,7 @@ dynamic main(List<String> args) async {
   );
 
   // Executing the analysis
+  stderr.writeln('Running analysis...');
   final String outputPana = await _runCommand(
     'pub',
     <String>[
