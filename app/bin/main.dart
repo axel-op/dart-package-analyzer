@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:app/comments.dart';
 import 'package:app/github.dart';
 import 'package:app/inputs.dart';
 import 'package:app/result.dart';
+import 'package:github/server.dart';
 
 dynamic main(List<String> args) async {
   exitCode = 1;
@@ -27,6 +27,16 @@ dynamic main(List<String> args) async {
   await _runCommand(
     '${inputs.flutterPath}/bin/flutter',
     const <String>['config', '--no-analytics'],
+  );
+
+  final CheckRun checkRun = await startAnalysis(
+    commitSha: inputs.commitSha,
+    githubToken: inputs.githubToken,
+    repositorySlug: inputs.repositorySlug,
+    onError: (e, s) async {
+      _writeErrors(e, s);
+      exit(1);
+    },
   );
 
   // Executing the analysis
@@ -54,34 +64,20 @@ dynamic main(List<String> args) async {
   }
   final Map<String, dynamic> resultPana = jsonDecode(outputPana);
   final Result result = Result.fromOutput(resultPana);
-  final List<Comment> comments = Comment.fromResult(
-    result,
-    pathPrefix: inputs.packagePath,
-    commitSha: inputs.commitSha,
-  );
-
-  const String noComment =
-      'Health score and maintenance score are both higher than the maximum score, so no general commit comment will be made.';
 
   // Posting comments on GitHub
-  if (result.healthScore > inputs.maxScoreToComment &&
-      result.maintenanceScore > inputs.maxScoreToComment) {
-    stdout.writeln(noComment);
-    exitCode = 0;
-  } else {
-    exitCode = 0;
-    for (final Comment comment in comments) {
-      await postCommitComment(
-        comment,
-        repositorySlug: inputs.repositorySlug,
-        githubToken: inputs.githubToken,
-        onError: (e, s) async {
-          _writeErrors(e, s);
-          exitCode = 1;
-        },
-      );
-    }
-  }
+  exitCode = 0;
+  await postResultsAndEndAnalysis(
+    checkRun: checkRun,
+    pathPrefix: inputs.packagePath,
+    result: result,
+    repositorySlug: inputs.repositorySlug,
+    githubToken: inputs.githubToken,
+    onError: (e, s) async {
+      _writeErrors(e, s);
+      exitCode = 1;
+    },
+  );
 }
 
 /// Runs a command and prints its outputs to stderr and stdout while running.

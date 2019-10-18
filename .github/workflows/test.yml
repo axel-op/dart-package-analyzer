@@ -25,9 +25,9 @@ jobs:
         /flutter/bin/flutter --version
     - name: Test
       env:
-        TESTING: true
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
         INPUT_RELATIVEPATH: 'test_package'
+        INPUT_MINANNOTATIONLEVEL: warning
       run: |
         cd app
         pub get

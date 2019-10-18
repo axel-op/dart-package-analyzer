@@ -1,6 +1,6 @@
 # Dart/Flutter package analyzer
 
-This action uses the [pana (Package ANAlysis) package](https://pub.dev/packages/pana) to compute the score that your Dart or Flutter package will have on the [Pub site](https://pub.dev/help), and posts it as a commit comment, with suggestions for improvements.
+This action uses the [pana (Package ANAlysis) package](https://pub.dev/packages/pana) to compute the score that your Dart or Flutter package will have on the [Pub site](https://pub.dev/help), and annotates your code, with suggestions for improvements.
 
 This package, amongst other things:
 
@@ -10,10 +10,6 @@ This package, amongst other things:
 * validates the `pubscpec.yaml` file (dependencies, description's length...),
 * checks for required files (`CHANGELOG`, `README`, `example` folder...)
 * ...
-
-## Example
-
-![](example.png)
 
 ## Usage
 
@@ -33,10 +29,14 @@ jobs:
           # Required:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           # Optional:
-          maxScoreToComment: 99.99
           relativePath: 'packages/mypackage/'
+          minAnnotationLevel: info
 ```
 
 * `githubToken` input is required to post a comment on GitHub. **Note:** this secret is already provided by GitHub and you don't have to set it up yourself.
-* Use `maxScoreToComment` if you only want to have a comment if your score is lower (or equals) than this. If you don't specify it, a comment will be posted for every commit that triggers the workflow. In this example, a comment won't be posted if the score is above 99.99, that is, if it equals 100.
 * If your package isn't at the root of the repository, use `relativePath` to indicate its location.
+* If you only want to see annotations for important errors, try to change the `minAnnotationLevel` parameter to another value. Accepted values are `info`, `warning` and `error`. Defaults to `info` that posts all the annotations.
+
+## Example
+
+![](example.png)
