@@ -1,5 +1,17 @@
 import 'package:meta/meta.dart';
 
+enum AnnotationLevel {
+  Error,
+  Warning,
+  Info,
+}
+
+const Map<String, AnnotationLevel> annotationLevels = {
+  'ERROR': AnnotationLevel.Error,
+  'WARNING': AnnotationLevel.Warning,
+  'INFO': AnnotationLevel.Info,
+};
+
 class Result {
   final String packageName;
   final double healthScore;
@@ -11,7 +23,7 @@ class Result {
   final List<Suggestion> generalSuggestions;
   final List<Suggestion> healthSuggestions;
   final List<Suggestion> maintenanceSuggestions;
-  final List<LineSuggestion> lineSuggestions;
+  final List<Annotation> annotations;
 
   Result._({
     @required this.packageName,
@@ -21,7 +33,7 @@ class Result {
     @required this.generalSuggestions,
     @required this.healthSuggestions,
     @required this.maintenanceSuggestions,
-    @required this.lineSuggestions,
+    @required this.annotations,
     @required this.dartSdkInFlutterVersion,
     @required this.dartSdkVersion,
     @required this.flutterVersion,
@@ -49,25 +61,33 @@ class Suggestion {
       );
 }
 
-class LineSuggestion extends Suggestion {
+class Annotation {
   final String file;
   final int line;
+  final int column;
+  final String description;
+  final AnnotationLevel level;
+  final String errorType;
+  final String errorCode;
 
-  LineSuggestion._({
-    @required String description,
+  Annotation._({
+    @required this.description,
     @required this.file,
     @required this.line,
-  }) : super._(
-          description: description,
-          loss: null,
-          title: null,
-        );
+    @required this.column,
+    @required this.level,
+    @required this.errorCode,
+    @required this.errorType,
+  });
 
-  factory LineSuggestion._fromJSON(Map<String, dynamic> json) =>
-      LineSuggestion._(
+  factory Annotation._fromJSON(Map<String, dynamic> json) => Annotation._(
         description: json['description'],
         line: json['line'],
         file: json['file'],
+        column: json['col'],
+        level: annotationLevels[json['severity']],
+        errorCode: json['errorCode'],
+        errorType: json['errorType'],
       );
 }
 
@@ -86,7 +106,7 @@ Result _processOutput(Map<String, dynamic> output) {
   final List<Suggestion> generalSuggestions = <Suggestion>[];
   final List<Suggestion> maintenanceSuggestions = <Suggestion>[];
   final List<Suggestion> healthSuggestions = <Suggestion>[];
-  final List<LineSuggestion> lineSuggestions = <LineSuggestion>[];
+  final List<Annotation> lineSuggestions = <Annotation>[];
 
   final Map<String, void Function(List<Suggestion>)> categories = {
     'health': (suggestions) => healthSuggestions.addAll(suggestions),
@@ -95,17 +115,22 @@ Result _processOutput(Map<String, dynamic> output) {
 
   const String suggestionKey = 'suggestions';
 
+  final List<Suggestion> Function(List<dynamic>) parseSuggestions = (list) =>
+      List.castFrom<dynamic, Map<String, dynamic>>(list)
+          .map((s) => Suggestion._fromJSON(s))
+          .toList();
+
   for (final String key in categories.keys) {
     if (output.containsKey(key)) {
       final Map<String, dynamic> category = output[key];
       if (category.containsKey(suggestionKey)) {
-        categories[key](_parseSuggestions(category[suggestionKey]));
+        categories[key](parseSuggestions(category[suggestionKey]));
       }
     }
   }
 
   if (output.containsKey(suggestionKey)) {
-    generalSuggestions.addAll(_parseSuggestions(output[suggestionKey]));
+    generalSuggestions.addAll(parseSuggestions(output[suggestionKey]));
   }
 
   if (output.containsKey('dartFiles')) {
@@ -117,7 +142,7 @@ Result _processOutput(Map<String, dynamic> output) {
             List.castFrom<dynamic, Map<String, dynamic>>(
                 details['codeProblems']);
         lineSuggestions.addAll(problems.map(
-          (jsonObj) => LineSuggestion._fromJSON(jsonObj),
+          (jsonObj) => Annotation._fromJSON(jsonObj),
         ));
       }
     }
@@ -131,14 +156,9 @@ Result _processOutput(Map<String, dynamic> output) {
     generalSuggestions: generalSuggestions,
     healthSuggestions: healthSuggestions,
     maintenanceSuggestions: maintenanceSuggestions,
-    lineSuggestions: lineSuggestions,
+    annotations: lineSuggestions,
     flutterVersion: flutterVersion,
     dartSdkInFlutterVersion: dartInFlutterVersion,
     dartSdkVersion: dartSdkVersion,
   );
 }
-
-List<Suggestion> _parseSuggestions(List<dynamic> list) =>
-    List.castFrom<dynamic, Map<String, dynamic>>(list)
-        .map((s) => Suggestion._fromJSON(s))
-        .toList();

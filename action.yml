@@ -1,5 +1,5 @@
 name: 'Dart/Flutter Package Analyzer'
-description: 'Computes the Pub score of your Dart/Flutter package and posts a detailed commit comment'
+description: 'Computes the Pub score of your Dart/Flutter package and posts annotations and suggestions.'
 author: 'axel-op'
 branding:
   color: 'blue'
@@ -8,14 +8,14 @@ inputs:
   githubToken:
     description: 'Token to connect to Github. Use secrets.GITHUB_TOKEN'
     required: true
-  maxScoreToComment:
-    description: 'No comment will be posted if both scores are over this max'
-    required: false
-    default: 100.0
   relativePath:
     description: 'Path of your package in your repository'
     required: false
     default: ''
+  minAnnotationLevel:
+    description: 'Minimum level for annotations. Accepted values are [info, warning, error].'
+    required: false
+    default: 'info'
 runs:
   using: 'docker'
   image: 'Dockerfile'
