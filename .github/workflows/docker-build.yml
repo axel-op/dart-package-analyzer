@@ -21,21 +21,12 @@ jobs:
           IMAGE: axelop/dart_package_analyzer
           DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
           EVENT: ${{ github.event_name }}
-          GPG_DOCKER_URL: https://download.docker.com/linux/ubuntu/gpg
-          DOCKER_DOWNLOAD_URL: https://download.docker.com/linux/ubuntu
           GIT_FLUTTER: git://github.com/flutter/flutter.git
         run: |
-          sudo apt-get update
-          sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
-          curl -fsSL $GPG_DOCKER_URL | sudo apt-key add -
-          sudo add-apt-repository "deb [arch=amd64] $DOCKER_DOWNLOAD_URL bionic stable"
-          sudo apt-get update
-          apt-cache policy docker-ce
-          sudo apt-get install docker-ce
           FLUTTER_SHA=$(git ls-remote $GIT_FLUTTER refs/heads/stable | cut -f 1)
           echo $FLUTTER_SHA is the last commit in the stable branch of Flutter
           echo $DOCKER_TOKEN | sudo docker login --username=axelop --password-stdin
-          if [ $EVENT != push ] && DOCKER_CLI_EXPERIMENTAL=enabled docker manifest inspect $IMAGE:$FLUTTER_SHA > /dev/null; then echo No new stable version of Flutter; exit 0; fi
+          if [ $EVENT != push ] && DOCKER_CLI_EXPERIMENTAL=enabled sudo docker manifest inspect $IMAGE:$FLUTTER_SHA > /dev/null; then echo No new stable version of Flutter; exit 0; fi
           sudo docker build -f Dockerfile-parent -t $IMAGE:$FLUTTER_SHA .
           sudo docker push $IMAGE:$FLUTTER_SHA
           sudo docker tag $IMAGE:$FLUTTER_SHA $IMAGE:latest
