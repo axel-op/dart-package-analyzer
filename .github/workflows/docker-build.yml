@@ -23,8 +23,8 @@ jobs:
           DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
           EVENT: ${{ github.event_name }}
           GIT_FLUTTER: git://github.com/flutter/flutter.git
-          DOCKER_CLI_EXPERIMENTAL: enabled
         run: |
+          echo '{ "experimental": true }' | sudo tee /etc/docker/daemon.json && sudo service docker restart
           FLUTTER_SHA=$(git ls-remote $GIT_FLUTTER refs/heads/stable | cut -f 1)
           echo $FLUTTER_SHA is the last commit in the stable branch of Flutter
           echo $DOCKER_TOKEN | sudo docker login --username=axelop --password-stdin
