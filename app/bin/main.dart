@@ -6,14 +6,14 @@ import 'package:app/inputs.dart';
 import 'package:app/result.dart';
 import 'package:github/server.dart';
 
-Inputs inputs;
-CheckRun checkRun;
+Inputs _inputs;
+CheckRun _checkRun;
 
 dynamic main(List<String> args) async {
   exitCode = 1;
 
   // Parsing command arguments
-  inputs = await getInputs(
+  _inputs = await getInputs(
     onError: (e, s) async {
       _writeErrors(e, s);
       await _exitProgram(1);
@@ -21,19 +21,19 @@ dynamic main(List<String> args) async {
   );
 
   // Displaying commit SHA
-  stderr.writeln('This action will be run for commit ${inputs.commitSha}');
+  stderr.writeln('This action will be run for commit ${_inputs.commitSha}');
 
-  checkRun = await queueAnalysis(
-    commitSha: inputs.commitSha,
-    githubToken: inputs.githubToken,
-    repositorySlug: inputs.repositorySlug,
+  _checkRun = await queueAnalysis(
+    commitSha: _inputs.commitSha,
+    githubToken: _inputs.githubToken,
+    repositorySlug: _inputs.repositorySlug,
     onError: (e, s) async {
       _writeErrors(e, s);
       await _exitProgram(1);
     },
   );
 
-  final String flutterExecutable = '${inputs.flutterPath}/bin/flutter';
+  final String flutterExecutable = '${_inputs.flutterPath}/bin/flutter';
 
   // Installing pana package
   stderr.writeln('Activating pana package...');
@@ -50,9 +50,9 @@ dynamic main(List<String> args) async {
   );
 
   await startAnalysis(
-    checkRun: checkRun,
-    githubToken: inputs.githubToken,
-    repositorySlug: inputs.repositorySlug,
+    checkRun: _checkRun,
+    githubToken: _inputs.githubToken,
+    repositorySlug: _inputs.repositorySlug,
     onError: (e, s) async {
       _writeErrors(e, s);
       await _exitProgram(1);
@@ -71,10 +71,10 @@ dynamic main(List<String> args) async {
       '--scores',
       '--no-warning',
       '--flutter-sdk',
-      inputs.flutterPath,
+      _inputs.flutterPath,
       '--source',
       'path',
-      inputs.sourcePath,
+      _inputs.sourcePath,
     ],
     exitOnError: true,
   );
@@ -89,12 +89,12 @@ dynamic main(List<String> args) async {
   // Posting comments on GitHub
   exitCode = 0;
   await postResultsAndEndAnalysis(
-    checkRun: checkRun,
-    pathPrefix: inputs.packagePath,
+    checkRun: _checkRun,
+    pathPrefix: _inputs.packagePath,
     result: result,
-    repositorySlug: inputs.repositorySlug,
-    githubToken: inputs.githubToken,
-    minAnnotationLevel: inputs.minAnnotationLevel,
+    repositorySlug: _inputs.repositorySlug,
+    githubToken: _inputs.githubToken,
+    minAnnotationLevel: _inputs.minAnnotationLevel,
     onError: (e, s) async {
       _writeErrors(e, s);
       exitCode = 1;
@@ -137,11 +137,11 @@ Future<String> _runCommand(
 }
 
 Future<void> _exitProgram([int code]) async {
-  if (checkRun != null && inputs != null) {
+  if (_checkRun != null && _inputs != null) {
     await cancelAnalysis(
-      checkRun: checkRun,
-      githubToken: inputs.githubToken,
-      repositorySlug: inputs.repositorySlug,
+      checkRun: _checkRun,
+      githubToken: _inputs.githubToken,
+      repositorySlug: _inputs.repositorySlug,
       onError: (e, s) async => _writeErrors(e, s),
     );
   }
