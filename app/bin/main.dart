@@ -33,17 +33,19 @@ dynamic main(List<String> args) async {
     },
   );
 
+  final String flutterExecutable = '${inputs.flutterPath}/bin/flutter';
+
   // Installing pana package
   stderr.writeln('Activating pana package...');
   await _runCommand(
-    'pub',
-    const <String>['global', 'activate', 'pana'],
+    flutterExecutable,
+    const <String>['pub', 'global', 'activate', 'pana'],
     exitOnError: true,
   );
 
   // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
   await _runCommand(
-    '${inputs.flutterPath}/bin/flutter',
+    flutterExecutable,
     const <String>['config', '--no-analytics'],
   );
 
@@ -60,8 +62,9 @@ dynamic main(List<String> args) async {
   // Executing the analysis
   stderr.writeln('Running analysis...');
   final String outputPana = await _runCommand(
-    'pub',
+    flutterExecutable,
     <String>[
+      'pub',
       'global',
       'run',
       'pana',
