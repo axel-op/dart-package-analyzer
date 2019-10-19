@@ -118,12 +118,13 @@ Future<void> postResultsAndEndAnalysis({
   final String title = 'Package analysis results for ${result.packageName}';
   final String summary = _buildSummary(result);
   final String text = _buildText(result);
-  final CheckRunConclusion conclusion = !testing &&
-          result.annotations
+  final CheckRunConclusion conclusion = testing
+      ? CheckRunConclusion.neutral
+      : result.annotations
               .where((a) => a.level == AnnotationLevel.Error)
               .isNotEmpty
-      ? CheckRunConclusion.failure
-      : CheckRunConclusion.success;
+          ? CheckRunConclusion.failure
+          : CheckRunConclusion.success;
   int i = 0;
   do {
     final bool isLastLoop = i + 50 >= annotations.length;
@@ -150,10 +151,16 @@ Future<void> postResultsAndEndAnalysis({
   } while (i < annotations.length);
 }
 
-String _buildSummary(Result result) =>
-    '* Health score is **${result.healthScore.toString()} / 100.0**'
-    '\n* Maintenance score is **${result.maintenanceScore.toString()} / 100.0**'
-    '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*';
+String _buildSummary(Result result) {
+  final String summary =
+      '* Health score is **${result.healthScore.toString()} / 100.0**'
+      '\n* Maintenance score is **${result.maintenanceScore.toString()} / 100.0**'
+      '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*';
+  return (testing
+          ? '**THIS ACTION HAS BEEN EXECUTED IN TEST MODE. THIS MODE IS NOT INTENDED FOR PRODUCTION USE.**\n'
+          : '') +
+      summary;
+}
 
 String _buildText(Result result) {
   final Map<String, List<Suggestion>> suggestions = {
