@@ -34,9 +34,7 @@ class _Input {
     final String v = Platform
         .environment['INPUT_${name.toUpperCase().replaceAll(" ", "_")}'];
     if ((v == null && !nullable) || (v != null && v.isEmpty && !canBeEmpty)) {
-      stderr
-          .writeln('No value were given for the argument \'$name\'. Exiting.');
-      exit(1);
+      throw ArgumentError('No value were given for the argument \'$name\'.');
     }
     return v;
   }
@@ -62,41 +60,48 @@ class Inputs {
   });
 }
 
-Inputs getInputs() {
+Future<Inputs> getInputs({
+  @required Future<void> Function(dynamic, dynamic) onError,
+}) async {
+  const Map<String, AnnotationLevel> annotationMapping = {
+    'info': AnnotationLevel.Info,
+    'warning': AnnotationLevel.Warning,
+    'error': AnnotationLevel.Error,
+  };
   const String flutterPath = '/flutter'; // TODO pass this as an env var
   final String repositorySlug = Platform.environment['GITHUB_REPOSITORY'];
   final String commitSha = Platform.environment['GITHUB_SHA'];
+  String githubToken;
   AnnotationLevel minAnnotationLevel;
-  switch (minAnnotationLevelInput.value.toLowerCase()) {
-    case 'info':
-      minAnnotationLevel = AnnotationLevel.Info;
-      break;
-    case 'warning':
-      minAnnotationLevel = AnnotationLevel.Warning;
-      break;
-    case 'error':
-      minAnnotationLevel = AnnotationLevel.Error;
-      break;
-    default:
+  String packagePath;
+  String repoPath;
+  try {
+    githubToken = githubTokenInput.value;
+    minAnnotationLevel =
+        annotationMapping[minAnnotationLevelInput.value.toLowerCase()];
+    if (minAnnotationLevel == null) {
       throw ArgumentError.value(
           minAnnotationLevelInput.value, 'minAnnotationLevel');
-  }
-  String repoPath = Platform.environment['GITHUB_WORKSPACE'];
-  if (repoPath.endsWith('/')) {
-    repoPath = repoPath.substring(0, repoPath.length - 1);
-  }
-  String packagePath = packagePathInput.value ?? '';
-  if (packagePath.startsWith('/')) {
-    packagePath = packagePath.substring(1);
-  }
-  if (packagePath.endsWith('/')) {
-    packagePath = packagePath.substring(0, packagePath.length - 1);
+    }
+    packagePath = packagePathInput.value ?? '';
+    if (packagePath.startsWith('/')) {
+      packagePath = packagePath.substring(1);
+    }
+    if (packagePath.endsWith('/')) {
+      packagePath = packagePath.substring(0, packagePath.length - 1);
+    }
+    repoPath = Platform.environment['GITHUB_WORKSPACE'];
+    if (repoPath.endsWith('/')) {
+      repoPath = repoPath.substring(0, repoPath.length - 1);
+    }
+  } catch (e, s) {
+    await onError(e, s);
   }
 
   return Inputs._(
     commitSha: commitSha,
     flutterPath: flutterPath,
-    githubToken: githubTokenInput.value,
+    githubToken: githubToken,
     packagePath: packagePath,
     repositorySlug: repositorySlug,
     sourcePath: '$repoPath/$packagePath',
