@@ -136,6 +136,6 @@ Future<void> _exitProgram([int code]) async {
   exit(code ?? exitCode);
 }
 
-void _writeErrors(dynamic error, dynamic stackTrace) {
+void _writeErrors(dynamic error, StackTrace stackTrace) {
   stderr.writeln(error.toString() + '\n' + stackTrace.toString());
 }

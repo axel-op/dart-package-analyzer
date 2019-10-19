@@ -23,7 +23,7 @@ Future<CheckRun> startAnalysis({
   @required String repositorySlug,
   @required String commitSha,
   @required String githubToken,
-  @required Future<void> Function(dynamic, dynamic) onError,
+  @required Future<void> Function(dynamic, StackTrace) onError,
 }) async {
   final GitHub client = _getClient(githubToken);
   final RepositorySlug slug = RepositorySlug.full(repositorySlug);
@@ -45,7 +45,7 @@ Future<void> cancelAnalysis({
   @required String repositorySlug,
   @required CheckRun checkRun,
   @required String githubToken,
-  @required Future<void> Function(dynamic, dynamic) onError,
+  @required Future<void> Function(dynamic, StackTrace) onError,
 }) async {
   try {
     final GitHub client = _getClient(githubToken);
@@ -69,7 +69,7 @@ Future<void> postResultsAndEndAnalysis({
   @required Result result,
   @required String pathPrefix,
   @required AnnotationLevel minAnnotationLevel,
-  @required Future<void> Function(dynamic error, dynamic stack) onError,
+  @required Future<void> Function(dynamic error, StackTrace stack) onError,
 }) async {
   final List<CheckRunAnnotation> annotations = result.annotations
       .where((a) {

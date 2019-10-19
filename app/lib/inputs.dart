@@ -61,7 +61,7 @@ class Inputs {
 }
 
 Future<Inputs> getInputs({
-  @required Future<void> Function(dynamic, dynamic) onError,
+  @required Future<void> Function(dynamic, StackTrace) onError,
 }) async {
   const Map<String, AnnotationLevel> annotationMapping = {
     'info': AnnotationLevel.Info,
