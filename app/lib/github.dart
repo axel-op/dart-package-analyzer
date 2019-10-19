@@ -19,10 +19,10 @@ GitHub _getClient(String token) {
   return _client;
 }
 
-Future<CheckRun> startAnalysis({
+Future<CheckRun> queueAnalysis({
   @required String repositorySlug,
-  @required String commitSha,
   @required String githubToken,
+  @required String commitSha,
   @required Future<void> Function(dynamic, StackTrace) onError,
 }) async {
   final GitHub client = _getClient(githubToken);
@@ -30,15 +30,34 @@ Future<CheckRun> startAnalysis({
   try {
     return client.checks.createCheckRun(
       slug,
+      status: CheckRunStatus.queued,
       name: 'Dart package analysis',
       headSha: commitSha,
+    );
+  } catch (e, s) {
+    await onError(e, s);
+  }
+  return null;
+}
+
+Future<void> startAnalysis({
+  @required String repositorySlug,
+  @required CheckRun checkRun,
+  @required String githubToken,
+  @required Future<void> Function(dynamic, StackTrace) onError,
+}) async {
+  final GitHub client = _getClient(githubToken);
+  final RepositorySlug slug = RepositorySlug.full(repositorySlug);
+  try {
+    await client.checks.updateCheckRun(
+      slug,
+      checkRun,
       startedAt: DateTime.now(),
       status: CheckRunStatus.inProgress,
     );
   } catch (e, s) {
     await onError(e, s);
   }
-  return null;
 }
 
 Future<void> cancelAnalysis({
@@ -47,9 +66,9 @@ Future<void> cancelAnalysis({
   @required String githubToken,
   @required Future<void> Function(dynamic, StackTrace) onError,
 }) async {
+  final GitHub client = _getClient(githubToken);
+  final RepositorySlug slug = RepositorySlug.full(repositorySlug);
   try {
-    final GitHub client = _getClient(githubToken);
-    final RepositorySlug slug = RepositorySlug.full(repositorySlug);
     await client.checks.updateCheckRun(
       slug,
       checkRun,
