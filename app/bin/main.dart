@@ -23,6 +23,16 @@ dynamic main(List<String> args) async {
   // Displaying commit SHA
   stderr.writeln('This action will be run for commit ${inputs.commitSha}');
 
+  checkRun = await queueAnalysis(
+    commitSha: inputs.commitSha,
+    githubToken: inputs.githubToken,
+    repositorySlug: inputs.repositorySlug,
+    onError: (e, s) async {
+      _writeErrors(e, s);
+      await _exitProgram(1);
+    },
+  );
+
   // Installing pana package
   stderr.writeln('Activating pana package...');
   await _runCommand(
@@ -37,8 +47,8 @@ dynamic main(List<String> args) async {
     const <String>['config', '--no-analytics'],
   );
 
-  checkRun = await startAnalysis(
-    commitSha: inputs.commitSha,
+  await startAnalysis(
+    checkRun: checkRun,
     githubToken: inputs.githubToken,
     repositorySlug: inputs.repositorySlug,
     onError: (e, s) async {
@@ -136,6 +146,6 @@ Future<void> _exitProgram([int code]) async {
   exit(code ?? exitCode);
 }
 
-void _writeErrors(dynamic error, dynamic stackTrace) {
+void _writeErrors(dynamic error, StackTrace stackTrace) {
   stderr.writeln(error.toString() + '\n' + stackTrace.toString());
 }

@@ -19,21 +19,20 @@ GitHub _getClient(String token) {
   return _client;
 }
 
-Future<CheckRun> startAnalysis({
+Future<CheckRun> queueAnalysis({
   @required String repositorySlug,
-  @required String commitSha,
   @required String githubToken,
-  @required Future<void> Function(dynamic, dynamic) onError,
+  @required String commitSha,
+  @required Future<void> Function(dynamic, StackTrace) onError,
 }) async {
   final GitHub client = _getClient(githubToken);
   final RepositorySlug slug = RepositorySlug.full(repositorySlug);
   try {
     return client.checks.createCheckRun(
       slug,
+      status: CheckRunStatus.queued,
       name: 'Dart package analysis',
       headSha: commitSha,
-      startedAt: DateTime.now(),
-      status: CheckRunStatus.inProgress,
     );
   } catch (e, s) {
     await onError(e, s);
@@ -41,15 +40,35 @@ Future<CheckRun> startAnalysis({
   return null;
 }
 
+Future<void> startAnalysis({
+  @required String repositorySlug,
+  @required CheckRun checkRun,
+  @required String githubToken,
+  @required Future<void> Function(dynamic, StackTrace) onError,
+}) async {
+  final GitHub client = _getClient(githubToken);
+  final RepositorySlug slug = RepositorySlug.full(repositorySlug);
+  try {
+    await client.checks.updateCheckRun(
+      slug,
+      checkRun,
+      startedAt: DateTime.now(),
+      status: CheckRunStatus.inProgress,
+    );
+  } catch (e, s) {
+    await onError(e, s);
+  }
+}
+
 Future<void> cancelAnalysis({
   @required String repositorySlug,
   @required CheckRun checkRun,
   @required String githubToken,
-  @required Future<void> Function(dynamic, dynamic) onError,
+  @required Future<void> Function(dynamic, StackTrace) onError,
 }) async {
+  final GitHub client = _getClient(githubToken);
+  final RepositorySlug slug = RepositorySlug.full(repositorySlug);
   try {
-    final GitHub client = _getClient(githubToken);
-    final RepositorySlug slug = RepositorySlug.full(repositorySlug);
     await client.checks.updateCheckRun(
       slug,
       checkRun,
@@ -69,7 +88,7 @@ Future<void> postResultsAndEndAnalysis({
   @required Result result,
   @required String pathPrefix,
   @required AnnotationLevel minAnnotationLevel,
-  @required Future<void> Function(dynamic error, dynamic stack) onError,
+  @required Future<void> Function(dynamic error, StackTrace stack) onError,
 }) async {
   final List<CheckRunAnnotation> annotations = result.annotations
       .where((a) {
@@ -86,7 +105,7 @@ Future<void> postResultsAndEndAnalysis({
             annotationLevel: _annotationsMapping[a.level],
             path: '$pathPrefix/${a.file}',
             title: a.errorType,
-            message: '[${a.errorCode ?? ""}] ${a.description}',
+            message: '[${a.errorCode ?? ""}]\n${a.description}',
             startLine: a.line,
             endLine: a.line,
             startColumn: a.column,
