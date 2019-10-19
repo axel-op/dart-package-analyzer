@@ -86,7 +86,7 @@ Future<void> postResultsAndEndAnalysis({
             annotationLevel: _annotationsMapping[a.level],
             path: '$pathPrefix/${a.file}',
             title: a.errorType,
-            message: '[${a.errorCode ?? ""}] ${a.description}',
+            message: '[${a.errorCode ?? ""}]\n${a.description}',
             startLine: a.line,
             endLine: a.line,
             startColumn: a.column,
