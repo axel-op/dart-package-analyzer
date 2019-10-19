@@ -95,7 +95,7 @@ Future<Inputs> getInputs({
       repoPath = repoPath.substring(0, repoPath.length - 1);
     }
   } catch (e, s) {
-    await onError(e, s);
+    await onError(e, e is ArgumentError ? null : s);
   }
 
   return Inputs._(
