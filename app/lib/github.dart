@@ -1,10 +1,11 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:app/result.dart';
 import 'package:github/server.dart';
 import 'package:meta/meta.dart';
 
-//final bool testing = Platform.environment['TESTING'] == 'true';
+final bool testing = Platform.environment['TESTING'] == 'true';
 
 const Map<AnnotationLevel, CheckRunAnnotationLevel> _annotationsMapping = {
   AnnotationLevel.Error: CheckRunAnnotationLevel.failure,
@@ -117,9 +118,10 @@ Future<void> postResultsAndEndAnalysis({
   final String title = 'Package analysis results for ${result.packageName}';
   final String summary = _buildSummary(result);
   final String text = _buildText(result);
-  final CheckRunConclusion conclusion = result.annotations
-          .where((a) => a.level == AnnotationLevel.Error)
-          .isNotEmpty
+  final CheckRunConclusion conclusion = !testing &&
+          result.annotations
+              .where((a) => a.level == AnnotationLevel.Error)
+              .isNotEmpty
       ? CheckRunConclusion.failure
       : CheckRunConclusion.success;
   int i = 0;
