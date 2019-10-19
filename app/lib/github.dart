@@ -5,8 +5,6 @@ import 'package:github/server.dart';
 import 'package:meta/meta.dart';
 
 //final bool testing = Platform.environment['TESTING'] == 'true';
-//final Map<String, Future<_Diff>> _diffs = {};
-final Map<String, GitHub> _clients = {};
 
 const Map<AnnotationLevel, CheckRunAnnotationLevel> _annotationsMapping = {
   AnnotationLevel.Error: CheckRunAnnotationLevel.failure,
@@ -14,14 +12,18 @@ const Map<AnnotationLevel, CheckRunAnnotationLevel> _annotationsMapping = {
   AnnotationLevel.Info: CheckRunAnnotationLevel.notice,
 };
 
-GitHub _getClient(String token) => _clients.putIfAbsent(
-    token, () => createGitHubClient(auth: Authentication.withToken(token)));
+GitHub _client;
+
+GitHub _getClient(String token) {
+  _client ??= createGitHubClient(auth: Authentication.withToken(token));
+  return _client;
+}
 
 Future<CheckRun> startAnalysis({
   @required String repositorySlug,
   @required String commitSha,
   @required String githubToken,
-  @required Future<void> Function(dynamic, dynamic) onError,
+  @required Future<void> Function(dynamic, StackTrace) onError,
 }) async {
   final GitHub client = _getClient(githubToken);
   final RepositorySlug slug = RepositorySlug.full(repositorySlug);
@@ -39,14 +41,35 @@ Future<CheckRun> startAnalysis({
   return null;
 }
 
+Future<void> cancelAnalysis({
+  @required String repositorySlug,
+  @required CheckRun checkRun,
+  @required String githubToken,
+  @required Future<void> Function(dynamic, StackTrace) onError,
+}) async {
+  try {
+    final GitHub client = _getClient(githubToken);
+    final RepositorySlug slug = RepositorySlug.full(repositorySlug);
+    await client.checks.updateCheckRun(
+      slug,
+      checkRun,
+      completedAt: DateTime.now(),
+      status: CheckRunStatus.completed,
+      conclusion: CheckRunConclusion.cancelled,
+    );
+  } catch (e, s) {
+    await onError(e, s);
+  }
+}
+
 Future<void> postResultsAndEndAnalysis({
-  @required final String repositorySlug,
+  @required String repositorySlug,
   @required String githubToken,
   @required CheckRun checkRun,
   @required Result result,
   @required String pathPrefix,
   @required AnnotationLevel minAnnotationLevel,
-  @required Future<void> Function(dynamic error, dynamic stack) onError,
+  @required Future<void> Function(dynamic error, StackTrace stack) onError,
 }) async {
   final List<CheckRunAnnotation> annotations = result.annotations
       .where((a) {
