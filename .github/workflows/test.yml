@@ -27,7 +27,8 @@ jobs:
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
         INPUT_RELATIVEPATH: 'test_package'
-        INPUT_MINANNOTATIONLEVEL: warning
+        INPUT_MINANNOTATIONLEVEL: info
+        TESTING: true
       run: |
         cd app
         pub get
