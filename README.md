@@ -37,6 +37,12 @@ jobs:
 * If your package isn't at the root of the repository, use `relativePath` to indicate its location.
 * If you only want to see annotations for important errors, try to change the `minAnnotationLevel` parameter to another value. Accepted values are `info`, `warning` and `error`. Defaults to `info` that posts all the annotations.
 
-## Example
+## Examples
 
-![](example.png)
+### Report
+
+![](example_report.png)
+
+### Diff annotations
+
+![](example_annotation.png)
