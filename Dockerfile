@@ -1,3 +1,3 @@
 FROM axelop/dart_package_analyzer
 
-ENTRYPOINT ["dartaotruntime", "/main.dart.aot"]
+ENTRYPOINT ["/dartaotruntime", "/main.dart.aot"]

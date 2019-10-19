@@ -1,15 +1,20 @@
-FROM google/dart:2.5
+FROM google/dart:2.5 as dartimage
 
 COPY app/ /app/
 
-# Compile the Dart application that manages this action
+# Compiling the Dart application that manages this action
 RUN cd /app \
     && pub get \
-    && dart2aot /app/bin/main.dart /main.dart.aot \
-    && cd / \
-    && rm -r /app
+    && dart2aot /app/bin/main.dart /main.dart.aot
 
-# Install Flutter
+# Using a lighter parent image to build the final image
+FROM bitnami/minideb
+
+# Copying only the aot file and the aot runtime
+COPY --from=dartimage /main.dart.aot /main.dart.aot
+COPY --from=dartimage /usr/lib/dart/bin/dartaotruntime /dartaotruntime
+
+# Installing Flutter
 RUN apt-get update \
     && apt-get -y install unzip \
     && git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter \
