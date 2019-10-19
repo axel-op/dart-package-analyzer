@@ -35,18 +35,18 @@ dynamic main(List<String> args) async {
 
   final String flutterExecutable = '${_inputs.flutterPath}/bin/flutter';
 
+  // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
+  await _runCommand(
+    flutterExecutable,
+    const <String>['config', '--no-analytics'],
+  );
+
   // Installing pana package
   stderr.writeln('Activating pana package...');
   await _runCommand(
     flutterExecutable,
     const <String>['pub', 'global', 'activate', 'pana'],
     exitOnError: true,
-  );
-
-  // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
-  await _runCommand(
-    flutterExecutable,
-    const <String>['config', '--no-analytics'],
   );
 
   await startAnalysis(
@@ -137,7 +137,7 @@ Future<String> _runCommand(
 }
 
 Future<void> _exitProgram([int code]) async {
-  if (_checkRun != null && _inputs != null) {
+  if (_checkRun != null) {
     await cancelAnalysis(
       checkRun: _checkRun,
       githubToken: _inputs.githubToken,
@@ -150,5 +150,6 @@ Future<void> _exitProgram([int code]) async {
 }
 
 void _writeErrors(dynamic error, StackTrace stackTrace) {
-  stderr.writeln(error.toString() + '\n' + stackTrace.toString());
+  stderr.writeln(error.toString() +
+      (stackTrace != null ? '\n' + stackTrace.toString() : ''));
 }
