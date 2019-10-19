@@ -6,11 +6,19 @@ import 'package:app/inputs.dart';
 import 'package:app/result.dart';
 import 'package:github/server.dart';
 
+Inputs inputs;
+CheckRun checkRun;
+
 dynamic main(List<String> args) async {
   exitCode = 1;
 
   // Parsing command arguments
-  final Inputs inputs = getInputs();
+  inputs = await getInputs(
+    onError: (e, s) async {
+      _writeErrors(e, s);
+      await _exitProgram(1);
+    },
+  );
 
   // Displaying commit SHA
   stderr.writeln('This action will be run for commit ${inputs.commitSha}');
@@ -29,13 +37,13 @@ dynamic main(List<String> args) async {
     const <String>['config', '--no-analytics'],
   );
 
-  final CheckRun checkRun = await startAnalysis(
+  checkRun = await startAnalysis(
     commitSha: inputs.commitSha,
     githubToken: inputs.githubToken,
     repositorySlug: inputs.repositorySlug,
     onError: (e, s) async {
       _writeErrors(e, s);
-      exit(1);
+      await _exitProgram(1);
     },
   );
 
@@ -60,7 +68,7 @@ dynamic main(List<String> args) async {
 
   if (outputPana == null) {
     stderr.writeln('The pana command has returned no valid output. Exiting.');
-    exit(1);
+    await _exitProgram(1);
   }
   final Map<String, dynamic> resultPana = jsonDecode(outputPana);
   final Result result = Result.fromOutput(resultPana);
@@ -73,6 +81,7 @@ dynamic main(List<String> args) async {
     result: result,
     repositorySlug: inputs.repositorySlug,
     githubToken: inputs.githubToken,
+    minAnnotationLevel: inputs.minAnnotationLevel,
     onError: (e, s) async {
       _writeErrors(e, s);
       exitCode = 1;
@@ -114,11 +123,19 @@ Future<String> _runCommand(
   return (await output)?.join();
 }
 
-void _writeErrors(dynamic error, dynamic stackTrace) {
-  stderr.writeln(error.toString() + '\n' + stackTrace.toString());
+Future<void> _exitProgram([int code]) async {
+  if (checkRun != null && inputs != null) {
+    await cancelAnalysis(
+      checkRun: checkRun,
+      githubToken: inputs.githubToken,
+      repositorySlug: inputs.repositorySlug,
+      onError: (e, s) async => _writeErrors(e, s),
+    );
+  }
+  await Future.wait(<Future<dynamic>>[stderr.done, stdout.done]);
+  exit(code ?? exitCode);
 }
 
-Future<void> _exitProgram([int code]) async {
-  await Future.wait(<Future<dynamic>>[stderr.done, stdout.done]);
-  exit(code != null ? code : exitCode);
+void _writeErrors(dynamic error, dynamic stackTrace) {
+  stderr.writeln(error.toString() + '\n' + stackTrace.toString());
 }
