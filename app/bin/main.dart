@@ -4,116 +4,112 @@ import 'dart:io';
 import 'package:app/github.dart';
 import 'package:app/inputs.dart';
 import 'package:app/result.dart';
-import 'package:github/server.dart';
-
-Inputs _inputs;
-CheckRun _checkRun;
+import 'package:meta/meta.dart';
+import 'package:pedantic/pedantic.dart';
 
 dynamic main(List<String> args) async {
   exitCode = 1;
 
   // Parsing command arguments
-  _inputs = await getInputs(
-    onError: (e, s) async {
-      _writeErrors(e, s);
-      await _exitProgram(1);
-    },
-  );
+  final Inputs inputs = await getInputs();
 
   // Displaying commit SHA
-  stderr.writeln('This action will be run for commit ${_inputs.commitSha}');
+  stderr.writeln('This action will be run for commit ${inputs.commitSha}');
 
-  _checkRun = await queueAnalysis(
-    commitSha: _inputs.commitSha,
-    githubToken: _inputs.githubToken,
-    repositorySlug: _inputs.repositorySlug,
-    onError: (e, s) async {
+  final Analysis analysis = await Analysis.queue(
+    commitSha: inputs.commitSha,
+    githubToken: inputs.githubToken,
+    repositorySlug: inputs.repositorySlug,
+  );
+
+  void tryCancelAnalysis() {
+    try {
+      analysis.cancel();
+    } catch (e, s) {
       _writeErrors(e, s);
-      await _exitProgram(1);
-    },
-  );
-
-  final String flutterExecutable = '${_inputs.flutterPath}/bin/flutter';
-
-  // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
-  await _runCommand(
-    flutterExecutable,
-    const <String>['config', '--no-analytics'],
-  );
-
-  // Installing pana package
-  stderr.writeln('Activating pana package...');
-  await _runCommand(
-    flutterExecutable,
-    const <String>['pub', 'global', 'activate', 'pana'],
-    exitOnError: true,
-  );
-
-  await startAnalysis(
-    checkRun: _checkRun,
-    githubToken: _inputs.githubToken,
-    repositorySlug: _inputs.repositorySlug,
-    onError: (e, s) async {
-      _writeErrors(e, s);
-      await _exitProgram(1);
-    },
-  );
-
-  // Executing the analysis
-  stderr.writeln('Running analysis...');
-  final String outputPana = await _runCommand(
-    flutterExecutable,
-    <String>[
-      'pub',
-      'global',
-      'run',
-      'pana',
-      '--scores',
-      '--no-warning',
-      '--flutter-sdk',
-      _inputs.flutterPath,
-      '--source',
-      'path',
-      _inputs.sourcePath,
-    ],
-    exitOnError: true,
-  );
-
-  if (outputPana == null) {
-    stderr.writeln('The pana command has returned no valid output. Exiting.');
-    await _exitProgram(1);
+    }
   }
-  final Map<String, dynamic> resultPana = jsonDecode(outputPana);
-  final Result result = Result.fromOutput(resultPana);
 
-  // Posting comments on GitHub
-  exitCode = 0;
-  await postResultsAndEndAnalysis(
-    checkRun: _checkRun,
-    pathPrefix: _inputs.packagePath,
-    result: result,
-    repositorySlug: _inputs.repositorySlug,
-    githubToken: _inputs.githubToken,
-    minAnnotationLevel: _inputs.minAnnotationLevel,
-    onError: (e, s) async {
-      _writeErrors(e, s);
-      exitCode = 1;
-    },
-  );
+  try {
+    final String flutterExecutable = '${inputs.flutterPath}/bin/flutter';
+
+    // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
+    await _runCommand(
+      flutterExecutable,
+      const <String>['config', '--no-analytics'],
+    );
+
+    // Installing pana package
+    stderr.writeln('Activating pana package...');
+    final int panaActivationExitCode = (await _runCommand(
+      flutterExecutable,
+      const <String>['pub', 'global', 'activate', 'pana'],
+    ))
+        .exitCode;
+
+    if (panaActivationExitCode != 0) {
+      tryCancelAnalysis();
+      await _exitProgram(panaActivationExitCode);
+    }
+
+    unawaited(analysis.start());
+
+    // Executing the analysis
+    stderr.writeln('Running analysis...');
+    final _ProcessResult panaResult = await _runCommand(
+      flutterExecutable,
+      <String>[
+        'pub',
+        'global',
+        'run',
+        'pana',
+        '--scores',
+        '--no-warning',
+        '--flutter-sdk',
+        inputs.flutterPath,
+        '--source',
+        'path',
+        inputs.sourcePath,
+      ],
+    );
+
+    if (panaResult.exitCode != 0) {
+      tryCancelAnalysis();
+      await _exitProgram(panaResult.exitCode);
+    }
+    if (panaResult.output == null) {
+      throw Exception('The pana command has returned no valid output.');
+    }
+
+    final Map<String, dynamic> resultPana = jsonDecode(panaResult.output);
+    final Result result = Result.fromOutput(resultPana);
+
+    // Posting comments on GitHub
+    await analysis.complete(
+      pathPrefix: inputs.packagePath,
+      result: result,
+      minAnnotationLevel: inputs.minAnnotationLevel,
+    );
+
+    exitCode = 0;
+  } catch (e, s) {
+    _writeErrors(e, s);
+    tryCancelAnalysis();
+    rethrow;
+  }
 }
 
 /// Runs a command and prints its outputs to stderr and stdout while running.
-/// Returns the sdtout output in a String.
-Future<String> _runCommand(
+/// Returns a [_ProcessResult] with the sdtout output in a String.
+Future<_ProcessResult> _runCommand(
   String executable,
-  List<String> arguments, {
-  bool exitOnError = false,
-}) async {
+  List<String> arguments,
+) async {
   Future<List<String>> output;
   Future<dynamic> addStreamOut;
   Future<dynamic> addStreamErr;
-  final Future<List<dynamic>> Function() freeStreams = () async =>
-      await Future.wait(<Future<dynamic>>[addStreamErr, addStreamOut]);
+  final Future<List<dynamic>> Function() freeStreams =
+      () async => Future.wait<dynamic>([addStreamErr, addStreamOut]);
   try {
     final int code =
         await Process.start(executable, arguments, runInShell: true)
@@ -124,32 +120,30 @@ Future<String> _runCommand(
       output = outBrStream.transform(utf8.decoder).toList();
       return process.exitCode;
     });
-    if (exitOnError && code != 0) {
-      await _exitProgram(code);
-    }
-  } catch (e, s) {
     await freeStreams();
-    _writeErrors(e, s);
-    await _exitProgram(1);
+    return _ProcessResult(exitCode: code, output: (await output)?.join());
+  } catch (e) {
+    await freeStreams();
+    rethrow;
   }
-  await freeStreams();
-  return (await output)?.join();
 }
 
 Future<void> _exitProgram([int code]) async {
-  if (_checkRun != null) {
-    await cancelAnalysis(
-      checkRun: _checkRun,
-      githubToken: _inputs.githubToken,
-      repositorySlug: _inputs.repositorySlug,
-      onError: (e, s) async => _writeErrors(e, s),
-    );
-  }
-  await Future.wait(<Future<dynamic>>[stderr.done, stdout.done]);
+  await Future.wait<dynamic>([stderr.done, stdout.done]);
   exit(code ?? exitCode);
 }
 
 void _writeErrors(dynamic error, StackTrace stackTrace) {
   stderr.writeln(error.toString() +
       (stackTrace != null ? '\n' + stackTrace.toString() : ''));
+}
+
+class _ProcessResult {
+  final String output;
+  final int exitCode;
+
+  _ProcessResult({
+    @required this.exitCode,
+    @required this.output,
+  });
 }

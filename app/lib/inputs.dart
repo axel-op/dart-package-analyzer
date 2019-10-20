@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:app/result.dart';
+import 'package:github/server.dart';
 import 'package:meta/meta.dart';
 
 const _Input githubTokenInput = _Input(
@@ -47,7 +47,7 @@ class Inputs {
   final String githubToken;
   final String commitSha;
   final String repositorySlug;
-  final AnnotationLevel minAnnotationLevel;
+  final CheckRunAnnotationLevel minAnnotationLevel;
 
   Inputs._({
     @required this.commitSha,
@@ -60,42 +60,36 @@ class Inputs {
   });
 }
 
-Future<Inputs> getInputs({
-  @required Future<void> Function(dynamic, StackTrace) onError,
-}) async {
-  const Map<String, AnnotationLevel> annotationMapping = {
-    'info': AnnotationLevel.Info,
-    'warning': AnnotationLevel.Warning,
-    'error': AnnotationLevel.Error,
+Future<Inputs> getInputs() async {
+  const Map<String, CheckRunAnnotationLevel> annotationMapping = {
+    'info': CheckRunAnnotationLevel.notice,
+    'warning': CheckRunAnnotationLevel.warning,
+    'error': CheckRunAnnotationLevel.failure,
   };
   const String flutterPath = '/flutter'; // TODO pass this as an env var
   final String repositorySlug = Platform.environment['GITHUB_REPOSITORY'];
   final String commitSha = Platform.environment['GITHUB_SHA'];
   String githubToken;
-  AnnotationLevel minAnnotationLevel;
+  CheckRunAnnotationLevel minAnnotationLevel;
   String packagePath;
   String repoPath;
-  try {
-    githubToken = githubTokenInput.value;
-    minAnnotationLevel =
-        annotationMapping[minAnnotationLevelInput.value.toLowerCase()];
-    if (minAnnotationLevel == null) {
-      throw ArgumentError.value(
-          minAnnotationLevelInput.value, 'minAnnotationLevel');
-    }
-    packagePath = packagePathInput.value ?? '';
-    if (packagePath.startsWith('/')) {
-      packagePath = packagePath.substring(1);
-    }
-    if (packagePath.endsWith('/')) {
-      packagePath = packagePath.substring(0, packagePath.length - 1);
-    }
-    repoPath = Platform.environment['GITHUB_WORKSPACE'];
-    if (repoPath.endsWith('/')) {
-      repoPath = repoPath.substring(0, repoPath.length - 1);
-    }
-  } catch (e, s) {
-    await onError(e, e is ArgumentError ? null : s);
+  githubToken = githubTokenInput.value;
+  minAnnotationLevel =
+      annotationMapping[minAnnotationLevelInput.value.toLowerCase()];
+  if (minAnnotationLevel == null) {
+    throw ArgumentError.value(
+        minAnnotationLevelInput.value, 'minAnnotationLevel');
+  }
+  packagePath = packagePathInput.value ?? '';
+  if (packagePath.startsWith('/')) {
+    packagePath = packagePath.substring(1);
+  }
+  if (packagePath.endsWith('/')) {
+    packagePath = packagePath.substring(0, packagePath.length - 1);
+  }
+  repoPath = Platform.environment['GITHUB_WORKSPACE'];
+  if (repoPath.endsWith('/')) {
+    repoPath = repoPath.substring(0, repoPath.length - 1);
   }
 
   return Inputs._(

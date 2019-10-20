@@ -7,134 +7,93 @@ import 'package:meta/meta.dart';
 
 final bool testing = Platform.environment['TESTING'] == 'true';
 
-const Map<AnnotationLevel, CheckRunAnnotationLevel> _annotationsMapping = {
-  AnnotationLevel.Error: CheckRunAnnotationLevel.failure,
-  AnnotationLevel.Warning: CheckRunAnnotationLevel.warning,
-  AnnotationLevel.Info: CheckRunAnnotationLevel.notice,
-};
+class Analysis {
+  final GitHub client;
+  final CheckRun checkRun;
+  final RepositorySlug repositorySlug;
+  DateTime startTime;
 
-GitHub _client;
+  Analysis._({
+    @required this.client,
+    @required this.checkRun,
+    @required this.repositorySlug,
+  });
 
-GitHub _getClient(String token) {
-  _client ??= createGitHubClient(auth: Authentication.withToken(token));
-  return _client;
-}
-
-Future<CheckRun> queueAnalysis({
-  @required String repositorySlug,
-  @required String githubToken,
-  @required String commitSha,
-  @required Future<void> Function(dynamic, StackTrace) onError,
-}) async {
-  final GitHub client = _getClient(githubToken);
-  final RepositorySlug slug = RepositorySlug.full(repositorySlug);
-  try {
-    return client.checks.createCheckRun(
+  static Future<Analysis> queue({
+    @required String repositorySlug,
+    @required String githubToken,
+    @required String commitSha,
+  }) async {
+    final GitHub client = GitHub(auth: Authentication.withToken(githubToken));
+    final RepositorySlug slug = RepositorySlug.full(repositorySlug);
+    final CheckRun checkRun = await client.checks.createCheckRun(
       slug,
       status: CheckRunStatus.queued,
       name: 'Dart package analysis',
       headSha: commitSha,
     );
-  } catch (e, s) {
-    await onError(e, s);
+    return Analysis._(checkRun: checkRun, client: client, repositorySlug: slug);
   }
-  return null;
-}
 
-Future<void> startAnalysis({
-  @required String repositorySlug,
-  @required CheckRun checkRun,
-  @required String githubToken,
-  @required Future<void> Function(dynamic, StackTrace) onError,
-}) async {
-  final GitHub client = _getClient(githubToken);
-  final RepositorySlug slug = RepositorySlug.full(repositorySlug);
-  try {
+  Future<void> start() async {
+    startTime = DateTime.now();
     await client.checks.updateCheckRun(
-      slug,
+      repositorySlug,
       checkRun,
-      startedAt: DateTime.now(),
+      startedAt: startTime,
       status: CheckRunStatus.inProgress,
     );
-  } catch (e, s) {
-    await onError(e, s);
   }
-}
 
-Future<void> cancelAnalysis({
-  @required String repositorySlug,
-  @required CheckRun checkRun,
-  @required String githubToken,
-  @required Future<void> Function(dynamic, StackTrace) onError,
-}) async {
-  final GitHub client = _getClient(githubToken);
-  final RepositorySlug slug = RepositorySlug.full(repositorySlug);
-  try {
+  Future<void> cancel() async {
     await client.checks.updateCheckRun(
-      slug,
+      repositorySlug,
       checkRun,
+      startedAt: startTime,
       completedAt: DateTime.now(),
       status: CheckRunStatus.completed,
       conclusion: CheckRunConclusion.cancelled,
     );
-  } catch (e, s) {
-    await onError(e, s);
   }
-}
 
-Future<void> postResultsAndEndAnalysis({
-  @required String repositorySlug,
-  @required String githubToken,
-  @required CheckRun checkRun,
-  @required Result result,
-  @required String pathPrefix,
-  @required AnnotationLevel minAnnotationLevel,
-  @required Future<void> Function(dynamic error, StackTrace stack) onError,
-}) async {
-  final List<CheckRunAnnotation> annotations = result.annotations
-      .where((a) {
-        switch (a.level) {
-          case AnnotationLevel.Info:
-            return minAnnotationLevel == AnnotationLevel.Info;
-          case AnnotationLevel.Warning:
-            return minAnnotationLevel != AnnotationLevel.Error;
-          default:
-            return true;
-        }
-      })
-      .map((a) => CheckRunAnnotation(
-            annotationLevel: _annotationsMapping[a.level],
-            path: '$pathPrefix/${a.file}',
-            title: a.errorType,
-            message: '[${a.errorCode ?? ""}]\n${a.description}',
-            startLine: a.line,
-            endLine: a.line,
-            startColumn: a.column,
-            endColumn: a.column,
-          ))
-      .toList();
-  final GitHub client = _getClient(githubToken);
-  final RepositorySlug repoSlug = RepositorySlug.full(repositorySlug);
-  final String title = 'Package analysis results for ${result.packageName}';
-  final String summary = _buildSummary(result);
-  final String text = _buildText(result);
-  final CheckRunConclusion conclusion = testing
-      ? CheckRunConclusion.neutral
-      : result.annotations
-              .where((a) => a.level == AnnotationLevel.Error)
-              .isNotEmpty
-          ? CheckRunConclusion.failure
-          : CheckRunConclusion.success;
-  int i = 0;
-  do {
-    final bool isLastLoop = i + 50 >= annotations.length;
-    try {
+  Future<void> complete({
+    @required Result result,
+    @required String pathPrefix,
+    @required CheckRunAnnotationLevel minAnnotationLevel,
+  }) async {
+    final List<CheckRunAnnotation> annotations = result.annotations
+        .where((a) => a.level >= minAnnotationLevel)
+        .map((a) => CheckRunAnnotation(
+              annotationLevel: a.level,
+              path: '$pathPrefix/${a.file}',
+              title: a.errorType,
+              message: '[${a.errorCode ?? ""}]\n${a.description}',
+              startLine: a.line,
+              endLine: a.line,
+              startColumn: a.column,
+              endColumn: a.column,
+            ))
+        .toList();
+    final String title = 'Package analysis results for ${result.packageName}';
+    final String summary = _buildSummary(result);
+    final String text = _buildText(result);
+    final CheckRunConclusion conclusion = testing
+        ? CheckRunConclusion.neutral
+        : result.annotations
+                .where((a) => a.level == CheckRunAnnotationLevel.failure)
+                .isNotEmpty
+            ? CheckRunConclusion.failure
+            : CheckRunConclusion.success;
+    int i = 0;
+    do {
+      final bool isLastLoop = i + 50 >= annotations.length;
       await client.checks.updateCheckRun(
-        repoSlug,
+        repositorySlug,
         checkRun,
         name: 'Analysis of ${result.packageName}',
         status:
             isLastLoop ? CheckRunStatus.completed : CheckRunStatus.inProgress,
+        startedAt: startTime,
         completedAt: isLastLoop ? DateTime.now() : null,
         conclusion: isLastLoop ? conclusion : null,
         output: CheckRunOutput(
@@ -144,11 +103,9 @@ Future<void> postResultsAndEndAnalysis({
           annotations: annotations.sublist(i, min(i + 50, annotations.length)),
         ),
       );
-    } catch (e, s) {
-      await onError(e, s);
-    }
-    i += 50;
-  } while (i < annotations.length);
+      i += 50;
+    } while (i < annotations.length);
+  }
 }
 
 String _buildSummary(Result result) {
@@ -178,11 +135,11 @@ String _buildText(Result result) {
       entry.value.forEach((s) => text += _stringSuggestion(s));
     }
   }
-  text += '\n### Versions'
-      '\n* [Pana](https://pub.dev/packages/pana): ${result.panaVersion}'
-      '\n* Dart: ${result.dartSdkVersion}'
-      '\n* Flutter: ${result.flutterVersion} with Dart ${result.dartSdkInFlutterVersion}';
-  return text;
+  return text +
+      '\n### Versions'
+          '\n* [Pana](https://pub.dev/packages/pana): ${result.panaVersion}'
+          '\n* Dart: ${result.dartSdkVersion}'
+          '\n* Flutter: ${result.flutterVersion} with Dart ${result.dartSdkInFlutterVersion}';
 }
 
 String _stringSuggestion(Suggestion suggestion) {
@@ -199,7 +156,5 @@ String _stringSuggestion(Suggestion suggestion) {
     }
     str += '**: ';
   }
-  ;
-  str += suggestion.description.replaceAll(RegExp(r'(\n *)+'), '\n  * ');
-  return str;
+  return str + suggestion.description.replaceAll(RegExp(r'(\n *)+'), '\n  * ');
 }

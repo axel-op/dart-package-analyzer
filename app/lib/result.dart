@@ -1,15 +1,10 @@
+import 'package:github/server.dart';
 import 'package:meta/meta.dart';
 
-enum AnnotationLevel {
-  Error,
-  Warning,
-  Info,
-}
-
-const Map<String, AnnotationLevel> annotationLevels = {
-  'ERROR': AnnotationLevel.Error,
-  'WARNING': AnnotationLevel.Warning,
-  'INFO': AnnotationLevel.Info,
+const Map<String, CheckRunAnnotationLevel> _annotationLevels = {
+  'ERROR': CheckRunAnnotationLevel.failure,
+  'WARNING': CheckRunAnnotationLevel.warning,
+  'INFO': CheckRunAnnotationLevel.notice,
 };
 
 class Result {
@@ -66,7 +61,7 @@ class Annotation {
   final int line;
   final int column;
   final String description;
-  final AnnotationLevel level;
+  final CheckRunAnnotationLevel level;
   final String errorType;
   final String errorCode;
 
@@ -85,7 +80,7 @@ class Annotation {
         line: json['line'],
         file: json['file'],
         column: json['col'],
-        level: annotationLevels[json['severity']],
+        level: _annotationLevels[json['severity']],
         errorCode: json['errorCode'],
         errorType: json['errorType'],
       );

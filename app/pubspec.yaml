@@ -17,3 +17,4 @@ dependencies:
 
 dev_dependencies:
   pedantic: ^1.8.0
+  extra_pedantic: any
