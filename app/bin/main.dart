@@ -30,6 +30,12 @@ dynamic main(List<String> args) async {
     }
   }
 
+  Future<void> _exitProgram([int code]) async {
+    tryCancelAnalysis();
+    await Future.wait<dynamic>([stderr.done, stdout.done]);
+    exit(code ?? exitCode);
+  }
+
   try {
     final String flutterExecutable = '${inputs.flutterPath}/bin/flutter';
 
@@ -48,7 +54,6 @@ dynamic main(List<String> args) async {
         .exitCode;
 
     if (panaActivationExitCode != 0) {
-      tryCancelAnalysis();
       await _exitProgram(panaActivationExitCode);
     }
 
@@ -74,7 +79,6 @@ dynamic main(List<String> args) async {
     );
 
     if (panaResult.exitCode != 0) {
-      tryCancelAnalysis();
       await _exitProgram(panaResult.exitCode);
     }
     if (panaResult.output == null) {
@@ -126,11 +130,6 @@ Future<_ProcessResult> _runCommand(
     await freeStreams();
     rethrow;
   }
-}
-
-Future<void> _exitProgram([int code]) async {
-  await Future.wait<dynamic>([stderr.done, stdout.done]);
-  exit(code ?? exitCode);
 }
 
 void _writeErrors(dynamic error, StackTrace stackTrace) {
