@@ -8,7 +8,8 @@ on:
     - '*'
 
 jobs:
-  build:
+
+  all-annotations:
 
     runs-on: ubuntu-latest
 
