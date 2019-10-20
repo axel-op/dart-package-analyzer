@@ -35,30 +35,3 @@ jobs:
         pub get
         dart2aot bin/main.dart /main.dart.aot
         dartaotruntime /main.dart.aot
-
-  just-errors:
-
-    runs-on: ubuntu-latest
-
-    container:
-      image:  google/dart:latest
-    
-    steps:
-    - uses: actions/checkout@v1
-    - name: Install Flutter
-      run: |
-        apt-get update
-        apt-get -y install unzip
-        git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter
-        /flutter/bin/flutter --version
-    - name: Test
-      env:
-        INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INPUT_RELATIVEPATH: 'test_package'
-        INPUT_MINANNOTATIONLEVEL: error
-        TESTING: true
-      run: |
-        cd app
-        pub get
-        dart2aot bin/main.dart /main.dart.aot
-        dartaotruntime /main.dart.aot

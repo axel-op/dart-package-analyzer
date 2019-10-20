@@ -139,7 +139,7 @@ String _buildText(Result result) {
       '\n### Versions'
           '\n* [Pana](https://pub.dev/packages/pana): ${result.panaVersion}'
           '\n* Dart: ${result.dartSdkVersion}'
-          '\n* Flutter: ${result.flutterVersion} with Dart ${result.dartSdkInFlutterVersion}';
+          '\n* Flutter: ${result.flutterVersion}'; // with Dart ${result.dartSdkInFlutterVersion}'; // Useless as we use the Flutter command so this will be the same SDK
 }
 
 String _stringSuggestion(Suggestion suggestion) {
