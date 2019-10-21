@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:app/result.dart';
 import 'package:github/server.dart';
@@ -8,16 +7,16 @@ import 'package:meta/meta.dart';
 final bool testing = Platform.environment['TESTING'] == 'true';
 
 class Analysis {
-  final GitHub client;
-  final CheckRun checkRun;
-  final RepositorySlug repositorySlug;
-  DateTime startTime;
+  final GitHub _client;
+  final CheckRun _checkRun;
+  final RepositorySlug _repositorySlug;
+  DateTime _startTime;
 
-  Analysis._({
-    @required this.client,
-    @required this.checkRun,
-    @required this.repositorySlug,
-  });
+  Analysis._(
+    this._client,
+    this._checkRun,
+    this._repositorySlug,
+  );
 
   static Future<Analysis> queue({
     @required String repositorySlug,
@@ -26,30 +25,42 @@ class Analysis {
   }) async {
     final GitHub client = GitHub(auth: Authentication.withToken(githubToken));
     final RepositorySlug slug = RepositorySlug.full(repositorySlug);
-    final CheckRun checkRun = await client.checks.createCheckRun(
-      slug,
-      status: CheckRunStatus.queued,
-      name: 'Dart package analysis',
-      headSha: commitSha,
-    );
-    return Analysis._(checkRun: checkRun, client: client, repositorySlug: slug);
+    try {
+      final CheckRun checkRun = await client.checks.createCheckRun(
+        slug,
+        status: CheckRunStatus.queued,
+        name: 'Dart package analysis',
+        headSha: commitSha,
+      );
+      return Analysis._(client, checkRun, slug);
+    } catch (e) {
+      if (e is GitHubError &&
+          e.message.contains('Resource not accessible by integration')) {
+        stderr.writeln(
+            'It seems that this action doesn\'t have the required permissions to call the GitHub API with the token you gave.'
+            'If you\'re using the default GITHUB_TOKEN, this may be because this repository is a fork and the workflow file by which this action is triggered has been edited.'
+            'In that case, GitHub reduces the token\'s permissions for security reasons.'
+            'This action thus should work once the workflow file has been merged to the original repository.');
+      }
+      rethrow;
+    }
   }
 
   Future<void> start() async {
-    startTime = DateTime.now();
-    await client.checks.updateCheckRun(
-      repositorySlug,
-      checkRun,
-      startedAt: startTime,
+    _startTime = DateTime.now();
+    await _client.checks.updateCheckRun(
+      _repositorySlug,
+      _checkRun,
+      startedAt: _startTime,
       status: CheckRunStatus.inProgress,
     );
   }
 
   Future<void> cancel() async {
-    await client.checks.updateCheckRun(
-      repositorySlug,
-      checkRun,
-      startedAt: startTime,
+    await _client.checks.updateCheckRun(
+      _repositorySlug,
+      _checkRun,
+      startedAt: _startTime,
       completedAt: DateTime.now(),
       status: CheckRunStatus.completed,
       conclusion: CheckRunConclusion.cancelled,
@@ -87,20 +98,21 @@ class Analysis {
     int i = 0;
     do {
       final bool isLastLoop = i + 50 >= annotations.length;
-      await client.checks.updateCheckRun(
-        repositorySlug,
-        checkRun,
+      await _client.checks.updateCheckRun(
+        _repositorySlug,
+        _checkRun,
         name: 'Analysis of ${result.packageName}',
         status:
             isLastLoop ? CheckRunStatus.completed : CheckRunStatus.inProgress,
-        startedAt: startTime,
+        startedAt: _startTime,
         completedAt: isLastLoop ? DateTime.now() : null,
         conclusion: isLastLoop ? conclusion : null,
         output: CheckRunOutput(
           title: title,
           summary: summary,
           text: text,
-          annotations: annotations.sublist(i, min(i + 50, annotations.length)),
+          annotations:
+              annotations.sublist(i, isLastLoop ? annotations.length : i + 50),
         ),
       );
       i += 50;
@@ -156,5 +168,11 @@ String _stringSuggestion(Suggestion suggestion) {
     }
     str += '**: ';
   }
-  return str + suggestion.description.replaceAll(RegExp(r'(\n *)+'), '\n  * ');
+  String desc =
+      suggestion.description?.replaceAll(RegExp(r'(\n)+-? *'), '\n  * ') ?? '';
+  const String rawNewline = r'\n';
+  if (desc.endsWith(rawNewline)) {
+    desc = desc.substring(0, desc.length - rawNewline.length);
+  }
+  return str + desc;
 }
