@@ -5,7 +5,6 @@ import 'package:app/github.dart';
 import 'package:app/inputs.dart';
 import 'package:app/result.dart';
 import 'package:meta/meta.dart';
-import 'package:pedantic/pedantic.dart';
 
 dynamic main(List<String> args) async {
   exitCode = 1;
@@ -22,16 +21,16 @@ dynamic main(List<String> args) async {
     repositorySlug: inputs.repositorySlug,
   );
 
-  void tryCancelAnalysis() {
+  Future<void> tryCancelAnalysis() async {
     try {
-      analysis.cancel();
+      await analysis.cancel();
     } catch (e, s) {
       _writeErrors(e, s);
     }
   }
 
   Future<void> _exitProgram([int code]) async {
-    tryCancelAnalysis();
+    await tryCancelAnalysis();
     await Future.wait<dynamic>([stderr.done, stdout.done]);
     exit(code ?? exitCode);
   }
@@ -57,7 +56,7 @@ dynamic main(List<String> args) async {
       await _exitProgram(panaActivationExitCode);
     }
 
-    unawaited(analysis.start());
+    await analysis.start();
 
     // Executing the analysis
     stderr.writeln('Running analysis...');
@@ -98,7 +97,7 @@ dynamic main(List<String> args) async {
     exitCode = 0;
   } catch (e, s) {
     _writeErrors(e, s);
-    tryCancelAnalysis();
+    await tryCancelAnalysis();
     rethrow;
   }
 }

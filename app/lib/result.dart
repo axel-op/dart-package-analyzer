@@ -7,37 +7,6 @@ const Map<String, CheckRunAnnotationLevel> _annotationLevels = {
   'INFO': CheckRunAnnotationLevel.notice,
 };
 
-class Result {
-  final String packageName;
-  final double healthScore;
-  final double maintenanceScore;
-  final String panaVersion;
-  final String flutterVersion;
-  final String dartSdkVersion;
-  final String dartSdkInFlutterVersion;
-  final List<Suggestion> generalSuggestions;
-  final List<Suggestion> healthSuggestions;
-  final List<Suggestion> maintenanceSuggestions;
-  final List<Annotation> annotations;
-
-  Result._({
-    @required this.packageName,
-    @required this.healthScore,
-    @required this.maintenanceScore,
-    @required this.panaVersion,
-    @required this.generalSuggestions,
-    @required this.healthSuggestions,
-    @required this.maintenanceSuggestions,
-    @required this.annotations,
-    @required this.dartSdkInFlutterVersion,
-    @required this.dartSdkVersion,
-    @required this.flutterVersion,
-  });
-
-  factory Result.fromOutput(Map<String, dynamic> output) =>
-      _processOutput(output);
-}
-
 class Suggestion {
   final double loss;
   final String description;
@@ -86,74 +55,102 @@ class Annotation {
       );
 }
 
-/// Processes the output of pana command and returns the [Result]
-Result _processOutput(Map<String, dynamic> output) {
-  final String packageName = output['packageName'];
-  final Map<String, dynamic> runtimeInfo = output['runtimeInfo'];
-  final String panaVersion = runtimeInfo['panaVersion'];
-  final String dartSdkVersion = runtimeInfo['sdkVersion'];
-  final Map<String, dynamic> flutterInfo = runtimeInfo['flutterVersions'];
-  final String flutterVersion = flutterInfo['frameworkVersion'];
-  final String dartInFlutterVersion = flutterInfo['dartSdkVersion'];
-  final Map<String, dynamic> scores = output['scores'];
-  final double healthScore = scores['health'];
-  final double maintenanceScore = scores['maintenance'];
-  final List<Suggestion> generalSuggestions = <Suggestion>[];
-  final List<Suggestion> maintenanceSuggestions = <Suggestion>[];
-  final List<Suggestion> healthSuggestions = <Suggestion>[];
-  final List<Annotation> lineSuggestions = <Annotation>[];
+class Result {
+  final String packageName;
+  final double healthScore;
+  final double maintenanceScore;
+  final String panaVersion;
+  final String flutterVersion;
+  final String dartSdkVersion;
+  final String dartSdkInFlutterVersion;
+  final List<Suggestion> generalSuggestions;
+  final List<Suggestion> healthSuggestions;
+  final List<Suggestion> maintenanceSuggestions;
+  final List<Annotation> annotations;
 
-  final Map<String, void Function(List<Suggestion>)> categories = {
-    'health': (suggestions) => healthSuggestions.addAll(suggestions),
-    'maintenance': (suggestions) => maintenanceSuggestions.addAll(suggestions),
-  };
+  Result._({
+    @required this.packageName,
+    @required this.healthScore,
+    @required this.maintenanceScore,
+    @required this.panaVersion,
+    @required this.generalSuggestions,
+    @required this.healthSuggestions,
+    @required this.maintenanceSuggestions,
+    @required this.annotations,
+    @required this.dartSdkInFlutterVersion,
+    @required this.dartSdkVersion,
+    @required this.flutterVersion,
+  });
 
-  const String suggestionKey = 'suggestions';
+  factory Result.fromOutput(Map<String, dynamic> output) {
+    final String packageName = output['packageName'];
+    final Map<String, dynamic> runtimeInfo = output['runtimeInfo'];
+    final String panaVersion = runtimeInfo['panaVersion'];
+    final String dartSdkVersion = runtimeInfo['sdkVersion'];
+    final Map<String, dynamic> flutterInfo = runtimeInfo['flutterVersions'];
+    final String flutterVersion = flutterInfo['frameworkVersion'];
+    final String dartInFlutterVersion = flutterInfo['dartSdkVersion'];
+    final Map<String, dynamic> scores = output['scores'];
+    final double healthScore = scores['health'];
+    final double maintenanceScore = scores['maintenance'];
+    final List<Suggestion> generalSuggestions = <Suggestion>[];
+    final List<Suggestion> maintenanceSuggestions = <Suggestion>[];
+    final List<Suggestion> healthSuggestions = <Suggestion>[];
+    final List<Annotation> lineSuggestions = <Annotation>[];
 
-  final List<Suggestion> Function(List<dynamic>) parseSuggestions = (list) =>
-      List.castFrom<dynamic, Map<String, dynamic>>(list)
-          .map((s) => Suggestion._fromJSON(s))
-          .toList();
+    final Map<String, void Function(List<Suggestion>)> categories = {
+      'health': (suggestions) => healthSuggestions.addAll(suggestions),
+      'maintenance': (suggestions) =>
+          maintenanceSuggestions.addAll(suggestions),
+    };
 
-  for (final String key in categories.keys) {
-    if (output.containsKey(key)) {
-      final Map<String, dynamic> category = output[key];
-      if (category.containsKey(suggestionKey)) {
-        categories[key](parseSuggestions(category[suggestionKey]));
+    const String suggestionKey = 'suggestions';
+
+    List<Suggestion> parseSuggestions(List<dynamic> list) =>
+        List.castFrom<dynamic, Map<String, dynamic>>(list)
+            .map((s) => Suggestion._fromJSON(s))
+            .toList();
+
+    for (final String key in categories.keys) {
+      if (output.containsKey(key)) {
+        final Map<String, dynamic> category = output[key];
+        if (category.containsKey(suggestionKey)) {
+          categories[key](parseSuggestions(category[suggestionKey]));
+        }
       }
     }
-  }
 
-  if (output.containsKey(suggestionKey)) {
-    generalSuggestions.addAll(parseSuggestions(output[suggestionKey]));
-  }
+    if (output.containsKey(suggestionKey)) {
+      generalSuggestions.addAll(parseSuggestions(output[suggestionKey]));
+    }
 
-  if (output.containsKey('dartFiles')) {
-    final Map<String, dynamic> dartFiles = output['dartFiles'];
-    for (final String file in dartFiles.keys) {
-      final Map<String, dynamic> details = dartFiles[file];
-      if (details.containsKey('codeProblems')) {
-        final List<Map<String, dynamic>> problems =
-            List.castFrom<dynamic, Map<String, dynamic>>(
-                details['codeProblems']);
-        lineSuggestions.addAll(problems.map(
-          (jsonObj) => Annotation._fromJSON(jsonObj),
-        ));
+    if (output.containsKey('dartFiles')) {
+      final Map<String, dynamic> dartFiles = output['dartFiles'];
+      for (final String file in dartFiles.keys) {
+        final Map<String, dynamic> details = dartFiles[file];
+        if (details.containsKey('codeProblems')) {
+          final List<Map<String, dynamic>> problems =
+              List.castFrom<dynamic, Map<String, dynamic>>(
+                  details['codeProblems']);
+          lineSuggestions.addAll(problems.map(
+            (jsonObj) => Annotation._fromJSON(jsonObj),
+          ));
+        }
       }
     }
-  }
 
-  return Result._(
-    packageName: packageName,
-    panaVersion: panaVersion,
-    maintenanceScore: maintenanceScore,
-    healthScore: healthScore,
-    generalSuggestions: generalSuggestions,
-    healthSuggestions: healthSuggestions,
-    maintenanceSuggestions: maintenanceSuggestions,
-    annotations: lineSuggestions,
-    flutterVersion: flutterVersion,
-    dartSdkInFlutterVersion: dartInFlutterVersion,
-    dartSdkVersion: dartSdkVersion,
-  );
+    return Result._(
+      packageName: packageName,
+      panaVersion: panaVersion,
+      maintenanceScore: maintenanceScore,
+      healthScore: healthScore,
+      generalSuggestions: generalSuggestions,
+      healthSuggestions: healthSuggestions,
+      maintenanceSuggestions: maintenanceSuggestions,
+      annotations: lineSuggestions,
+      flutterVersion: flutterVersion,
+      dartSdkInFlutterVersion: dartInFlutterVersion,
+      dartSdkVersion: dartSdkVersion,
+    );
+  }
 }
