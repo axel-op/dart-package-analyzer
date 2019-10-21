@@ -1,4 +1,5 @@
-# This workflow is for internal testing only. Please follow the README's instructions to use this action in your project. 
+# This workflow is for internal testing only, and its execution is slower than in regular conditions.
+# Please follow the README's instructions to use this action in your project. 
 
 name: Test
 
