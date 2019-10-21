@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:app/result.dart';
 import 'package:github/server.dart';
@@ -112,7 +111,8 @@ class Analysis {
           title: title,
           summary: summary,
           text: text,
-          annotations: annotations.sublist(i, min(i + 50, annotations.length)),
+          annotations:
+              annotations.sublist(i, isLastLoop ? annotations.length : i + 50),
         ),
       );
       i += 50;
@@ -168,5 +168,11 @@ String _stringSuggestion(Suggestion suggestion) {
     }
     str += '**: ';
   }
-  return str + suggestion.description.replaceAll(RegExp(r'(\n *)+'), '\n  * ');
+  String desc =
+      suggestion.description?.replaceAll(RegExp(r'(\n)+-? *'), '\n  * ') ?? '';
+  const String rawNewline = r'\n';
+  if (desc.endsWith(rawNewline)) {
+    desc = desc.substring(0, desc.length - rawNewline.length);
+  }
+  return str + desc;
 }
