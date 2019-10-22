@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:app/result.dart';
 import 'package:github/server.dart';
 import 'package:meta/meta.dart';
+import 'package:path/path.dart' as path;
 
 final bool testing = Platform.environment['TESTING'] == 'true';
 
@@ -76,7 +77,7 @@ class Analysis {
         .where((a) => a.level >= minAnnotationLevel)
         .map((a) => CheckRunAnnotation(
               annotationLevel: a.level,
-              path: '$pathPrefix/${a.file}',
+              path: path.normalize('$pathPrefix/${a.file}'),
               title: a.errorType,
               message: '[${a.errorCode ?? ""}]\n${a.description}',
               startLine: a.line,
@@ -120,16 +121,13 @@ class Analysis {
   }
 }
 
-String _buildSummary(Result result) {
-  final String summary =
-      '* Health score is **${result.healthScore.toString()} / 100.0**'
-      '\n* Maintenance score is **${result.maintenanceScore.toString()} / 100.0**'
-      '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*';
-  return (testing
-          ? '**THIS ACTION HAS BEEN EXECUTED IN TEST MODE. THIS MODE IS NOT INTENDED FOR PRODUCTION USE.**\n'
-          : '') +
-      summary;
-}
+String _buildSummary(Result result) =>
+    (testing
+        ? '**THIS ACTION HAS BEEN EXECUTED IN TEST MODE. THIS MODE IS NOT INTENDED FOR PRODUCTION USE.**\n'
+        : '') +
+    '* Health score is **${result.healthScore.toString()} / 100.0**'
+        '\n* Maintenance score is **${result.maintenanceScore.toString()} / 100.0**'
+        '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*';
 
 String _buildText(Result result) {
   final Map<String, List<Suggestion>> suggestions = {

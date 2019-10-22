@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:github/server.dart';
 import 'package:meta/meta.dart';
+import 'package:path/path.dart' as path;
 
 const _Input githubTokenInput = _Input(
   'githubToken',
@@ -41,8 +42,8 @@ class _Input {
 }
 
 class Inputs {
-  final String sourcePath;
-  final String packagePath;
+  final String absolutePathToPackage;
+  final String filesPrefix;
   final String flutterPath;
   final String githubToken;
   final String commitSha;
@@ -53,52 +54,45 @@ class Inputs {
     @required this.commitSha,
     @required this.flutterPath,
     @required this.githubToken,
-    @required this.packagePath,
-    @required this.sourcePath,
+    @required this.filesPrefix,
+    @required this.absolutePathToPackage,
     @required this.repositorySlug,
     @required this.minAnnotationLevel,
   });
-}
 
-Future<Inputs> getInputs() async {
-  const Map<String, CheckRunAnnotationLevel> annotationMapping = {
-    'info': CheckRunAnnotationLevel.notice,
-    'warning': CheckRunAnnotationLevel.warning,
-    'error': CheckRunAnnotationLevel.failure,
-  };
-  const String flutterPath = '/flutter'; // TODO pass this as an env var
-  final String repositorySlug = Platform.environment['GITHUB_REPOSITORY'];
-  final String commitSha = Platform.environment['GITHUB_SHA'];
-  String githubToken;
-  CheckRunAnnotationLevel minAnnotationLevel;
-  String packagePath;
-  String repoPath;
-  githubToken = githubTokenInput.value;
-  minAnnotationLevel =
-      annotationMapping[minAnnotationLevelInput.value.toLowerCase()];
-  if (minAnnotationLevel == null) {
-    throw ArgumentError.value(
-        minAnnotationLevelInput.value, 'minAnnotationLevel');
-  }
-  packagePath = packagePathInput.value ?? '';
-  if (packagePath.startsWith('/')) {
-    packagePath = packagePath.substring(1);
-  }
-  if (packagePath.endsWith('/')) {
-    packagePath = packagePath.substring(0, packagePath.length - 1);
-  }
-  repoPath = Platform.environment['GITHUB_WORKSPACE'];
-  if (repoPath.endsWith('/')) {
-    repoPath = repoPath.substring(0, repoPath.length - 1);
-  }
+  static Future<Inputs> getInputs() async {
+    const Map<String, CheckRunAnnotationLevel> annotationMapping = {
+      'info': CheckRunAnnotationLevel.notice,
+      'warning': CheckRunAnnotationLevel.warning,
+      'error': CheckRunAnnotationLevel.failure,
+    };
+    const String flutterPath = '/flutter'; // TODO pass this as an env var
+    final String repositorySlug = Platform.environment['GITHUB_REPOSITORY'];
+    final String commitSha = Platform.environment['GITHUB_SHA'];
+    final String githubToken = githubTokenInput.value;
+    final CheckRunAnnotationLevel minAnnotationLevel =
+        annotationMapping[minAnnotationLevelInput.value.toLowerCase()];
+    if (minAnnotationLevel == null) {
+      throw ArgumentError.value(
+          minAnnotationLevelInput.value, 'minAnnotationLevel');
+    }
+    const String envVarWorkspace = 'GITHUB_WORKSPACE';
+    final String repoPath = Platform.environment[envVarWorkspace];
+    if (repoPath == null) {
+      throw ArgumentError.value(repoPath, envVarWorkspace,
+          "Did you call 'actions/checkout' in a previous step? Invalid environment variable");
+    }
+    final String packagePath = packagePathInput.value ?? '';
+    final String sourcePath = path.canonicalize('$repoPath/$packagePath');
 
-  return Inputs._(
-    commitSha: commitSha,
-    flutterPath: flutterPath,
-    githubToken: githubToken,
-    packagePath: packagePath,
-    repositorySlug: repositorySlug,
-    sourcePath: '$repoPath/$packagePath',
-    minAnnotationLevel: minAnnotationLevel,
-  );
+    return Inputs._(
+      commitSha: commitSha,
+      flutterPath: flutterPath,
+      githubToken: githubToken,
+      filesPrefix: path.relative(sourcePath, from: repoPath),
+      repositorySlug: repositorySlug,
+      absolutePathToPackage: sourcePath,
+      minAnnotationLevel: minAnnotationLevel,
+    );
+  }
 }
