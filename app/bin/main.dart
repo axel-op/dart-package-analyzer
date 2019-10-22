@@ -5,12 +5,13 @@ import 'package:app/github.dart';
 import 'package:app/inputs.dart';
 import 'package:app/result.dart';
 import 'package:meta/meta.dart';
+import 'package:path/path.dart' as path;
 
 dynamic main(List<String> args) async {
   exitCode = 1;
 
   // Parsing command arguments
-  final Inputs inputs = await getInputs();
+  final Inputs inputs = await Inputs.getInputs();
 
   // Displaying commit SHA
   stderr.writeln('This action will be run for commit ${inputs.commitSha}');
@@ -36,7 +37,8 @@ dynamic main(List<String> args) async {
   }
 
   try {
-    final String flutterExecutable = '${inputs.flutterPath}/bin/flutter';
+    final String flutterExecutable =
+        path.canonicalize('${inputs.flutterPath}/bin/flutter');
 
     // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
     await _runCommand(
@@ -73,7 +75,7 @@ dynamic main(List<String> args) async {
         inputs.flutterPath,
         '--source',
         'path',
-        inputs.sourcePath,
+        inputs.absolutePathToPackage,
       ],
     );
 
@@ -89,7 +91,7 @@ dynamic main(List<String> args) async {
 
     // Posting comments on GitHub
     await analysis.complete(
-      pathPrefix: inputs.packagePath,
+      pathPrefix: inputs.filesPrefix,
       result: result,
       minAnnotationLevel: inputs.minAnnotationLevel,
     );
