@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image:  google/dart:2.5
+      image:  google/dart:2.6-dev
     
     steps:
     - uses: actions/checkout@v1
@@ -29,25 +29,25 @@ jobs:
       run: |
         cd app
         pub get
-        dart2aot bin/main.dart /main.dart.aot
+        dart2native bin/main.dart -o /dpa.main
     - name: Path 1
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
         INPUT_RELATIVEPATH: 'test_package'
         INPUT_MINANNOTATIONLEVEL: info
         TESTING: true
-      run: dartaotruntime /main.dart.aot
+      run: /dpa.main
     - name: Path 2
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
         INPUT_RELATIVEPATH: '/test_package'
         INPUT_MINANNOTATIONLEVEL: info
         TESTING: true
-      run: dartaotruntime /main.dart.aot
+      run: /dpa.main
     - name: Path 3
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
         INPUT_RELATIVEPATH: './test_package'
         INPUT_MINANNOTATIONLEVEL: info
         TESTING: true
-      run: dartaotruntime /main.dart.aot
+      run: /dpa.main
