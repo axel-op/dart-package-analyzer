@@ -29,25 +29,25 @@ jobs:
       run: |
         cd app
         pub get
-        dart2native bin/main.dart -o /dpa.main
+        dart2native bin/main.dart -o /main
     - name: Path 1
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
         INPUT_RELATIVEPATH: 'test_package'
         INPUT_MINANNOTATIONLEVEL: info
         TESTING: true
-      run: /dpa.main
+      run: /main
     - name: Path 2
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
         INPUT_RELATIVEPATH: '/test_package'
         INPUT_MINANNOTATIONLEVEL: info
         TESTING: true
-      run: /dpa.main
+      run: /main
     - name: Path 3
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
         INPUT_RELATIVEPATH: './test_package'
         INPUT_MINANNOTATIONLEVEL: info
         TESTING: true
-      run: /dpa.main
+      run: /main
