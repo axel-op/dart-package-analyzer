@@ -37,7 +37,7 @@ jobs:
       run: |
         cd app
         pub get
-        dart2native bin/main.dart -o /dpa.main
+        dart2native bin/main.dart -o /main
     - name: Path 1
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
