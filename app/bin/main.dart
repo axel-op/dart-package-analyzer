@@ -50,7 +50,7 @@ dynamic main(List<String> args) async {
     stderr.writeln('Activating pana package...');
     final int panaActivationExitCode = (await _runCommand(
       flutterExecutable,
-      const <String>['pub', 'global', 'activate', 'pana'],
+      const <String>['pub', 'global', 'activate', 'pana', '^0.12.21'],
     ))
         .exitCode;
 
