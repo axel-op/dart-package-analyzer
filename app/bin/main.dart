@@ -26,7 +26,7 @@ dynamic main(List<String> args) async {
     try {
       await analysis.cancel();
     } catch (e, s) {
-      _writeErrors(e, s);
+      _writeError(e, s);
     }
   }
 
@@ -97,8 +97,8 @@ dynamic main(List<String> args) async {
     );
 
     exitCode = 0;
-  } catch (e, s) {
-    _writeErrors(e, s);
+  } catch (e) {
+    //_writeErrors(e, s); // useless if we rethrow it
     await tryCancelAnalysis();
     rethrow;
   }
@@ -130,7 +130,7 @@ Future<_ProcessResult> _runCommand(
   }
 }
 
-void _writeErrors(dynamic error, StackTrace stackTrace) {
+void _writeError(dynamic error, StackTrace stackTrace) {
   stderr.writeln(error.toString() +
       (stackTrace != null ? '\n' + stackTrace.toString() : ''));
 }
