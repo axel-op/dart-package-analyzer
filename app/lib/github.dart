@@ -166,10 +166,9 @@ String _stringSuggestion(Suggestion suggestion) {
     }
     str += '**: ';
   }
-  String desc = suggestion.description ?? '';
-  const String rawNewline = r'\n';
-  while (desc.endsWith(rawNewline)) {
-    desc = desc.substring(0, desc.length - rawNewline.length);
-  }
-  return str + desc.replaceAll(RegExp(r'(\n)+-? *'), '\n  * ');
+  return str +
+      (suggestion.description
+              ?.trimRight()
+              ?.replaceAll(RegExp(r'(\n)+-? *'), '\n  * ') ??
+          '');
 }
