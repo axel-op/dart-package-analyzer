@@ -51,3 +51,20 @@ jobs:
         INPUT_MINANNOTATIONLEVEL: info
         TESTING: true
       run: dartaotruntime /main.dart.aot
+    - name: With exception
+      env:
+        INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
+        INPUT_MINANNOTATIONLEVEL: info
+        TESTING: true
+      run: dartaotruntime /main.dart.aot
+    - name: Empty path
+      env:
+        INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
+        INPUT_MINANNOTATIONLEVEL: info
+        TESTING: true
+      run: |
+        cd $GITHUB_WORKSPACE
+        mv test_package /test_package
+        rm -r *
+        mv /test_package/* .
+        dartaotruntime /main.dart.aot
