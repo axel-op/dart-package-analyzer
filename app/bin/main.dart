@@ -26,7 +26,7 @@ dynamic main(List<String> args) async {
     try {
       await analysis.cancel();
     } catch (e, s) {
-      _writeErrors(e, s);
+      _writeError(e, s);
     }
   }
 
@@ -97,8 +97,8 @@ dynamic main(List<String> args) async {
     );
 
     exitCode = 0;
-  } catch (e, s) {
-    _writeErrors(e, s);
+  } catch (e) {
+    //_writeErrors(e, s); // useless if we rethrow it
     await tryCancelAnalysis();
     rethrow;
   }
@@ -110,21 +110,18 @@ Future<_ProcessResult> _runCommand(
   String executable,
   List<String> arguments,
 ) async {
-  Future<List<String>> output;
-  Future<dynamic> addStreamOut;
-  Future<dynamic> addStreamErr;
+  final List<Future<dynamic>> streamsToFree = [];
   final Future<List<dynamic>> Function() freeStreams =
-      () async => Future.wait<dynamic>([addStreamErr, addStreamOut]);
+      () async => Future.wait<dynamic>(streamsToFree);
   try {
-    final int code =
-        await Process.start(executable, arguments, runInShell: true)
-            .then((final Process process) {
-      addStreamErr = stderr.addStream(process.stderr);
-      final Stream<List<int>> outBrStream = process.stdout.asBroadcastStream();
-      addStreamOut = stdout.addStream(outBrStream);
-      output = outBrStream.transform(utf8.decoder).toList();
-      return process.exitCode;
-    });
+    final Process process =
+        await Process.start(executable, arguments, runInShell: true);
+    streamsToFree.add(stderr.addStream(process.stderr));
+    final Stream<List<int>> outStream = process.stdout.asBroadcastStream();
+    streamsToFree.add(stdout.addStream(outStream));
+    final Future<List<String>> output =
+        outStream.transform(utf8.decoder).toList();
+    final int code = await process.exitCode;
     await freeStreams();
     return _ProcessResult(exitCode: code, output: (await output)?.join());
   } catch (e) {
@@ -133,7 +130,7 @@ Future<_ProcessResult> _runCommand(
   }
 }
 
-void _writeErrors(dynamic error, StackTrace stackTrace) {
+void _writeError(dynamic error, StackTrace stackTrace) {
   stderr.writeln(error.toString() +
       (stackTrace != null ? '\n' + stackTrace.toString() : ''));
 }
