@@ -1,5 +1,5 @@
 name: 'Dart/Flutter Package Analyzer'
-description: 'Computes the Pub score of your Dart/Flutter package and posts annotations and suggestions.'
+description: 'Performs static analysis, linting, formatting, to compute the Pub score of your Dart/Flutter package.'
 author: 'axel-op'
 branding:
   color: 'blue'
