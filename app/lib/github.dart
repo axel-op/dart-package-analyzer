@@ -8,6 +8,7 @@ import 'package:path/path.dart' as path;
 final bool testing = Platform.environment['TESTING'] == 'true';
 
 class Analysis {
+  static const String defaultCheckRunName = 'Dart package analysis';
   final GitHub _client;
   final CheckRun _checkRun;
   final RepositorySlug _repositorySlug;
@@ -30,7 +31,7 @@ class Analysis {
       final CheckRun checkRun = await client.checks.createCheckRun(
         slug,
         status: CheckRunStatus.queued,
-        name: 'Dart package analysis',
+        name: defaultCheckRunName,
         headSha: commitSha,
       );
       return Analysis._(client, checkRun, slug);
@@ -86,7 +87,9 @@ class Analysis {
               endColumn: a.column,
             ))
         .toList();
-    final String title = 'Package analysis results for ${result.packageName}';
+    final String title = result.packageName != null
+        ? 'Package analysis results for ${result.packageName}'
+        : 'Package analysis results';
     final String summary = _buildSummary(result);
     final String text = _buildText(result);
     final CheckRunConclusion conclusion = testing
@@ -102,7 +105,9 @@ class Analysis {
       await _client.checks.updateCheckRun(
         _repositorySlug,
         _checkRun,
-        name: 'Analysis of ${result.packageName}',
+        name: result.packageName != null
+            ? 'Analysis of ${result.packageName}'
+            : defaultCheckRunName,
         status:
             isLastLoop ? CheckRunStatus.completed : CheckRunStatus.inProgress,
         startedAt: _startTime,
@@ -169,6 +174,7 @@ String _stringSuggestion(Suggestion suggestion) {
   return str +
       (suggestion.description
               ?.trimRight()
+              ?.replaceAll(RegExp(r'\n```'), '\n')
               ?.replaceAll(RegExp(r'(\n)+-? *'), '\n  * ') ??
           '');
 }
