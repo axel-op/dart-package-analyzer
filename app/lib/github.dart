@@ -132,8 +132,8 @@ String _buildSummary(Result result) =>
     (testing
         ? '**THIS ACTION HAS BEEN EXECUTED IN TEST MODE. THIS MODE IS NOT INTENDED FOR PRODUCTION USE.**\n'
         : '') +
-    '* Health score is **${result.healthScore.toString()} / 100.0**'
-        '\n* Maintenance score is **${result.maintenanceScore.toString()} / 100.0**'
+    '* Health score: **${result.healthScore.toStringAsFixed(2)}%**'
+        '\n* Maintenance score: **${result.maintenanceScore.toStringAsFixed(2)}%**'
         '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*';
 
 String _buildText(Result result) {
