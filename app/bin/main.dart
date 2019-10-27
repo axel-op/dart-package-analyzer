@@ -10,8 +10,8 @@ import 'package:path/path.dart' as path;
 dynamic main(List<String> args) async {
   exitCode = 1;
 
-  // Parsing command arguments
-  final Inputs inputs = await Inputs.getInputs();
+  // Parsing user inputs and environment variables
+  final Inputs inputs = Inputs();
 
   final Analysis analysis = await Analysis.queue(
     commitSha: inputs.commitSha,
