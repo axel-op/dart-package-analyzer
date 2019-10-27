@@ -13,9 +13,6 @@ dynamic main(List<String> args) async {
   // Parsing command arguments
   final Inputs inputs = await Inputs.getInputs();
 
-  // Displaying commit SHA
-  stderr.writeln('This action will be run for commit ${inputs.commitSha}');
-
   final Analysis analysis = await Analysis.queue(
     commitSha: inputs.commitSha,
     githubToken: inputs.githubToken,

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:github/server.dart';
@@ -43,6 +44,7 @@ class _Input {
 
 class Inputs {
   final String absolutePathToPackage;
+  final String eventName;
   final String filesPrefix;
   final String flutterPath;
   final String githubToken;
@@ -58,24 +60,16 @@ class Inputs {
     @required this.absolutePathToPackage,
     @required this.repositorySlug,
     @required this.minAnnotationLevel,
+    @required this.eventName,
   });
 
   static Future<Inputs> getInputs() async {
-    const Map<String, CheckRunAnnotationLevel> annotationMapping = {
-      'info': CheckRunAnnotationLevel.notice,
-      'warning': CheckRunAnnotationLevel.warning,
-      'error': CheckRunAnnotationLevel.failure,
-    };
     const String flutterPath = '/flutter'; // TODO pass this as an env var
     final String repositorySlug = Platform.environment['GITHUB_REPOSITORY'];
-    final String commitSha = Platform.environment['GITHUB_SHA'];
+    final String eventName = Platform.environment['GITHUB_EVENT_NAME'];
+    final String commitSha = _getSHA();
     final String githubToken = githubTokenInput.value;
-    final CheckRunAnnotationLevel minAnnotationLevel =
-        annotationMapping[minAnnotationLevelInput.value.toLowerCase()];
-    if (minAnnotationLevel == null) {
-      throw ArgumentError.value(
-          minAnnotationLevelInput.value, 'minAnnotationLevel');
-    }
+    final CheckRunAnnotationLevel minAnnotationLevel = _getMinAnnotationLevel();
     const String envVarWorkspace = 'GITHUB_WORKSPACE';
     final String repoPath = Platform.environment[envVarWorkspace];
     if (repoPath == null) {
@@ -86,13 +80,46 @@ class Inputs {
     final String sourcePath = path.canonicalize('$repoPath/$packagePath');
 
     return Inputs._(
+      absolutePathToPackage: sourcePath,
       commitSha: commitSha,
+      eventName: eventName,
+      filesPrefix: path.relative(sourcePath, from: repoPath),
       flutterPath: flutterPath,
       githubToken: githubToken,
-      filesPrefix: path.relative(sourcePath, from: repoPath),
-      repositorySlug: repositorySlug,
-      absolutePathToPackage: sourcePath,
       minAnnotationLevel: minAnnotationLevel,
+      repositorySlug: repositorySlug,
     );
+  }
+
+  static String _getSHA() {
+    final String pathEventPayload = Platform.environment['GITHUB_EVENT_PATH'];
+    final Map<String, dynamic> eventPayload =
+        jsonDecode(File(pathEventPayload).readAsStringSync());
+    String commitSha = Platform.environment['GITHUB_SHA'];
+    String message = 'This action will be run for commit $commitSha';
+    final Map<String, dynamic> pullRequest = eventPayload['pull_request'];
+    if (pullRequest != null) {
+      final String headSha = pullRequest['head']['sha'];
+      message +=
+          ', but as it is a merge commit, the output will be attached to commit $headSha';
+      commitSha = headSha;
+    }
+    stderr.writeln(message);
+    return commitSha;
+  }
+
+  static CheckRunAnnotationLevel _getMinAnnotationLevel() {
+    const Map<String, CheckRunAnnotationLevel> annotationMapping = {
+      'info': CheckRunAnnotationLevel.notice,
+      'warning': CheckRunAnnotationLevel.warning,
+      'error': CheckRunAnnotationLevel.failure,
+    };
+    final CheckRunAnnotationLevel level =
+        annotationMapping[minAnnotationLevelInput.value.toLowerCase()];
+    if (level == null) {
+      throw ArgumentError.value(
+          minAnnotationLevelInput.value, 'minAnnotationLevel');
+    }
+    return level;
   }
 }
