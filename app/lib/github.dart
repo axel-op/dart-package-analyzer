@@ -24,6 +24,7 @@ class Analysis {
     @required String repositorySlug,
     @required String githubToken,
     @required String commitSha,
+    @required String eventName,
   }) async {
     final GitHub client = GitHub(auth: Authentication.withToken(githubToken));
     final RepositorySlug slug = RepositorySlug.full(repositorySlug);
@@ -31,7 +32,7 @@ class Analysis {
       final CheckRun checkRun = await client.checks.createCheckRun(
         slug,
         status: CheckRunStatus.queued,
-        name: defaultCheckRunName,
+        name: '$defaultCheckRunName [$eventName]',
         headSha: commitSha,
       );
       return Analysis._(client, checkRun, slug);
@@ -71,6 +72,7 @@ class Analysis {
 
   Future<void> complete({
     @required Result result,
+    @required String eventName,
     @required String pathPrefix,
     @required CheckRunAnnotationLevel minAnnotationLevel,
   }) async {
@@ -106,8 +108,8 @@ class Analysis {
         _repositorySlug,
         _checkRun,
         name: result.packageName != null
-            ? 'Analysis of ${result.packageName}'
-            : defaultCheckRunName,
+            ? 'Analysis of ${result.packageName} [$eventName]'
+            : null,
         status:
             isLastLoop ? CheckRunStatus.completed : CheckRunStatus.inProgress,
         startedAt: _startTime,
