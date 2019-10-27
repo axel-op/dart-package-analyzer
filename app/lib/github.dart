@@ -176,7 +176,7 @@ String _stringSuggestion(Suggestion suggestion) {
   return str +
       (suggestion.description
               ?.trimRight()
-              ?.replaceAll(RegExp(r'\n```'), '\n')
+              ?.replaceAll(RegExp(r'\n```'), '')
               ?.replaceAll(RegExp(r'(\n)+-? *'), '\n  * ') ??
           '');
 }
