@@ -52,18 +52,7 @@ class Inputs {
   final String repositorySlug;
   final CheckRunAnnotationLevel minAnnotationLevel;
 
-  Inputs._({
-    @required this.commitSha,
-    @required this.flutterPath,
-    @required this.githubToken,
-    @required this.filesPrefix,
-    @required this.absolutePathToPackage,
-    @required this.repositorySlug,
-    @required this.minAnnotationLevel,
-    @required this.eventName,
-  });
-
-  static Future<Inputs> getInputs() async {
+  factory Inputs() {
     const String flutterPath = '/flutter'; // TODO pass this as an env var
     final String repositorySlug = Platform.environment['GITHUB_REPOSITORY'];
     final String eventName = Platform.environment['GITHUB_EVENT_NAME'];
@@ -90,6 +79,17 @@ class Inputs {
       repositorySlug: repositorySlug,
     );
   }
+
+  Inputs._({
+    @required this.commitSha,
+    @required this.flutterPath,
+    @required this.githubToken,
+    @required this.filesPrefix,
+    @required this.absolutePathToPackage,
+    @required this.repositorySlug,
+    @required this.minAnnotationLevel,
+    @required this.eventName,
+  });
 
   static String _getSHA() {
     final String pathEventPayload = Platform.environment['GITHUB_EVENT_PATH'];

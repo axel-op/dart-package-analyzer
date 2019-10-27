@@ -32,7 +32,7 @@ class Analysis {
       final CheckRun checkRun = await client.checks.createCheckRun(
         slug,
         status: CheckRunStatus.queued,
-        name: '$defaultCheckRunName [$eventName]',
+        name: '$defaultCheckRunName ($eventName)',
         headSha: commitSha,
       );
       return Analysis._(client, checkRun, slug);
@@ -108,7 +108,7 @@ class Analysis {
         _repositorySlug,
         _checkRun,
         name: result.packageName != null
-            ? 'Analysis of ${result.packageName} [$eventName]'
+            ? 'Analysis of ${result.packageName} ($eventName)'
             : null,
         status:
             isLastLoop ? CheckRunStatus.completed : CheckRunStatus.inProgress,
