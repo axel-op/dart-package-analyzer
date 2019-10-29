@@ -35,17 +35,14 @@ dynamic main(List<String> args) async {
   }
 
   try {
-    final String flutterExecutable =
-        path.canonicalize('${inputs.flutterPath}/bin/flutter');
+    /*final String flutterExecutable =
+        path.canonicalize('${inputs.flutterPath}/bin/flutter');*/
 
     // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
-    await _runCommand(
-      flutterExecutable,
-      const <String>['config', '--no-analytics'],
-    );
+    await _runCommand('flutter', const <String>['config', '--no-analytics']);
 
     // Installing pana package
-    stderr.writeln('Activating pana package...');
+    /*stderr.writeln('Activating pana package...');
     final int panaActivationExitCode = (await _runCommand(
       flutterExecutable,
       const <String>['pub', 'global', 'activate', 'pana', '^0.12.21'],
@@ -54,19 +51,15 @@ dynamic main(List<String> args) async {
 
     if (panaActivationExitCode != 0) {
       await _exitProgram(panaActivationExitCode);
-    }
+    }*/
 
     await analysis.start();
 
     // Executing the analysis
     stderr.writeln('Running analysis...');
     final _ProcessResult panaResult = await _runCommand(
-      flutterExecutable,
+      'pana',
       <String>[
-        'pub',
-        'global',
-        'run',
-        'pana',
         '--scores',
         '--no-warning',
         '--flutter-sdk',
