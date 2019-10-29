@@ -19,12 +19,18 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
+    - name: Set environment variables
+      run: |
+        echo "::add-path::/flutter/bin"
+        echo "::add-path::$HOME/.pub-cache/bin"
     - name: Install Flutter
       run: |
         apt-get update
         apt-get -y install unzip
         git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter
-        /flutter/bin/flutter --version
+        flutter --version
+    - name: Activate pana
+      run: flutter pub global activate pana
     - name: Compile
       run: |
         cd app
