@@ -23,14 +23,20 @@ jobs:
           EVENT: ${{ github.event_name }}
           GIT_FLUTTER: git://github.com/flutter/flutter.git
           API_ADDRESS: https://registry-1.docker.io/v2
+          PANA_DOC: https://pub.dev/api/documentation/pana
         run: |
           FLUTTER_SHA=$(git ls-remote $GIT_FLUTTER refs/heads/stable | cut -f 1)
+          PANA_VERSION=$(curl -s $PANA_DOC | jq -r '.latestStableVersion')
           echo $DOCKER_TOKEN | sudo docker login --username=axelop --password-stdin
           API_TOKEN=$(curl -s "https://auth.docker.io/token?scope=repository:$IMAGE:pull&service=registry.docker.io" | jq -r '.token')
           DIGEST=$(curl -s -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "$API_ADDRESS/$IMAGE/manifests/latest" | jq -r '.config.digest')
-          PREVIOUS_SHA=$(curl -s -L -H "Authorization: Bearer $API_TOKEN" "$API_ADDRESS/$IMAGE/blobs/$DIGEST" | jq -r '.config.Labels.fluttersha')
+          CONFIG=$(curl -s -L -H "Authorization: Bearer $API_TOKEN" "$API_ADDRESS/$IMAGE/blobs/$DIGEST")
+          PREVIOUS_SHA=$(jq -r '.config.Labels.fluttersha' <<< $CONFIG)
+          PREVIOUS_PANA=$(jq -r '.config.Labels.panaversion' <<< $CONFIG)
           echo $FLUTTER_SHA is the latest commit in the stable branch of Flutter
+          echo $PANA_VERSION is the latest stable version of pana
           echo $PREVIOUS_SHA is the latest commit of Flutter on Docker image
-          if [ $EVENT != push ] && [ $FLUTTER_SHA == $PREVIOUS_SHA ]; then echo No new stable version of Flutter; exit 0; fi
-          sudo docker build --label "fluttersha=$FLUTTER_SHA" -f Dockerfile-parent -t $IMAGE .
+          echo $PREVIOUS_PANA is the version of pana on Docker image
+          if [ $EVENT != push ] && [ $FLUTTER_SHA == $PREVIOUS_SHA ] && [ $PANA_VERSION == $PREVIOUS_PANA ]; then echo No new stable version of Flutter; exit 0; fi
+          sudo docker build --label "fluttersha=$FLUTTER_SHA" --label "panaversion=$PANA_VERSION" -f Dockerfile-parent -t $IMAGE .
           sudo docker push $IMAGE
