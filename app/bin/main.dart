@@ -5,7 +5,6 @@ import 'package:app/github.dart';
 import 'package:app/inputs.dart';
 import 'package:app/result.dart';
 import 'package:meta/meta.dart';
-import 'package:path/path.dart' as path;
 
 dynamic main(List<String> args) async {
   exitCode = 1;
@@ -35,23 +34,8 @@ dynamic main(List<String> args) async {
   }
 
   try {
-    /*final String flutterExecutable =
-        path.canonicalize('${inputs.flutterPath}/bin/flutter');*/
-
     // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
     await _runCommand('flutter', const <String>['config', '--no-analytics']);
-
-    // Installing pana package
-    /*stderr.writeln('Activating pana package...');
-    final int panaActivationExitCode = (await _runCommand(
-      flutterExecutable,
-      const <String>['pub', 'global', 'activate', 'pana', '^0.12.21'],
-    ))
-        .exitCode;
-
-    if (panaActivationExitCode != 0) {
-      await _exitProgram(panaActivationExitCode);
-    }*/
 
     await analysis.start();
 
@@ -62,8 +46,6 @@ dynamic main(List<String> args) async {
       <String>[
         '--scores',
         '--no-warning',
-        '--flutter-sdk',
-        inputs.flutterPath,
         '--source',
         'path',
         inputs.absolutePathToPackage,

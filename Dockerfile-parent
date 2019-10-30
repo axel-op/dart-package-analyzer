@@ -22,4 +22,4 @@ RUN apt-get update \
     && git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter \
     && flutter --version \
     && apt-get clean \
-    && flutter pub global activate pana
+    && flutter pub global activate pana ^0.12.21
