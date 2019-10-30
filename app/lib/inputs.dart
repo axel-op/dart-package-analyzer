@@ -46,25 +46,18 @@ class Inputs {
   final String absolutePathToPackage;
   final String eventName;
   final String filesPrefix;
-  final String flutterPath;
   final String githubToken;
   final String commitSha;
   final String repositorySlug;
   final CheckRunAnnotationLevel minAnnotationLevel;
 
   factory Inputs() {
-    const String flutterPath = '/flutter'; // TODO pass this as an env var
     final String repositorySlug = Platform.environment['GITHUB_REPOSITORY'];
     final String eventName = Platform.environment['GITHUB_EVENT_NAME'];
     final String commitSha = _getSHA();
     final String githubToken = githubTokenInput.value;
     final CheckRunAnnotationLevel minAnnotationLevel = _getMinAnnotationLevel();
-    const String envVarWorkspace = 'GITHUB_WORKSPACE';
-    final String repoPath = Platform.environment[envVarWorkspace];
-    if (repoPath == null) {
-      throw ArgumentError.value(repoPath, envVarWorkspace,
-          "Did you call 'actions/checkout' in a previous step? Invalid environment variable");
-    }
+    final String repoPath = _getRepoPath();
     final String packagePath = packagePathInput.value ?? '';
     final String sourcePath = path.canonicalize('$repoPath/$packagePath');
 
@@ -73,7 +66,6 @@ class Inputs {
       commitSha: commitSha,
       eventName: eventName,
       filesPrefix: path.relative(sourcePath, from: repoPath),
-      flutterPath: flutterPath,
       githubToken: githubToken,
       minAnnotationLevel: minAnnotationLevel,
       repositorySlug: repositorySlug,
@@ -82,7 +74,6 @@ class Inputs {
 
   Inputs._({
     @required this.commitSha,
-    @required this.flutterPath,
     @required this.githubToken,
     @required this.filesPrefix,
     @required this.absolutePathToPackage,
@@ -90,6 +81,16 @@ class Inputs {
     @required this.minAnnotationLevel,
     @required this.eventName,
   });
+
+  static String _getRepoPath() {
+    const String envVarWorkspace = 'GITHUB_WORKSPACE';
+    final String repoPath = Platform.environment[envVarWorkspace];
+    if (repoPath == null) {
+      throw ArgumentError.value(repoPath, envVarWorkspace,
+          "Did you call 'actions/checkout' in a previous step? Invalid environment variable");
+    }
+    return repoPath;
+  }
 
   static String _getSHA() {
     final String pathEventPayload = Platform.environment['GITHUB_EVENT_PATH'];

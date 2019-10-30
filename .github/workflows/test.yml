@@ -30,7 +30,7 @@ jobs:
         git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter
         flutter --version
     - name: Activate pana
-      run: flutter pub global activate pana
+      run: flutter pub global activate pana ^0.12.21
     - name: Compile
       run: |
         cd app
