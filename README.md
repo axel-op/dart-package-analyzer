@@ -3,21 +3,24 @@
 This action uses the [pana (Package ANAlysis) package](https://pub.dev/packages/pana) to compute the score that your Dart or Flutter package will have on the [Pub site](https://pub.dev/help), and annotates your code, with suggestions for improvements. 
 
 This package, amongst other things:
-* checks code formatting with [`dartfmt`](https://dart.dev/tools/dartfmt) or [`flutter format`](https://flutter.dev/docs/development/tools/formatting#automatically-formatting-code-with-the-flutter-command) (detected automatically),
 * validates the code by performing static analysis with [dartanalyzer](https://dart.dev/tools/dartanalyzer),
+* checks code formatting with [`dartfmt`](https://dart.dev/tools/dartfmt) or [`flutter format`](https://flutter.dev/docs/development/tools/formatting#automatically-formatting-code-with-the-flutter-command) (detected automatically),
 * checks for outdated dependencies,
-* validates the `pubscpec.yaml` file (dependencies, description's length...),
+* validates the `pubspec.yaml` file (dependencies, description's length...),
 * checks for required files (`CHANGELOG`, `README`, `example` folder...)
 * ...
 
 ## Usage
 
-You must include the `actions/checkout` step in your workflow. Here's an example:
+You must include the `actions/checkout` step in your workflow. You **don't** need to run `pub get` or build a Dart container before.
+
+Here's an example:
 ```yml
 name: Workflow example
 on: [push, pull_request]
 
 jobs:
+
   package-analysis:
     runs-on: ubuntu-latest
     steps:
@@ -27,7 +30,7 @@ jobs:
           # Required:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           # Optional:
-          relativePath: 'packages/mypackage/'
+          relativePath: packages/mypackage/
           minAnnotationLevel: info
 ```
 

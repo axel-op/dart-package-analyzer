@@ -23,6 +23,8 @@ jobs:
       run: |
         echo "::add-path::/flutter/bin"
         echo "::add-path::$HOME/.pub-cache/bin"
+        echo "::set-env name=INPUT_TESTING::true"
+        echo "::set-env name=INPUT_MINANNOTATIONLEVEL::info"
     - name: Install Flutter
       run: |
         apt-get update
@@ -39,35 +41,25 @@ jobs:
     - name: Path 1
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INPUT_RELATIVEPATH: 'test_package'
-        INPUT_MINANNOTATIONLEVEL: info
-        TESTING: true
+        INPUT_RELATIVEPATH: test_package
       run: dartaotruntime /main.dart.aot
     - name: Path 2
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INPUT_RELATIVEPATH: '/test_package'
-        INPUT_MINANNOTATIONLEVEL: info
-        TESTING: true
+        INPUT_RELATIVEPATH: /test_package
       run: dartaotruntime /main.dart.aot
     - name: Path 3
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INPUT_RELATIVEPATH: './test_package'
-        INPUT_MINANNOTATIONLEVEL: info
-        TESTING: true
+        INPUT_RELATIVEPATH: ./test_package
       run: dartaotruntime /main.dart.aot
     - name: With exception
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INPUT_MINANNOTATIONLEVEL: info
-        TESTING: true
       run: dartaotruntime /main.dart.aot
     - name: Empty path
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INPUT_MINANNOTATIONLEVEL: info
-        TESTING: true
       run: |
         cd $GITHUB_WORKSPACE
         mv test_package /test_package

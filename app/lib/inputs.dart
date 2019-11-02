@@ -101,9 +101,11 @@ class Inputs {
     final Map<String, dynamic> pullRequest = eventPayload['pull_request'];
     if (pullRequest != null) {
       final String headSha = pullRequest['head']['sha'];
-      message +=
-          ', but as it is a merge commit, the output will be attached to commit $headSha';
-      commitSha = headSha;
+      if (commitSha != headSha) {
+        message +=
+            ', but as it is a merge commit, the output will be attached to the head commit $headSha';
+        commitSha = headSha;
+      }
     }
     stderr.writeln(message);
     return commitSha;

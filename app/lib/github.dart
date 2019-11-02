@@ -5,20 +5,17 @@ import 'package:github/server.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as path;
 
-final bool testing = Platform.environment['TESTING'] == 'true';
+final bool testing = Platform.environment['INPUT_TESTING'] == 'true';
 
 class Analysis {
-  static const String defaultCheckRunName = 'Dart package analysis';
-  final GitHub _client;
-  final CheckRun _checkRun;
-  final RepositorySlug _repositorySlug;
-  DateTime _startTime;
-
-  Analysis._(
-    this._client,
-    this._checkRun,
-    this._repositorySlug,
-  );
+  static String _getCheckRunName({
+    @required String eventName,
+    String packageName,
+  }) =>
+      (packageName != null
+          ? 'Analysis of $packageName'
+          : 'Dart package analysis') +
+      ' ($eventName)';
 
   static Future<Analysis> queue({
     @required String repositorySlug,
@@ -32,7 +29,7 @@ class Analysis {
       final CheckRun checkRun = await client.checks.createCheckRun(
         slug,
         status: CheckRunStatus.queued,
-        name: '$defaultCheckRunName ($eventName)',
+        name: _getCheckRunName(eventName: eventName),
         headSha: commitSha,
       );
       return Analysis._(client, checkRun, slug);
@@ -48,6 +45,17 @@ class Analysis {
       rethrow;
     }
   }
+
+  final GitHub _client;
+  final CheckRun _checkRun;
+  final RepositorySlug _repositorySlug;
+  DateTime _startTime;
+
+  Analysis._(
+    this._client,
+    this._checkRun,
+    this._repositorySlug,
+  );
 
   Future<void> start() async {
     _startTime = DateTime.now();
@@ -107,9 +115,10 @@ class Analysis {
       await _client.checks.updateCheckRun(
         _repositorySlug,
         _checkRun,
-        name: result.packageName != null
-            ? 'Analysis of ${result.packageName} ($eventName)'
-            : null,
+        name: _getCheckRunName(
+          eventName: eventName,
+          packageName: result.packageName,
+        ),
         status:
             isLastLoop ? CheckRunStatus.completed : CheckRunStatus.inProgress,
         startedAt: _startTime,

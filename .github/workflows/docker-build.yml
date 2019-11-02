@@ -34,9 +34,9 @@ jobs:
           PREVIOUS_SHA=$(jq -r '.config.Labels.fluttersha' <<< $CONFIG)
           PREVIOUS_PANA=$(jq -r '.config.Labels.panaversion' <<< $CONFIG)
           echo $FLUTTER_SHA is the latest commit in the stable branch of Flutter
+          echo $PREVIOUS_SHA is the commit of Flutter on Docker image
           echo $PANA_VERSION is the latest stable version of pana
-          echo $PREVIOUS_SHA is the latest commit of Flutter on Docker image
           echo $PREVIOUS_PANA is the version of pana on Docker image
-          if [ $EVENT != push ] && [ $FLUTTER_SHA == $PREVIOUS_SHA ] && [ $PANA_VERSION == $PREVIOUS_PANA ]; then echo No new stable version of Flutter; exit 0; fi
+          if [ $EVENT != push ] && [ $FLUTTER_SHA == $PREVIOUS_SHA ] && [ $PANA_VERSION == $PREVIOUS_PANA ]; then echo No need to rebuild; exit 0; fi
           sudo docker build --label "fluttersha=$FLUTTER_SHA" --label "panaversion=$PANA_VERSION" -f Dockerfile-parent -t $IMAGE .
           sudo docker push $IMAGE
