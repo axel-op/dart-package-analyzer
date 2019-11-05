@@ -1,18 +1,17 @@
-FROM google/dart:2.5 as dartimage
+FROM google/dart:2.6 as dartimage
 
 COPY app/ /app/
 
 # Compiling the Dart application that manages this action
 RUN cd /app \
     && pub get \
-    && dart2aot /app/bin/main.dart /main.dart.aot
+    && dart2native /app/bin/main.dart -o /app/dart_package_analyzer
 
 # Using a lighter parent image to build the final image
 FROM bitnami/minideb
 
-# Copying only the aot file and the aot runtime
-COPY --from=dartimage /main.dart.aot /main.dart.aot
-COPY --from=dartimage /usr/lib/dart/bin/dartaotruntime /dartaotruntime
+# Copying only the executable
+COPY --from=dartimage /app/dart_package_analyzer /dart_package_analyzer
 
 ENV PATH /flutter/bin/cache/dart-sdk/bin:/root/.pub-cache/bin:/flutter/bin:$PATH
 
@@ -21,5 +20,5 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-show-upgraded git unzip curl ca-certificates \
     && git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter \
     && flutter --version \
-    && apt-get clean \
-    && flutter pub global activate pana ^0.12.21
+    && flutter pub global activate pana ^0.12.21 \
+    && apt-get clean
