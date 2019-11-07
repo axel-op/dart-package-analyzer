@@ -15,6 +15,7 @@ This package, amongst other things:
 You must include the `actions/checkout` step in your workflow. You **don't** need to run `pub get` or build a Dart container before.
 
 Here's an example:
+
 ```yml
 name: Workflow example
 on: [push, pull_request]
@@ -34,7 +35,7 @@ jobs:
           minAnnotationLevel: info
 ```
 
-* `githubToken` input is required to post a comment on GitHub. **Note:** this secret is already provided by GitHub and you don't have to set it up yourself. 
+* `githubToken` input is required to post a report on GitHub. **Note:** the secret [`GITHUB_TOKEN`](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/authenticating-with-the-github_token) is already provided by GitHub and you don't have to set it up yourself.
 * If your package isn't at the root of the repository, use `relativePath` to indicate its location.
 * If you only want to see annotations for important errors, try to change the `minAnnotationLevel` parameter to another value. Accepted values are `info`, `warning` and `error`. Defaults to `info` that posts all the annotations. 
 
