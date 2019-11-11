@@ -15,16 +15,19 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image:  google/dart:2.6-dev
+      image:  google/dart:2.6
+
+    env:
+      INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
+      INPUT_TESTING: true
+      INPUT_MINANNOTATIONLEVEL: info
     
     steps:
     - uses: actions/checkout@v1
-    - name: Set environment variables
+    - name: Edit path
       run: |
         echo "::add-path::/flutter/bin"
         echo "::add-path::$HOME/.pub-cache/bin"
-        echo "::set-env name=INPUT_TESTING::true"
-        echo "::set-env name=INPUT_MINANNOTATIONLEVEL::info"
     - name: Install Flutter
       run: |
         apt-get update
@@ -32,7 +35,7 @@ jobs:
         git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter
         flutter --version
     - name: Activate pana
-      run: flutter pub global activate pana ^0.12.21
+      run: flutter pub global activate pana
     - name: Compile
       run: |
         cd app
@@ -40,17 +43,14 @@ jobs:
         dart2native bin/main.dart -o /main
     - name: Path 1
       env:
-        INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
         INPUT_RELATIVEPATH: test_package
       run: dartaotruntime /main.dart.aot
     - name: Path 2
       env:
-        INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
         INPUT_RELATIVEPATH: /test_package
       run: dartaotruntime /main.dart.aot
     - name: Path 3
       env:
-        INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
         INPUT_RELATIVEPATH: ./test_package
       run: dartaotruntime /main.dart.aot
     - name: With exception
@@ -58,8 +58,6 @@ jobs:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: dartaotruntime /main.dart.aot
     - name: Empty path
-      env:
-        INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         cd $GITHUB_WORKSPACE
         mv test_package /test_package
