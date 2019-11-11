@@ -8,18 +8,22 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
+
   build:
 
     runs-on: ubuntu-latest
+
+    env:
+      IMAGE: axelop/dart_package_analyzer
 
     steps:
       - uses: actions/checkout@v1
         with:
           fetch-depth: 1
-      - name: Build and push Docker image
+
+      - name: Check current image
+        id: check
         env:
-          IMAGE: axelop/dart_package_analyzer
-          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
           EVENT: ${{ github.event_name }}
           GIT_FLUTTER: git://github.com/flutter/flutter.git
           API_ADDRESS: https://registry-1.docker.io/v2
@@ -27,7 +31,6 @@ jobs:
         run: |
           FLUTTER_SHA=$(git ls-remote $GIT_FLUTTER refs/heads/stable | cut -f 1)
           PANA_VERSION=$(curl -s $PANA_DOC | jq -r '.latestStableVersion')
-          echo $DOCKER_TOKEN | sudo docker login --username=axelop --password-stdin
           API_TOKEN=$(curl -s "https://auth.docker.io/token?scope=repository:$IMAGE:pull&service=registry.docker.io" | jq -r '.token')
           DIGEST=$(curl -s -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "$API_ADDRESS/$IMAGE/manifests/latest" | jq -r '.config.digest')
           CONFIG=$(curl -s -L -H "Authorization: Bearer $API_TOKEN" "$API_ADDRESS/$IMAGE/blobs/$DIGEST")
@@ -37,6 +40,28 @@ jobs:
           echo $PREVIOUS_SHA is the commit of Flutter on Docker image
           echo $PANA_VERSION is the latest stable version of pana
           echo $PREVIOUS_PANA is the version of pana on Docker image
-          if [ $EVENT != push ] && [ $FLUTTER_SHA == $PREVIOUS_SHA ] && [ $PANA_VERSION == $PREVIOUS_PANA ]; then echo No need to rebuild; exit 0; fi
-          sudo docker build --label "fluttersha=$FLUTTER_SHA" --label "panaversion=$PANA_VERSION" -f Dockerfile-parent -t $IMAGE .
+          if [ "$EVENT" = push ] || [ "$FLUTTER_SHA" != "$PREVIOUS_SHA" ] || [ "$PANA_VERSION" != "$PREVIOUS_PANA" ]; then SHOULD_PUSH=true; else SHOULD_PUSH=false; fi
+          echo "::set-env name=FLUTTER_SHA::$FLUTTER_SHA"
+          echo "::set-env name=PANA_VERSION::$PANA_VERSION"
+          echo "::set-output name=should_push::$SHOULD_PUSH"
+
+      - name: Build new image
+        if: steps.check.outputs.should_push == 'true'
+        run: sudo docker build --label "fluttersha=$FLUTTER_SHA" --label "panaversion=$PANA_VERSION" -f Dockerfile-parent -t $IMAGE .
+
+      - name: Test new image
+        if: steps.check.outputs.should_push == 'true'
+        run: |
+          sudo docker run -d -t --name test $IMAGE
+          sudo docker cp ${GITHUB_WORKSPACE}/test_package/. test:/test
+          sudo docker cp $GITHUB_EVENT_PATH test:/eventpayload
+          sudo docker exec -e GITHUB_WORKSPACE=/test -e GITHUB_EVENT_PATH=/eventpayload -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+      
+      - name: Push new image
+        if: steps.check.outputs.should_push == 'true'
+        env:
+          USERNAME: axelop
+          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        run: |
+          echo $DOCKER_TOKEN | sudo docker login --username=$USERNAME --password-stdin
           sudo docker push $IMAGE
