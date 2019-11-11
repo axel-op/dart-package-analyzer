@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:github/server.dart';
+import 'package:github/github.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as path;
 

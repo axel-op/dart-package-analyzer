@@ -1,4 +1,4 @@
-import 'package:github/server.dart';
+import 'package:github/github.dart';
 import 'package:meta/meta.dart';
 
 const Map<String, CheckRunAnnotationLevel> _annotationLevels = {
