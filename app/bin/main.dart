@@ -8,7 +8,8 @@ import 'package:app/result.dart';
 import 'package:meta/meta.dart';
 import 'package:pana/pana.dart';
 
-const flutterPath = '/flutter/', dartPath = '/flutter/bin/cache/dart-sdk/';
+const flutterPath = '/flutter/',
+    dartPath = '/flutter/bin/cache/dart-sdk/'; // TODO pass as -d var
 
 dynamic main(List<String> args) async {
   exitCode = 1;

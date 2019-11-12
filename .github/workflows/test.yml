@@ -35,27 +35,25 @@ jobs:
         git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter
         flutter --version
     - name: Get dependencies
-      run: |
-        cd app
-        pub get
+      run: cd app && pub get
     - name: Path 1
       env:
         INPUT_RELATIVEPATH: test_package
-      run: dart bin/main.dart
+      run: dart /app/bin/main.dart
     - name: Path 2
       env:
         INPUT_RELATIVEPATH: /test_package
-      run: dart bin/main.dart
+      run: dart /app/bin/main.dart
     - name: Path 3
       env:
         INPUT_RELATIVEPATH: ./test_package
-      run: dart bin/main.dart
+      run: dart /app/bin/main.dart
     - name: With exception
-      run: dart bin/main.dart
+      run: dart /app/bin/main.dart
     - name: Empty path
       run: |
         cd $GITHUB_WORKSPACE
         mv test_package /test_package
         rm -r *
         mv /test_package/* .
-        dart bin/main.dart
+        dart /app/bin/main.dart
