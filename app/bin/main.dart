@@ -3,8 +3,10 @@ import 'dart:io';
 
 import 'package:app/github.dart';
 import 'package:app/inputs.dart';
+import 'package:app/pana.dart';
 import 'package:app/result.dart';
 import 'package:meta/meta.dart';
+import 'package:pana/pana.dart';
 
 dynamic main(List<String> args) async {
   exitCode = 1;
@@ -27,12 +29,6 @@ dynamic main(List<String> args) async {
     }
   }
 
-  Future<void> _exitProgram([int code]) async {
-    await tryCancelAnalysis();
-    await Future.wait<dynamic>([stderr.done, stdout.done]);
-    exit(code ?? exitCode);
-  }
-
   try {
     // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
     await _runCommand('flutter', const <String>['config', '--no-analytics']);
@@ -41,26 +37,10 @@ dynamic main(List<String> args) async {
 
     // Executing the analysis
     stderr.writeln('Running analysis...');
-    final _ProcessResult panaResult = await _runCommand(
-      'pana',
-      <String>[
-        '--scores',
-        '--no-warning',
-        '--source',
-        'path',
-        inputs.absolutePathToPackage,
-      ],
+    final Summary panaResult = await getSummary(
+      packagePath: inputs.absolutePathToPackage,
     );
-
-    if (panaResult.exitCode != 0) {
-      await _exitProgram(panaResult.exitCode);
-    }
-    if (panaResult.output == null) {
-      throw Exception('The pana command has returned no valid output.');
-    }
-
-    final Map<String, dynamic> resultPana = jsonDecode(panaResult.output);
-    final Result result = Result.fromOutput(resultPana);
+    final Result result = Result.fromSummary(panaResult);
 
     // Posting comments on GitHub
     await analysis.complete(

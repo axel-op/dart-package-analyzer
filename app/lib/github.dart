@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:app/result.dart';
 import 'package:github/github.dart';
 import 'package:meta/meta.dart';
+import 'package:pana/pana.dart';
 import 'package:path/path.dart' as path;
 
 final bool testing = Platform.environment['INPUT_TESTING'] == 'true';
@@ -170,22 +171,22 @@ String _buildText(Result result) {
 
 String _stringSuggestion(Suggestion suggestion) {
   String str = '\n* ';
-  if (suggestion.title != null || suggestion.loss != null) {
+  if (suggestion.title != null || suggestion.score != null) {
     str += '**';
     if (suggestion.title != null) {
       final String trimmedTitle = suggestion.title.trim();
       str += trimmedTitle.substring(
           0, trimmedTitle.length - (trimmedTitle.endsWith('.') ? 1 : 0));
     }
-    if (suggestion.loss != null) {
-      str += ' (${suggestion.loss.toString()} points)';
+    if (suggestion.score != null) {
+      str += ' (${suggestion.score.toString()} points)';
     }
     str += '**: ';
   }
   return str +
-      (suggestion.description
-              ?.trimRight()
-              ?.replaceAll(RegExp(r'\n```'), '')
-              ?.replaceAll(RegExp(r'(\n)+-? *'), '\n  * ') ??
+      (suggestion.description?.trimRight()
+          /*?.replaceAll(RegExp(r'\n```'), '')
+              ?.replaceAll(RegExp(r'(\n)+-? *'), '\n  * ')*/
+          ??
           '');
 }
