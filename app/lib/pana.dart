@@ -6,6 +6,7 @@ import 'package:pana/pana.dart';
 Future<Summary> getSummary({
   @required String flutterPath,
   @required String packagePath,
+  @required String dartSdkDir,
 }) async {
   final tempPath = Directory.systemTemp
       .createTempSync('pana.${DateTime.now().millisecondsSinceEpoch}')
@@ -13,6 +14,7 @@ Future<Summary> getSummary({
   final analyzer = await PackageAnalyzer.create(
     flutterDir: flutterPath,
     pubCacheDir: tempPath,
+    sdkDir: dartSdkDir,
   );
   final absolutePath = Directory(packagePath).resolveSymbolicLinksSync();
   final summary = await analyzer.inspectDir(absolutePath);

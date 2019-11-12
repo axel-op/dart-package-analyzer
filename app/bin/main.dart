@@ -8,6 +8,8 @@ import 'package:app/result.dart';
 import 'package:meta/meta.dart';
 import 'package:pana/pana.dart';
 
+const flutterPath = '/flutter/', dartPath = '/flutter/bin/cache/dart-sdk/';
+
 dynamic main(List<String> args) async {
   exitCode = 1;
 
@@ -39,6 +41,8 @@ dynamic main(List<String> args) async {
     stderr.writeln('Running analysis...');
     final Summary panaResult = await getSummary(
       packagePath: inputs.absolutePathToPackage,
+      flutterPath: flutterPath,
+      dartSdkDir: dartPath,
     );
     final Result result = Result.fromSummary(panaResult);
 
