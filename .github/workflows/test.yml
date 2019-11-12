@@ -25,36 +25,37 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Edit path
-      run: echo "::add-path::/flutter/bin"
+      run: |
+        echo "::add-path::/flutter/bin"
+        echo "::add-path::/flutter/bin/cache/dart-sdk/bin"
     - name: Install Flutter
       run: |
         apt-get update
         apt-get -y install unzip
         git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter
         flutter --version
-    - name: Compile
+    - name: Get dependencies
       run: |
         cd app
         pub get
-        dart2native bin/main.dart -o /main
     - name: Path 1
       env:
         INPUT_RELATIVEPATH: test_package
-      run: /main
+      run: dart bin/main.dart
     - name: Path 2
       env:
         INPUT_RELATIVEPATH: /test_package
-      run: /main
+      run: dart bin/main.dart
     - name: Path 3
       env:
         INPUT_RELATIVEPATH: ./test_package
-      run: /main
+      run: dart bin/main.dart
     - name: With exception
-      run: /main
+      run: dart bin/main.dart
     - name: Empty path
       run: |
         cd $GITHUB_WORKSPACE
         mv test_package /test_package
         rm -r *
         mv /test_package/* .
-        /main
+        dart bin/main.dart
