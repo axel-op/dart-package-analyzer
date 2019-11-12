@@ -39,21 +39,21 @@ jobs:
     - name: Path 1
       env:
         INPUT_RELATIVEPATH: test_package
-      run: dart /app/bin/main.dart
+      run: dart app/bin/main.dart
     - name: Path 2
       env:
         INPUT_RELATIVEPATH: /test_package
-      run: dart /app/bin/main.dart
+      run: dart app/bin/main.dart
     - name: Path 3
       env:
         INPUT_RELATIVEPATH: ./test_package
-      run: dart /app/bin/main.dart
+      run: dart app/bin/main.dart
     - name: With exception
-      run: dart /app/bin/main.dart
+      run: dart app/bin/main.dart
     - name: Empty path
       run: |
         cd $GITHUB_WORKSPACE
         mv test_package /test_package
         rm -r *
         mv /test_package/* .
-        dart /app/bin/main.dart
+        dart app/bin/main.dart
