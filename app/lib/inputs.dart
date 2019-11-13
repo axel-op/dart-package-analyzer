@@ -43,43 +43,51 @@ class _Input {
 }
 
 class Inputs {
+  /// Name given by the user to this check
+  final String actionName;
+
+  /// Absolute path to the package to analyze
   final String absolutePathToPackage;
-  final String eventName;
-  final String filesPrefix;
+
+  /// Relative path of the package in the repository
+  final String pathFromRepoRoot;
+
+  /// Token to call the GitHub API
   final String githubToken;
+
+  /// Commit SHA attached to this workflow
   final String commitSha;
+
+  /// Slug of the repository
   final String repositorySlug;
+
+  /// Minimum level of the annotations that will be posted on the diff
   final CheckRunAnnotationLevel minAnnotationLevel;
 
   factory Inputs() {
-    final String repositorySlug = Platform.environment['GITHUB_REPOSITORY'];
-    final String eventName = Platform.environment['GITHUB_EVENT_NAME'];
-    final String commitSha = _getSHA();
-    final String githubToken = githubTokenInput.value;
-    final CheckRunAnnotationLevel minAnnotationLevel = _getMinAnnotationLevel();
     final String repoPath = _getRepoPath();
     final String packagePath = packagePathInput.value ?? '';
     final String sourcePath = path.canonicalize('$repoPath/$packagePath');
 
     return Inputs._(
+      actionName: Platform.environment['GITHUB_ACTION'],
+      repositorySlug: Platform.environment['GITHUB_REPOSITORY'],
       absolutePathToPackage: sourcePath,
-      commitSha: commitSha,
-      eventName: eventName,
-      filesPrefix: path.relative(sourcePath, from: repoPath),
-      githubToken: githubToken,
-      minAnnotationLevel: minAnnotationLevel,
-      repositorySlug: repositorySlug,
+      pathFromRepoRoot: path.relative(sourcePath, from: repoPath),
+      commitSha: _getSHA(),
+      minAnnotationLevel: _getMinAnnotationLevel(),
+      githubToken: githubTokenInput.value,
     );
   }
 
   Inputs._({
     @required this.commitSha,
     @required this.githubToken,
-    @required this.filesPrefix,
+    @required this.pathFromRepoRoot,
     @required this.absolutePathToPackage,
     @required this.repositorySlug,
     @required this.minAnnotationLevel,
-    @required this.eventName,
+    @required this.actionName,
   });
 
   static String _getRepoPath() {

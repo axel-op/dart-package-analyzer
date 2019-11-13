@@ -8,20 +8,11 @@ import 'package:path/path.dart' as path;
 final bool testing = Platform.environment['INPUT_TESTING'] == 'true';
 
 class Analysis {
-  static String _getCheckRunName({
-    @required String eventName,
-    String packageName,
-  }) =>
-      (packageName != null
-          ? 'Analysis of $packageName'
-          : 'Dart package analysis') +
-      ' ($eventName)';
-
   static Future<Analysis> queue({
     @required String repositorySlug,
     @required String githubToken,
     @required String commitSha,
-    @required String eventName,
+    @required String actionName,
   }) async {
     final GitHub client = GitHub(auth: Authentication.withToken(githubToken));
     final RepositorySlug slug = RepositorySlug.full(repositorySlug);
@@ -29,7 +20,7 @@ class Analysis {
       final CheckRun checkRun = await client.checks.createCheckRun(
         slug,
         status: CheckRunStatus.queued,
-        name: _getCheckRunName(eventName: eventName),
+        name: actionName,
         headSha: commitSha,
       );
       return Analysis._(client, checkRun, slug);
@@ -80,7 +71,6 @@ class Analysis {
 
   Future<void> complete({
     @required Result result,
-    @required String eventName,
     @required String pathPrefix,
     @required CheckRunAnnotationLevel minAnnotationLevel,
   }) async {
@@ -115,10 +105,6 @@ class Analysis {
       await _client.checks.updateCheckRun(
         _repositorySlug,
         _checkRun,
-        name: _getCheckRunName(
-          eventName: eventName,
-          packageName: result.packageName,
-        ),
         status:
             isLastLoop ? CheckRunStatus.completed : CheckRunStatus.inProgress,
         startedAt: _startTime,
