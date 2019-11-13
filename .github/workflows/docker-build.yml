@@ -3,7 +3,7 @@ name: Docker image update
 on:
   push:
     branches:
-      - 'stable'
+      - 'check-name'
   schedule:
     - cron: '0 0 * * *'
 
@@ -47,12 +47,12 @@ jobs:
 
       - name: Build new image
         if: steps.check.outputs.should_push == 'true'
-        run: sudo docker build --label "fluttersha=$FLUTTER_SHA" --label "panaversion=$PANA_VERSION" -f Dockerfile-parent -t $IMAGE .
+        run: sudo docker build --label "fluttersha=$FLUTTER_SHA" --label "panaversion=$PANA_VERSION" -f Dockerfile-parent -t $IMAGE:test .
 
       - name: Test new image
         if: steps.check.outputs.should_push == 'true'
         run: |
-          sudo docker run -d -t --name test $IMAGE
+          sudo docker run -d -t --name test $IMAGE:test
           sudo docker cp ${GITHUB_WORKSPACE}/test_package/. test:/test
           sudo docker cp $GITHUB_EVENT_PATH test:/eventpayload
           sudo docker exec -e GITHUB_ACTION=$GITHUB_ACTION -e GITHUB_ACTION=$GITHUB_ACTION -e GITHUB_WORKSPACE=/test -e GITHUB_EVENT_PATH=/eventpayload -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
@@ -64,4 +64,4 @@ jobs:
           DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
         run: |
           echo $DOCKER_TOKEN | sudo docker login --username=$USERNAME --password-stdin
-          sudo docker push $IMAGE
+          sudo docker push $IMAGE:test
