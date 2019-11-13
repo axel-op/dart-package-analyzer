@@ -43,43 +43,46 @@ class _Input {
 }
 
 class Inputs {
+  /// Absolute path to the package that will be analyzed
   final String absolutePathToPackage;
-  final String eventName;
-  final String filesPrefix;
+
+  /// Relative path to the package from the root of the repository
+  final String pathFromRepoRoot;
+
+  /// Token to call the GitHub API
   final String githubToken;
+
+  /// Head SHA of the commit associated to the current workflow
   final String commitSha;
+
+  /// Slug of the repository
   final String repositorySlug;
+
+  /// Minimum level of the diff annotations
   final CheckRunAnnotationLevel minAnnotationLevel;
 
   factory Inputs() {
-    final String repositorySlug = Platform.environment['GITHUB_REPOSITORY'];
-    final String eventName = Platform.environment['GITHUB_EVENT_NAME'];
-    final String commitSha = _getSHA();
-    final String githubToken = githubTokenInput.value;
-    final CheckRunAnnotationLevel minAnnotationLevel = _getMinAnnotationLevel();
     final String repoPath = _getRepoPath();
     final String packagePath = packagePathInput.value ?? '';
     final String sourcePath = path.canonicalize('$repoPath/$packagePath');
 
     return Inputs._(
       absolutePathToPackage: sourcePath,
-      commitSha: commitSha,
-      eventName: eventName,
-      filesPrefix: path.relative(sourcePath, from: repoPath),
-      githubToken: githubToken,
-      minAnnotationLevel: minAnnotationLevel,
-      repositorySlug: repositorySlug,
+      commitSha: _getSHA(),
+      pathFromRepoRoot: path.relative(sourcePath, from: repoPath),
+      githubToken: githubTokenInput.value,
+      minAnnotationLevel: _getMinAnnotationLevel(),
+      repositorySlug: Platform.environment['GITHUB_REPOSITORY'],
     );
   }
 
   Inputs._({
     @required this.commitSha,
     @required this.githubToken,
-    @required this.filesPrefix,
+    @required this.pathFromRepoRoot,
     @required this.absolutePathToPackage,
     @required this.repositorySlug,
     @required this.minAnnotationLevel,
-    @required this.eventName,
   });
 
   static String _getRepoPath() {

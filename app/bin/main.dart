@@ -16,7 +16,6 @@ dynamic main(List<String> args) async {
     commitSha: inputs.commitSha,
     githubToken: inputs.githubToken,
     repositorySlug: inputs.repositorySlug,
-    eventName: inputs.eventName,
   );
 
   Future<void> tryCancelAnalysis() async {
@@ -64,10 +63,9 @@ dynamic main(List<String> args) async {
 
     // Posting comments on GitHub
     await analysis.complete(
-      pathPrefix: inputs.filesPrefix,
+      pathPrefix: inputs.pathFromRepoRoot,
       result: result,
       minAnnotationLevel: inputs.minAnnotationLevel,
-      eventName: inputs.eventName,
     );
 
     exitCode = 0;
