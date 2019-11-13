@@ -108,12 +108,12 @@ class Result {
       dartSdkVersion: summary.runtimeInfo.sdkVersion,
       flutterVersion: flutterInfo['frameworkVersion'],
       dartSdkInFlutterVersion: flutterInfo['dartSdkVersion'],
-      healthScore: _calculateScore(summary.health.suggestions),
-      maintenanceScore: _calculateScore(summary.maintenance.suggestions),
+      healthScore: _calculateScore(summary.health?.suggestions),
+      maintenanceScore: _calculateScore(summary.maintenance?.suggestions),
       annotations: annotations,
       generalSuggestions: summary.suggestions ?? [],
-      healthSuggestions: summary.health.suggestions ?? [],
-      maintenanceSuggestions: summary.maintenance.suggestions ?? [],
+      healthSuggestions: summary.health?.suggestions ?? [],
+      maintenanceSuggestions: summary.maintenance?.suggestions ?? [],
     );
   }
 }
