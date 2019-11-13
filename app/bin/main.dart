@@ -16,7 +16,7 @@ dynamic main(List<String> args) async {
     commitSha: inputs.commitSha,
     githubToken: inputs.githubToken,
     repositorySlug: inputs.repositorySlug,
-    actionName: inputs.actionName,
+    actionName: inputs.workflowName,
   );
 
   Future<void> tryCancelAnalysis() async {

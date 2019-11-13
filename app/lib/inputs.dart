@@ -43,8 +43,8 @@ class _Input {
 }
 
 class Inputs {
-  /// Name given by the user to this check
-  final String actionName;
+  /// Name given by the user to the current workflow
+  final String workflowName;
 
   /// Absolute path to the package to analyze
   final String absolutePathToPackage;
@@ -70,7 +70,7 @@ class Inputs {
     final String sourcePath = path.canonicalize('$repoPath/$packagePath');
 
     return Inputs._(
-      actionName: Platform.environment['GITHUB_ACTION'],
+      workflowName: Platform.environment['GITHUB_WORKFLOW'],
       repositorySlug: Platform.environment['GITHUB_REPOSITORY'],
       absolutePathToPackage: sourcePath,
       pathFromRepoRoot: path.relative(sourcePath, from: repoPath),
@@ -87,7 +87,7 @@ class Inputs {
     @required this.absolutePathToPackage,
     @required this.repositorySlug,
     @required this.minAnnotationLevel,
-    @required this.actionName,
+    @required this.workflowName,
   });
 
   static String _getRepoPath() {
