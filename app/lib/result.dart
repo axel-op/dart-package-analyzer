@@ -67,6 +67,7 @@ class Result {
   final List<Suggestion> healthSuggestions;
   final List<Suggestion> maintenanceSuggestions;
   final List<Annotation> annotations;
+  final List<String> supportedPlatforms;
 
   Result._({
     @required this.packageName,
@@ -80,6 +81,7 @@ class Result {
     @required this.dartSdkInFlutterVersion,
     @required this.dartSdkVersion,
     @required this.flutterVersion,
+    @required this.supportedPlatforms,
   });
 
   factory Result.fromOutput(Map<String, dynamic> output) {
@@ -97,6 +99,7 @@ class Result {
     final List<Suggestion> maintenanceSuggestions = <Suggestion>[];
     final List<Suggestion> healthSuggestions = <Suggestion>[];
     final List<Annotation> lineSuggestions = <Annotation>[];
+    final List<String> supportedPlatforms = <String>[];
 
     final Map<String, void Function(List<Suggestion>)> categories = {
       'health': (suggestions) => healthSuggestions.addAll(suggestions),
@@ -126,7 +129,7 @@ class Result {
 
     if (output.containsKey('dartFiles')) {
       final Map<String, dynamic> dartFiles = output['dartFiles'];
-      for (final String file in dartFiles.keys) {
+      for (final file in dartFiles.keys) {
         final Map<String, dynamic> details = dartFiles[file];
         if (details.containsKey('codeProblems')) {
           final List<Map<String, dynamic>> problems =
@@ -135,6 +138,18 @@ class Result {
           lineSuggestions.addAll(problems.map(
             (jsonObj) => Annotation._fromJSON(jsonObj),
           ));
+        }
+      }
+    }
+
+    if (output.containsKey('platform') && output['platform'] != null) {
+      final Map<String, dynamic> platforms = output['platform'];
+      if (platforms.containsKey('uses')) {
+        final Map<String, dynamic> used = platforms['uses'];
+        for (final p in used.keys) {
+          if (const ['allowed', 'used'].contains(used[p])) {
+            supportedPlatforms.add(p[0].toUpperCase() + p.substring(1));
+          }
         }
       }
     }
@@ -151,6 +166,7 @@ class Result {
       flutterVersion: flutterVersion,
       dartSdkInFlutterVersion: dartInFlutterVersion,
       dartSdkVersion: dartSdkVersion,
+      supportedPlatforms: supportedPlatforms,
     );
   }
 }

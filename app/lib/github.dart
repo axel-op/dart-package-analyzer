@@ -131,9 +131,14 @@ String _buildSummary(Result result) =>
     (testing
         ? '**THIS ACTION HAS BEEN EXECUTED IN TEST MODE. THIS MODE IS NOT INTENDED FOR PRODUCTION USE.**\n'
         : '') +
-    '* Health score: **${result.healthScore.toStringAsFixed(2)}%**'
+    '### Scores'
+    '\n* Health score: **${result.healthScore.toStringAsFixed(2)}%**'
         '\n* Maintenance score: **${result.maintenanceScore.toStringAsFixed(2)}%**'
-        '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*';
+        '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*' +
+    (result.supportedPlatforms.isNotEmpty
+        ? '\n### Supported platforms' +
+            result.supportedPlatforms.map((p) => '\n* $p').join()
+        : '');
 
 String _buildText(Result result) {
   final Map<String, List<Suggestion>> suggestions = {
@@ -155,7 +160,10 @@ String _buildText(Result result) {
       '\n### Versions'
           '\n* [Pana](https://pub.dev/packages/pana): ${result.panaVersion}'
           '\n* Dart: ${result.dartSdkVersion}'
-          '\n* Flutter: ${result.flutterVersion}'; // with Dart ${result.dartSdkInFlutterVersion}'; // Useless as we use the Flutter command so this will be the same SDK
+          '\n* Flutter: ${result.flutterVersion}' +
+      (result.dartSdkVersion != result.dartSdkInFlutterVersion
+          ? ' with Dart ${result.dartSdkInFlutterVersion}'
+          : '');
 }
 
 String _stringSuggestion(Suggestion suggestion) {
