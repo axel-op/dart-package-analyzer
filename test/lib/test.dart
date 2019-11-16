@@ -1,4 +1,4 @@
-library test_package;
+library test;
 
 class Test {
   final int valueTest;
