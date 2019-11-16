@@ -1,4 +1,4 @@
-# test_package
+# test
 
 A new Flutter package project.
 

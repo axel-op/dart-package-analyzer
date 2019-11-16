@@ -14,8 +14,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    container:
-      image:  google/dart:2.6
+    container: google/dart:2
 
     env:
       INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -43,16 +42,16 @@ jobs:
         dart2native bin/main.dart -o /main
     - name: Path 1
       env:
-        INPUT_RELATIVEPATH: test_package
-      run: dartaotruntime /main.dart.aot
+        INPUT_RELATIVEPATH: test
+      run: /main
     - name: Path 2
       env:
-        INPUT_RELATIVEPATH: /test_package
-      run: dartaotruntime /main.dart.aot
+        INPUT_RELATIVEPATH: /test
+      run: /main
     - name: Path 3
       env:
-        INPUT_RELATIVEPATH: ./test_package
-      run: dartaotruntime /main.dart.aot
+        INPUT_RELATIVEPATH: ./test
+      run: /main
     - name: With exception
       env:
         INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -60,7 +59,7 @@ jobs:
     - name: Empty path
       run: |
         cd $GITHUB_WORKSPACE
-        mv test_package /test_package
+        mv test /test
         rm -r *
-        mv /test_package/* .
-        dartaotruntime /main.dart.aot
+        mv /test/* .
+        /main
