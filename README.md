@@ -40,6 +40,16 @@ jobs:
 * If your package isn't at the root of the repository, use `relativePath` to indicate its location.
 * If you only want to see annotations for important errors, try to change the `minAnnotationLevel` parameter to another value. Accepted values are `info`, `warning` and `error`. Defaults to `info` that posts all the annotations.
 
+### Using the full Dart SDK
+
+By default, this action uses the Dart SDK embedded in Flutter. It may not be the latest version of the Dart SDK. To use the latest version of the full Dart SDK, append `/with_full_sdk` to the path of this action. This will slightly increase the time to pull the container that this action uses.
+
+In the example above, you would edit line 10 like this:
+
+```yml
+      - uses: axel-op/dart_package_analyzer/with_full_sdk@stable
+```
+
 ## Examples
 
 ### Report

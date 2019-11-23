@@ -32,9 +32,8 @@ class Analysis {
           e.message.contains('Resource not accessible by integration')) {
         stderr.writeln(
             'It seems that this action doesn\'t have the required permissions to call the GitHub API with the token you gave.'
-            'If you\'re using the default GITHUB_TOKEN, this may be because this repository is a fork and the workflow file by which this action is triggered has been edited.'
-            'In that case, GitHub reduces the token\'s permissions for security reasons.'
-            'This action thus should work once the workflow file has been merged to the original repository.');
+            ' This can occur if this repository is a fork, as in that case GitHub reduces the GITHUB_TOKEN\'s permissions for security reasons.'
+            ' Check these links for more information: \n* https://github.com/actions/labeler/issues/12 \n* https://github.community/t5/GitHub-Actions/Github-Workflow-not-running-from-pull-request-from-forked/m-p/33547/highlight/true#M1555');
       }
       rethrow;
     }
@@ -132,7 +131,7 @@ String _buildSummary(Result result) =>
         ? '**THIS ACTION HAS BEEN EXECUTED IN TEST MODE. THIS MODE IS NOT INTENDED FOR PRODUCTION USE.**\n'
         : '') +
     '### Scores'
-    '\n* Health score: **${result.healthScore.toStringAsFixed(2)}%**'
+        '\n* Health score: **${result.healthScore.toStringAsFixed(2)}%**'
         '\n* Maintenance score: **${result.maintenanceScore.toStringAsFixed(2)}%**'
         '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*' +
     (result.supportedPlatforms.isNotEmpty

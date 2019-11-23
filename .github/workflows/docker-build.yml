@@ -13,10 +13,25 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: [latest, full-sdk]
+        include: 
+          - tag: full-sdk
+            dockerfile: with_full_sdk/Dockerfile-parent
+          - tag: latest
+            dockerfile: Dockerfile-parent
+    
     env:
+      TAG: ${{ matrix.tag }}
       IMAGE: axelop/dart_package_analyzer
+      LABEL_FLUTTER: fluttersha
+      LABEL_DART: dartdigest
+      LABEL_PANA: panaversion
 
     steps:
+
       - uses: actions/checkout@v1
         with:
           fetch-depth: 1
@@ -25,43 +40,51 @@ jobs:
         id: check
         env:
           EVENT: ${{ github.event_name }}
+          IMAGE_DART: google/dart
           GIT_FLUTTER: git://github.com/flutter/flutter.git
           API_ADDRESS: https://registry-1.docker.io/v2
           PANA_DOC: https://pub.dev/api/documentation/pana
         run: |
-          FLUTTER_SHA=$(git ls-remote $GIT_FLUTTER refs/heads/stable | cut -f 1)
-          PANA_VERSION=$(curl -s $PANA_DOC | jq -r '.latestStableVersion')
+          CURRENT_FLUTTER=$(git ls-remote $GIT_FLUTTER refs/heads/stable | cut -f 1)
+          CURRENT_PANA=$(curl -s $PANA_DOC | jq -r '.latestStableVersion')
+          API_TOKEN=$(curl -s "https://auth.docker.io/token?scope=repository:$IMAGE_DART:pull&service=registry.docker.io" | jq -r '.token')
+          CURRENT_DART=$(curl -s -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "$API_ADDRESS/$IMAGE_DART/manifests/latest" | jq -r '.config.digest')
           API_TOKEN=$(curl -s "https://auth.docker.io/token?scope=repository:$IMAGE:pull&service=registry.docker.io" | jq -r '.token')
-          DIGEST=$(curl -s -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "$API_ADDRESS/$IMAGE/manifests/latest" | jq -r '.config.digest')
+          DIGEST=$(curl -s -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "$API_ADDRESS/$IMAGE/manifests/$TAG" | jq -r '.config.digest')
           CONFIG=$(curl -s -L -H "Authorization: Bearer $API_TOKEN" "$API_ADDRESS/$IMAGE/blobs/$DIGEST")
-          PREVIOUS_SHA=$(jq -r '.config.Labels.fluttersha' <<< $CONFIG)
-          PREVIOUS_PANA=$(jq -r '.config.Labels.panaversion' <<< $CONFIG)
-          echo $FLUTTER_SHA is the latest commit in the stable branch of Flutter
-          echo $PREVIOUS_SHA is the commit of Flutter on Docker image
-          echo $PANA_VERSION is the latest stable version of pana
+          PREVIOUS_FLUTTER=$(jq -r ".config.Labels.$LABEL_FLUTTER" <<< $CONFIG)
+          PREVIOUS_PANA=$(jq -r ".config.Labels.$LABEL_PANA" <<< $CONFIG)
+          PREVIOUS_DART=$(jq -r ".config.Labels.$LABEL_DART" <<< $CONFIG)
+          echo $CURRENT_FLUTTER is the latest commit in the stable branch of Flutter
+          echo $PREVIOUS_FLUTTER is the commit of Flutter on Docker image
+          echo $CURRENT_PANA is the latest stable version of pana
           echo $PREVIOUS_PANA is the version of pana on Docker image
-          if [ "$EVENT" = push ] || [ "$FLUTTER_SHA" != "$PREVIOUS_SHA" ] || [ "$PANA_VERSION" != "$PREVIOUS_PANA" ]; then SHOULD_PUSH=true; else SHOULD_PUSH=false; fi
-          echo "::set-env name=FLUTTER_SHA::$FLUTTER_SHA"
-          echo "::set-env name=PANA_VERSION::$PANA_VERSION"
+          if [ "$TAG" = full-sdk ]; then echo $CURRENT_DART is the digest of the latest Dart image on Docker Hub; fi
+          if [ "$TAG" = full-sdk ]; then echo $PREVIOUS_DART is the digest of the Dart SDK on Docker image; fi
+          if [ "$EVENT" = push ] || [ "$CURRENT_FLUTTER" != "$PREVIOUS_FLUTTER" ] || [ "$CURRENT_PANA" != "$PREVIOUS_PANA" ]; then SHOULD_PUSH=true; else SHOULD_PUSH=false; fi
+          if [ "$TAG" = full-sdk ] && [ "$CURRENT_DART" != "$PREVIOUS_DART" ]; then SHOULD_PUSH=true; fi
+          echo "::set-env name=CURRENT_FLUTTER::$CURRENT_FLUTTER"
+          echo "::set-env name=CURRENT_PANA::$CURRENT_PANA"
+          echo "::set-env name=CURRENT_DART::$CURRENT_DART"
           echo "::set-output name=should_push::$SHOULD_PUSH"
-
+      
       - name: Build new image
         if: steps.check.outputs.should_push == 'true'
-        run: sudo docker build --label "fluttersha=$FLUTTER_SHA" --label "panaversion=$PANA_VERSION" -f Dockerfile-parent -t $IMAGE .
+        run: sudo docker build --label "${LABEL_FLUTTER}=$CURRENT_FLUTTER" --label "${LABEL_PANA}=$CURRENT_PANA" --label "${LABEL_DART}=$CURRENT_DART" -f ${{ matrix.dockerfile }} -t $IMAGE:$TAG .
 
       - name: Test new image
         if: steps.check.outputs.should_push == 'true'
         run: |
-          sudo docker run -d -t --name test $IMAGE
-          sudo docker cp ${GITHUB_WORKSPACE}/test_package/. test:/test
+          sudo docker run -d -t --name test $IMAGE:$TAG
+          sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
           sudo docker cp $GITHUB_EVENT_PATH test:/eventpayload
           sudo docker exec -e GITHUB_WORKSPACE=/test -e GITHUB_EVENT_PATH=/eventpayload -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
-      
+
       - name: Push new image
         if: steps.check.outputs.should_push == 'true'
         env:
-          USERNAME: axelop
+          DOCKER_USERNAME: axelop
           DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
         run: |
-          echo $DOCKER_TOKEN | sudo docker login --username=$USERNAME --password-stdin
-          sudo docker push $IMAGE
+          echo $DOCKER_TOKEN | sudo docker login --username=$DOCKER_USERNAME --password-stdin
+          sudo docker push $IMAGE:$TAG
