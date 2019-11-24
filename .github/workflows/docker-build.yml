@@ -20,7 +20,7 @@ jobs:
         tag: [latest, full-sdk]
         include: 
           - tag: full-sdk
-            dockerfile: with_full_sdk/Dockerfile-parent
+            dockerfile: with-full-sdk/Dockerfile-parent
           - tag: latest
             dockerfile: Dockerfile-parent
     

@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1 # required
-      - uses: axel-op/dart_package_analyzer@stable
+      - uses: axel-op/dart-package-analyzer@stable
         with:
           # Required:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
@@ -42,12 +42,12 @@ jobs:
 
 ### Using the full Dart SDK
 
-By default, this action uses the Dart SDK embedded in Flutter. It may not be the latest version of the Dart SDK. To use the latest version of the full Dart SDK, append `/with_full_sdk` to the path of this action. This will slightly increase the time to pull the container that this action uses.
+By default, this action uses the Dart SDK embedded in Flutter. It may not be the latest version of the Dart SDK. To use the latest version of the full Dart SDK, append `/with-full-sdk` to the path of this action. This will slightly increase the time to pull the container that this action uses.
 
 In the example above, you would edit line 10 like this:
 
 ```yml
-      - uses: axel-op/dart_package_analyzer/with_full_sdk@stable
+      - uses: axel-op/dart-package-analyzer/with-full-sdk@stable
 ```
 
 ## Examples
