@@ -53,9 +53,7 @@ jobs:
         INPUT_RELATIVEPATH: ./test
       run: /main
     - name: With exception
-      env:
-        INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: dartaotruntime /main.dart.aot
+      run: /main
     - name: Empty path
       run: |
         cd $GITHUB_WORKSPACE
