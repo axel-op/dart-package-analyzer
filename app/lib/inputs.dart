@@ -68,7 +68,7 @@ class Inputs {
 
     return Inputs._(
       absolutePathToPackage: sourcePath,
-      commitSha: _getSHA(),
+      commitSha: Platform.environment['GITHUB_SHA'],
       pathFromRepoRoot: path.relative(sourcePath, from: repoPath),
       githubToken: githubTokenInput.value,
       minAnnotationLevel: _getMinAnnotationLevel(),
@@ -93,25 +93,6 @@ class Inputs {
           "Did you call 'actions/checkout' in a previous step? Invalid environment variable");
     }
     return repoPath;
-  }
-
-  static String _getSHA() {
-    final String pathEventPayload = Platform.environment['GITHUB_EVENT_PATH'];
-    final Map<String, dynamic> eventPayload =
-        jsonDecode(File(pathEventPayload).readAsStringSync());
-    String commitSha = Platform.environment['GITHUB_SHA'];
-    String message = 'This action will be run for commit $commitSha';
-    final Map<String, dynamic> pullRequest = eventPayload['pull_request'];
-    if (pullRequest != null) {
-      final String headSha = pullRequest['head']['sha'];
-      if (commitSha != headSha) {
-        message +=
-            ', but as it is a merge commit, the output will be attached to the head commit $headSha';
-        commitSha = headSha;
-      }
-    }
-    stderr.writeln(message);
-    return commitSha;
   }
 
   static CheckRunAnnotationLevel _getMinAnnotationLevel() {
