@@ -26,7 +26,7 @@ jobs:
   package-analysis:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1 # required
+      - uses: actions/checkout@v2 # required
       - uses: axel-op/dart-package-analyzer@stable
         with:
           # Required:
