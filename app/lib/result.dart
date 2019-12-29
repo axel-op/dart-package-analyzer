@@ -127,11 +127,11 @@ class Result {
       generalSuggestions.addAll(parseSuggestions(output[suggestionKey]));
     }
 
-    if (output.containsKey('dartFiles')) {
-      final Map<String, dynamic> dartFiles = output['dartFiles'];
+    final Map<String, dynamic> dartFiles = output['dartFiles'];
+    if (dartFiles != null) {
       for (final file in dartFiles.keys) {
         final Map<String, dynamic> details = dartFiles[file];
-        if (details.containsKey('codeProblems')) {
+        if (details['codeProblems'] != null) {
           final List<Map<String, dynamic>> problems =
               List.castFrom<dynamic, Map<String, dynamic>>(
                   details['codeProblems']);
@@ -142,10 +142,10 @@ class Result {
       }
     }
 
-    if (output.containsKey('platform') && output['platform'] != null) {
-      final Map<String, dynamic> platforms = output['platform'];
-      if (platforms.containsKey('uses')) {
-        final Map<String, dynamic> used = platforms['uses'];
+    final Map<String, dynamic> platforms = output['platform'];
+    if (platforms != null) {
+      final Map<String, dynamic> used = platforms['uses'];
+      if (used != null) {
         for (final p in used.keys) {
           if (const ['allowed', 'used'].contains(used[p])) {
             supportedPlatforms.add(p[0].toUpperCase() + p.substring(1));
