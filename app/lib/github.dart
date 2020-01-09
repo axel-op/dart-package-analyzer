@@ -33,7 +33,8 @@ class Analysis {
         stderr.writeln(
             'It seems that this action doesn\'t have the required permissions to call the GitHub API with the token you gave.'
             ' This can occur if this repository is a fork, as in that case GitHub reduces the GITHUB_TOKEN\'s permissions for security reasons.'
-            ' Check these links for more information: \n* https://github.com/actions/labeler/issues/12 \n* https://github.community/t5/GitHub-Actions/Github-Workflow-not-running-from-pull-request-from-forked/m-p/33547/highlight/true#M1555');
+            ' Check this issue for more information and a workaround: '
+            '\n* https://github.com/axel-op/dart-package-analyzer/issues/2');
       }
       rethrow;
     }
