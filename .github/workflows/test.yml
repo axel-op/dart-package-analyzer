@@ -8,56 +8,57 @@ on:
     branches: 
     - '*'
 
+env:
+    IMAGE: axelop/dart_package_analyzer:test
+
 jobs:
 
-  tests:
+  test-outputs:
+
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        dockerfile: ['Dockerfile-parent', 'with-full-sdk/Dockerfile-parent']
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build container
+        run: sudo docker build -f ${{ matrix.dockerfile }} -t $IMAGE .
+      - name: Run tests
+        id: steptest
+        run: |
+          sudo docker run -d -t --name test $IMAGE
+          sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
+          sudo docker exec -e INPUT_RELATIVEPATH=${{ matrix.path }} -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+      - name: Test outputs
+        run: |
+          MAINT=${{ steps.steptest.outputs.maintenance }}
+          HEALTH=${{ steps.steptest.outputs.health }}
+          echo $MAINT
+          echo $HEALTH
+          if [[ -z $MAINT ]] || [[ -z $HEALTH ]]; then exit 1; fi
+          if (( $(echo "$MAINT < 100" | bc) )) || (( $(echo "$HEALTH < 100" | bc) )); then
+            echo Those scores are not perfect
+          fi
+
+
+  test-with-path:
 
     runs-on: ubuntu-latest
 
-    container: google/dart:2
-
-    env:
-      INPUT_GITHUBTOKEN: ${{ secrets.GITHUB_TOKEN }}
-      INPUT_TESTING: true
-      INPUT_MINANNOTATIONLEVEL: info
+    strategy:
+      matrix:
+        path: ['test', '/test', './test']
+        dockerfile: ['Dockerfile-parent', 'with-full-sdk/Dockerfile-parent']
     
     steps:
-    - uses: actions/checkout@v1
-    - name: Edit path
-      run: |
-        echo "::add-path::/flutter/bin"
-        echo "::add-path::$HOME/.pub-cache/bin"
-    - name: Install Flutter
-      run: |
-        apt-get update
-        apt-get -y install unzip
-        git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutter
-        flutter --version
-    - name: Activate pana
-      run: flutter pub global activate pana
-    - name: Compile
-      run: |
-        cd app
-        pub get
-        dart2native bin/main.dart -o /main
-    - name: Path 1
-      env:
-        INPUT_RELATIVEPATH: test
-      run: /main
-    - name: Path 2
-      env:
-        INPUT_RELATIVEPATH: /test
-      run: /main
-    - name: Path 3
-      env:
-        INPUT_RELATIVEPATH: ./test
-      run: /main
-    - name: With exception
-      run: /main
-    - name: Empty path
-      run: |
-        cd $GITHUB_WORKSPACE
-        mv test /test
-        rm -r *
-        mv /test/* .
-        /main
+      - uses: actions/checkout@v2
+      - name: Build container
+        run: sudo docker build -f ${{ matrix.dockerfile }} -t $IMAGE .
+      - name: Run tests
+        run: |
+          sudo docker run -d -t --name test $IMAGE
+          sudo docker exec test /bin/bash -c "mkdir workspace"
+          sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/workspace/test
+          sudo docker exec -e INPUT_RELATIVEPATH=${{ matrix.path }} -e GITHUB_WORKSPACE=/workspace -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"

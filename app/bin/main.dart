@@ -58,8 +58,7 @@ dynamic main(List<String> args) async {
       throw Exception('The pana command has returned no valid output.');
     }
 
-    final Map<String, dynamic> resultPana = jsonDecode(panaResult.output);
-    final Result result = Result.fromOutput(resultPana);
+    final Result result = Result.fromOutput(jsonDecode(panaResult.output) as Map<String, dynamic>);
 
     // Posting comments on GitHub
     await analysis.complete(
@@ -67,6 +66,10 @@ dynamic main(List<String> args) async {
       result: result,
       minAnnotationLevel: inputs.minAnnotationLevel,
     );
+
+    // Setting outputs
+    await _runCommand('echo', ['::set-output name=maintenance::${result.maintenanceScore.toStringAsFixed(2)}']);
+    await _runCommand('echo', ['::set-output name=health::${result.healthScore.toStringAsFixed(2)}']);
 
     exitCode = 0;
   } catch (e) {
