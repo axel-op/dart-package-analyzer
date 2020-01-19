@@ -127,18 +127,25 @@ class Analysis {
   }
 }
 
-String _buildSummary(Result result) =>
-    (testing
-        ? '**THIS ACTION HAS BEEN EXECUTED IN TEST MODE. THIS MODE IS NOT INTENDED FOR PRODUCTION USE.**\n'
-        : '') +
-    '### Scores'
-        '\n* Health score: **${result.healthScore.toStringAsFixed(2)}%**'
-        '\n* Maintenance score: **${result.maintenanceScore.toStringAsFixed(2)}%**'
-        '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*' +
-    (result.supportedPlatforms.isNotEmpty
-        ? '\n### Supported platforms' +
-            result.supportedPlatforms.map((p) => '\n* $p').join()
-        : '');
+String _buildSummary(Result result) {
+  final summary = StringBuffer();
+  if (testing) {
+    summary.writeln('**THIS ACTION HAS BEEN EXECUTED IN TEST MODE.**');
+  }
+  summary.write('### Scores'
+      '\n* Health score: **${result.healthScore.toStringAsFixed(2)}%**'
+      '\n* Maintenance score: **${result.maintenanceScore.toStringAsFixed(2)}%**'
+      '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*');
+  final platforms = result.supportedPlatforms;
+  if (platforms.isNotEmpty) {
+    summary.write('\n### Supported platforms');
+  }
+  for (final platform in result.supportedPlatforms.keys) {
+    summary.write('\n* $platform');
+    platforms[platform].forEach((tag) => summary.write('\n  * `$tag`'));
+  }
+  return summary.toString();
+}
 
 String _buildText(Result result) {
   final Map<String, List<Suggestion>> suggestions = {

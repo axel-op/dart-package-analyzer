@@ -59,7 +59,7 @@ This will slightly increase the time to pull the container that this action uses
 
 ### Using the scores in your workflow
 
-The health score and the maintenance scores are set as outputs of this action. If you [set an id for the step of this action](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idsteps), you can use these outputs in the next steps of your workflow, as illustrated in this example:
+The health score and the maintenance score are set as outputs of this action. If you [set an id for the step of this action](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idsteps), you can use these outputs in the next steps of your workflow, as illustrated in this example:
 
 ```yml
 name: Example workflow

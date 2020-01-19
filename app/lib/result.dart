@@ -67,7 +67,7 @@ class Result {
   final List<Suggestion> healthSuggestions;
   final List<Suggestion> maintenanceSuggestions;
   final List<Annotation> annotations;
-  final List<String> supportedPlatforms;
+  final Map<String, List<String>> supportedPlatforms;
 
   Result._({
     @required this.packageName,
@@ -95,11 +95,11 @@ class Result {
     final Map<String, dynamic> scores = output['scores'];
     final double healthScore = scores['health'];
     final double maintenanceScore = scores['maintenance'];
-    final List<Suggestion> generalSuggestions = <Suggestion>[];
-    final List<Suggestion> maintenanceSuggestions = <Suggestion>[];
-    final List<Suggestion> healthSuggestions = <Suggestion>[];
-    final List<Annotation> lineSuggestions = <Annotation>[];
-    final List<String> supportedPlatforms = <String>[];
+    final List<Suggestion> generalSuggestions = [];
+    final List<Suggestion> maintenanceSuggestions = [];
+    final List<Suggestion> healthSuggestions = [];
+    final List<Annotation> lineSuggestions = [];
+    final Map<String, List<String>> supportedPlatforms = {};
 
     final Map<String, void Function(List<Suggestion>)> categories = {
       'health': (suggestions) => healthSuggestions.addAll(suggestions),
@@ -142,16 +142,20 @@ class Result {
       }
     }
 
-    final Map<String, dynamic> platforms = output['platform'];
-    if (platforms != null) {
-      final Map<String, dynamic> used = platforms['uses'];
-      if (used != null) {
-        for (final p in used.keys) {
-          if (const ['allowed', 'used'].contains(used[p])) {
-            supportedPlatforms.add(p[0].toUpperCase() + p.substring(1));
-          }
+    final List<dynamic> tags = output['tags'];
+    if (tags != null) {
+      List.castFrom<dynamic, String>(tags).forEach((tag) {
+        final splitted = tag.split(":");
+        if (splitted.length != 2) return;
+        switch (splitted[0]) {
+          case 'platform':
+            supportedPlatforms.putIfAbsent('Flutter', () => []).add(splitted[1]);
+            break;
+          case 'runtime':
+            supportedPlatforms.putIfAbsent('Dart', () => []).add(splitted[1]);
+            break;
         }
-      }
+      });
     }
 
     return Result._(

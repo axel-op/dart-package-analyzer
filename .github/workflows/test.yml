@@ -30,7 +30,7 @@ jobs:
         run: |
           sudo docker run -d -t --name test $IMAGE
           sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
-          sudo docker exec -e INPUT_RELATIVEPATH=${{ matrix.path }} -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+          sudo docker exec -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
       - name: Test outputs
         run: |
           MAINT=${{ steps.steptest.outputs.maintenance }}
@@ -62,3 +62,23 @@ jobs:
           sudo docker exec test /bin/bash -c "mkdir workspace"
           sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/workspace/test
           sudo docker exec -e INPUT_RELATIVEPATH=${{ matrix.path }} -e GITHUB_WORKSPACE=/workspace -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+
+
+  test-pubspec-error:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        dockerfile: ['Dockerfile-parent', 'with-full-sdk/Dockerfile-parent']
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build container
+        run: sudo docker build -f ${{ matrix.dockerfile }} -t $IMAGE .
+      - name: Run tests
+        run: |
+          sudo docker run -d -t --name test $IMAGE
+          sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
+          sudo docker exec test /bin/bash -c "rm /test/pubspec.yaml"
+          sudo docker exec -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
