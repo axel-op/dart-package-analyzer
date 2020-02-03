@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:github/github.dart';
@@ -67,7 +68,7 @@ class Inputs {
 
     return Inputs._(
       absolutePathToPackage: sourcePath,
-      commitSha: Platform.environment['GITHUB_SHA'],
+      commitSha: _getSHA(),
       pathFromRepoRoot: path.relative(sourcePath, from: repoPath),
       githubToken: githubTokenInput.value,
       minAnnotationLevel: _getMinAnnotationLevel(),
@@ -92,6 +93,25 @@ class Inputs {
           "Did you call 'actions/checkout' in a previous step? Invalid environment variable");
     }
     return repoPath;
+  }
+
+  static String _getSHA() {
+    final String pathEventPayload = Platform.environment['GITHUB_EVENT_PATH'];
+    final Map<String, dynamic> eventPayload =
+        jsonDecode(File(pathEventPayload).readAsStringSync());
+    final String commitSha = Platform.environment['GITHUB_SHA'];
+    stderr.writeln('SHA that triggered the workflow: $commitSha');
+    final Map<String, dynamic> pullRequest = eventPayload['pull_request'];
+    if (pullRequest != null) {
+      final String baseSha = pullRequest['base']['sha'];
+      final String headSha = pullRequest['head']['sha'];
+      if (commitSha != headSha) {
+        stderr.writeln('Base SHA: $baseSha');
+        stderr.writeln('Head SHA: $headSha');
+        return headSha;
+      }
+    }
+    return commitSha;
   }
 
   static CheckRunAnnotationLevel _getMinAnnotationLevel() {

@@ -1,25 +1,26 @@
 # This workflow is for internal testing only, and its execution is slower than in regular conditions.
-# Please follow the README's instructions to use this action in your project. 
+# Please follow the README's instructions to use this action in your project.
 
 name: Test
 
 on:
   push:
-    branches: 
-    - '*'
+    branches-ignore:
+      - "stable"
+  pull_request:
+    branches:
+      - "*"
 
 env:
-    IMAGE: axelop/dart_package_analyzer:test
+  IMAGE: axelop/dart_package_analyzer:test
 
 jobs:
-
   test-outputs:
-
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
-        dockerfile: ['Dockerfile-parent', 'with-full-sdk/Dockerfile-parent']
+        dockerfile: ["Dockerfile-parent", "with-full-sdk/Dockerfile-parent"]
 
     steps:
       - uses: actions/checkout@v2
@@ -30,7 +31,8 @@ jobs:
         run: |
           sudo docker run -d -t --name test $IMAGE
           sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
-          sudo docker exec -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+          sudo docker cp ${GITHUB_EVENT_PATH} test:/event.json
+          sudo docker exec -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
       - name: Test outputs
         run: |
           MAINT=${{ steps.steptest.outputs.maintenance }}
@@ -42,16 +44,14 @@ jobs:
             echo Those scores are not perfect
           fi
 
-
   test-with-path:
-
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        path: ['test', '/test', './test']
-        dockerfile: ['Dockerfile-parent', 'with-full-sdk/Dockerfile-parent']
-    
+        path: ["test", "/test", "./test"]
+        dockerfile: ["Dockerfile-parent", "with-full-sdk/Dockerfile-parent"]
+
     steps:
       - uses: actions/checkout@v2
       - name: Build container
@@ -61,16 +61,15 @@ jobs:
           sudo docker run -d -t --name test $IMAGE
           sudo docker exec test /bin/bash -c "mkdir workspace"
           sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/workspace/test
-          sudo docker exec -e INPUT_RELATIVEPATH=${{ matrix.path }} -e GITHUB_WORKSPACE=/workspace -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
-
+          sudo docker cp ${GITHUB_EVENT_PATH} test:/workspace/event.json
+          sudo docker exec -e GITHUB_EVENT_PATH=/workspace/event.json -e INPUT_RELATIVEPATH=${{ matrix.path }} -e GITHUB_WORKSPACE=/workspace -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
 
   test-pubspec-error:
-
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        dockerfile: ['Dockerfile-parent', 'with-full-sdk/Dockerfile-parent']
+        dockerfile: ["Dockerfile-parent", "with-full-sdk/Dockerfile-parent"]
 
     steps:
       - uses: actions/checkout@v2
@@ -80,5 +79,6 @@ jobs:
         run: |
           sudo docker run -d -t --name test $IMAGE
           sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
+          sudo docker cp ${GITHUB_EVENT_PATH} test:/event.json
           sudo docker exec test /bin/bash -c "rm /test/pubspec.yaml"
-          sudo docker exec -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+          sudo docker exec -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
