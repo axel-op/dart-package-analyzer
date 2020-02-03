@@ -30,17 +30,21 @@ class Analysis {
     } catch (e) {
       if (e is GitHubError &&
           e.message.contains('Resource not accessible by integration')) {
-        stderr.writeln(
-            'It seems that this action doesn\'t have the required permissions to call the GitHub API with the token you gave.'
+        stderr.writeln('WARNING:'
+            ' It seems that this action doesn\'t have the required permissions to call the GitHub API with the token you gave.'
             ' This can occur if this repository is a fork, as in that case GitHub reduces the GITHUB_TOKEN\'s permissions for security reasons.'
-            ' Check this issue for more information and a workaround: '
+            ' Consequently, no report will be made on GitHub.'
+            ' Check this issue for more information: '
             '\n* https://github.com/axel-op/dart-package-analyzer/issues/2');
+        return Analysis._(client, null, slug);
       }
       rethrow;
     }
   }
 
   final GitHub _client;
+
+  /// No report will be posted on GitHub if this is null.
   final CheckRun _checkRun;
   final RepositorySlug _repositorySlug;
   DateTime _startTime;
@@ -52,6 +56,7 @@ class Analysis {
   );
 
   Future<void> start() async {
+    if (_checkRun == null) return;
     _startTime = DateTime.now();
     await _client.checks.updateCheckRun(
       _repositorySlug,
@@ -62,6 +67,7 @@ class Analysis {
   }
 
   Future<void> cancel() async {
+    if (_checkRun == null) return;
     await _client.checks.updateCheckRun(
       _repositorySlug,
       _checkRun,
@@ -77,6 +83,21 @@ class Analysis {
     @required String pathPrefix,
     @required CheckRunAnnotationLevel minAnnotationLevel,
   }) async {
+    final CheckRunConclusion conclusion = testing
+        ? CheckRunConclusion.neutral
+        : result.annotations
+                .where((a) => a.level == CheckRunAnnotationLevel.failure)
+                .isNotEmpty
+            ? CheckRunConclusion.failure
+            : CheckRunConclusion.success;
+    if (_checkRun == null) {
+      if (conclusion == CheckRunConclusion.failure) {
+        stderr.writeln('Static analysis has detected one or more static errors.'
+            ' As no report can be posted, this action will directly fail.');
+        exitCode = 1;
+      }
+      return;
+    }
     final List<CheckRunAnnotation> annotations = result.annotations
         .where((a) => a.level >= minAnnotationLevel)
         .map((a) => CheckRunAnnotation(
@@ -95,13 +116,6 @@ class Analysis {
         : 'Package analysis results';
     final String summary = _buildSummary(result);
     final String text = _buildText(result);
-    final CheckRunConclusion conclusion = testing
-        ? CheckRunConclusion.neutral
-        : result.annotations
-                .where((a) => a.level == CheckRunAnnotationLevel.failure)
-                .isNotEmpty
-            ? CheckRunConclusion.failure
-            : CheckRunConclusion.success;
     int i = 0;
     do {
       final bool isLastLoop = i + 50 >= annotations.length;

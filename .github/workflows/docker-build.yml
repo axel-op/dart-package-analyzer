@@ -62,8 +62,6 @@ jobs:
           echo $PREVIOUS_PANA is the version of pana on Docker image
           if [ "$TAG" = full-sdk ]; then
             echo $CURRENT_DART is the digest of the latest Dart image on Docker Hub
-          fi
-          if [ "$TAG" = full-sdk ]; then
             echo $PREVIOUS_DART is the digest of the Dart SDK on Docker image
           fi
           if [ "$EVENT" = push ] || [ "$CURRENT_FLUTTER" != "$PREVIOUS_FLUTTER" ] || [ "$CURRENT_PANA" != "$PREVIOUS_PANA" ]; then
