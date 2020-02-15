@@ -3,9 +3,46 @@ import 'dart:io';
 import 'package:app/result.dart';
 import 'package:github/github.dart';
 import 'package:meta/meta.dart';
-import 'package:path/path.dart' as path;
 
 final bool testing = Platform.environment['INPUT_TESTING'] == 'true';
+
+extension on Annotation {
+  CheckRunAnnotation toCheckRunAnnotation() => CheckRunAnnotation(
+        annotationLevel: this.level,
+        path: this.file,
+        title: this.errorType,
+        message: '[${this.errorCode ?? ""}]\n${this.description}',
+        startLine: this.line,
+        endLine: this.line,
+        startColumn: this.column,
+        endColumn: this.column,
+      );
+}
+
+extension on Suggestion {
+  String toItemString() {
+    final str = StringBuffer('\n* ');
+    if (this.title != null || this.loss != null) {
+      str.write('**');
+      if (this.title != null) {
+        final String trimmedTitle = this.title.trim();
+        str.write(trimmedTitle.substring(
+            0, trimmedTitle.length - (trimmedTitle.endsWith('.') ? 1 : 0)));
+      }
+      if (this.loss != null) {
+        str.write(' (${this.loss.toString()} points)');
+      }
+      str.write('**: ');
+    }
+    str.write(this
+            .description
+            ?.trimRight()
+            ?.replaceAll(RegExp(r'\n```'), '')
+            ?.replaceAll(RegExp(r'(\n)+-? *'), '\n  * ') ??
+        '');
+    return str.toString();
+  }
+}
 
 class Analysis {
   static String _getCheckRunName({String packageName}) => packageName != null
@@ -66,7 +103,7 @@ class Analysis {
     );
   }
 
-  Future<void> cancel() async {
+  Future<void> cancel({dynamic cause}) async {
     if (_checkRun == null) return;
     await _client.checks.updateCheckRun(
       _repositorySlug,
@@ -75,12 +112,19 @@ class Analysis {
       completedAt: DateTime.now(),
       status: CheckRunStatus.completed,
       conclusion: CheckRunConclusion.cancelled,
+      output: cause == null
+          ? null
+          : CheckRunOutput(
+              title: _getCheckRunName(),
+              summary:
+                  'This check run has been cancelled, due to the following error:'
+                  '\n`$cause`'
+                  '\nCheck your logs for more information.'),
     );
   }
 
   Future<void> complete({
     @required Result result,
-    @required String pathPrefix,
     @required CheckRunAnnotationLevel minAnnotationLevel,
   }) async {
     final CheckRunConclusion conclusion = testing
@@ -92,29 +136,26 @@ class Analysis {
             : CheckRunConclusion.success;
     if (_checkRun == null) {
       if (conclusion == CheckRunConclusion.failure) {
-        stderr.writeln('Static analysis has detected one or more static errors.'
-            ' As no report can be posted, this action will directly fail.');
+        stderr.writeAll(const <String>[
+          'Static analysis has detected one or more compile-time errors.',
+          'As no report can be posted, this action will directly fail.'
+        ], " ");
         exitCode = 1;
       }
       return;
     }
     final List<CheckRunAnnotation> annotations = result.annotations
         .where((a) => a.level >= minAnnotationLevel)
-        .map((a) => CheckRunAnnotation(
-              annotationLevel: a.level,
-              path: path.normalize('$pathPrefix/${a.file}'),
-              title: a.errorType,
-              message: '[${a.errorCode ?? ""}]\n${a.description}',
-              startLine: a.line,
-              endLine: a.line,
-              startColumn: a.column,
-              endColumn: a.column,
-            ))
+        .map((a) => a.toCheckRunAnnotation())
         .toList();
     final String title = result.packageName != null
         ? 'Package analysis results for ${result.packageName}'
         : 'Package analysis results';
-    final String summary = _buildSummary(result);
+    final String summary = (testing
+            ? '**THIS ACTION HAS BEEN EXECUTED IN TEST MODE.**'
+                '\nConclusion = `$conclusion`\n'
+            : '') +
+        _buildSummary(result);
     final String text = _buildText(result);
     int i = 0;
     do {
@@ -127,7 +168,9 @@ class Analysis {
             isLastLoop ? CheckRunStatus.completed : CheckRunStatus.inProgress,
         startedAt: _startTime,
         completedAt: isLastLoop ? DateTime.now() : null,
-        conclusion: isLastLoop ? conclusion : null,
+        conclusion: isLastLoop
+            ? (testing ? CheckRunConclusion.neutral : conclusion)
+            : null,
         output: CheckRunOutput(
           title: title,
           summary: summary,
@@ -143,9 +186,6 @@ class Analysis {
 
 String _buildSummary(Result result) {
   final summary = StringBuffer();
-  if (testing) {
-    summary.writeln('**THIS ACTION HAS BEEN EXECUTED IN TEST MODE.**');
-  }
   summary.write('### Scores'
       '\n* Health score: **${result.healthScore.toStringAsFixed(2)}%**'
       '\n* Maintenance score: **${result.maintenanceScore.toStringAsFixed(2)}%**'
@@ -167,44 +207,22 @@ String _buildText(Result result) {
     'Health': result.healthSuggestions,
     'Maintenance': result.maintenanceSuggestions,
   };
-  String text = '';
+  final text = StringBuffer();
   if (suggestions.values.where((l) => l.isNotEmpty).isNotEmpty) {
-    text += '### Issues';
+    text.write('### Issues');
   }
   for (final MapEntry<String, List<Suggestion>> entry in suggestions.entries) {
     if (entry.value.isNotEmpty) {
-      text += '\n#### ${entry.key}';
-      entry.value.forEach((s) => text += _stringSuggestion(s));
+      text.write('\n#### ${entry.key}');
+      entry.value.forEach((s) => text.write(s.toItemString()));
     }
   }
-  return text +
-      '\n### Versions'
+  text.write('\n### Versions'
           '\n* [Pana](https://pub.dev/packages/pana): ${result.panaVersion}'
           '\n* Dart: ${result.dartSdkVersion}'
           '\n* Flutter: ${result.flutterVersion}' +
       (result.dartSdkVersion != result.dartSdkInFlutterVersion
           ? ' with Dart ${result.dartSdkInFlutterVersion}'
-          : '');
-}
-
-String _stringSuggestion(Suggestion suggestion) {
-  String str = '\n* ';
-  if (suggestion.title != null || suggestion.loss != null) {
-    str += '**';
-    if (suggestion.title != null) {
-      final String trimmedTitle = suggestion.title.trim();
-      str += trimmedTitle.substring(
-          0, trimmedTitle.length - (trimmedTitle.endsWith('.') ? 1 : 0));
-    }
-    if (suggestion.loss != null) {
-      str += ' (${suggestion.loss.toString()} points)';
-    }
-    str += '**: ';
-  }
-  return str +
-      (suggestion.description
-              ?.trimRight()
-              ?.replaceAll(RegExp(r'\n```'), '')
-              ?.replaceAll(RegExp(r'(\n)+-? *'), '\n  * ') ??
-          '');
+          : ''));
+  return text.toString();
 }

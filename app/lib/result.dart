@@ -1,5 +1,10 @@
 import 'package:github/github.dart';
 import 'package:meta/meta.dart';
+import 'package:path/path.dart' as path;
+
+extension on Map<String, dynamic> {
+  bool containsNonNull(String key) => this[key] != null;
+}
 
 const Map<String, CheckRunAnnotationLevel> _annotationLevels = {
   'ERROR': CheckRunAnnotationLevel.failure,
@@ -12,17 +17,10 @@ class Suggestion {
   final String description;
   final String title;
 
-  Suggestion._({
-    @required this.description,
-    @required this.loss,
-    @required this.title,
-  });
-
-  factory Suggestion._fromJSON(Map<String, dynamic> json) => Suggestion._(
-        description: json['description'],
-        loss: json['score'],
-        title: json['title'],
-      );
+  Suggestion._fromJSON(Map<String, dynamic> json)
+      : description = json['description'],
+        loss = json['score'],
+        title = json['title'];
 }
 
 class Annotation {
@@ -34,25 +32,16 @@ class Annotation {
   final String errorType;
   final String errorCode;
 
-  Annotation._({
-    @required this.description,
-    @required this.file,
-    @required this.line,
-    @required this.column,
-    @required this.level,
-    @required this.errorCode,
-    @required this.errorType,
-  });
-
-  factory Annotation._fromJSON(Map<String, dynamic> json) => Annotation._(
-        description: json['description'],
-        line: json['line'],
-        file: json['file'],
-        column: json['col'],
-        level: _annotationLevels[json['severity']],
-        errorCode: json['errorCode'],
-        errorType: json['errorType'],
-      );
+  Annotation._fromJSON(Map<String, dynamic> json, {@required String pathPrefix})
+      : description = json['description'],
+        line = json['line'],
+        file = json.containsNonNull('file')
+            ? path.normalize("$pathPrefix/${json['file']}")
+            : null,
+        column = json['col'],
+        level = _annotationLevels[json['severity']],
+        errorCode = json['errorCode'],
+        errorType = json['errorType'];
 }
 
 class Result {
@@ -84,7 +73,10 @@ class Result {
     @required this.supportedPlatforms,
   });
 
-  factory Result.fromOutput(Map<String, dynamic> output) {
+  factory Result.fromOutput(
+    Map<String, dynamic> output, {
+    @required String filesPrefix,
+  }) {
     final String packageName = output['packageName'];
     final Map<String, dynamic> runtimeInfo = output['runtimeInfo'];
     final String panaVersion = runtimeInfo['panaVersion'];
@@ -131,12 +123,12 @@ class Result {
     if (dartFiles != null) {
       for (final file in dartFiles.keys) {
         final Map<String, dynamic> details = dartFiles[file];
-        if (details['codeProblems'] != null) {
+        if (details.containsNonNull('codeProblems')) {
           final List<Map<String, dynamic>> problems =
               List.castFrom<dynamic, Map<String, dynamic>>(
                   details['codeProblems']);
           lineSuggestions.addAll(problems.map(
-            (jsonObj) => Annotation._fromJSON(jsonObj),
+            (jsonObj) => Annotation._fromJSON(jsonObj, pathPrefix: filesPrefix),
           ));
         }
       }
@@ -149,7 +141,9 @@ class Result {
         if (splitted.length != 2) return;
         switch (splitted[0]) {
           case 'platform':
-            supportedPlatforms.putIfAbsent('Flutter', () => []).add(splitted[1]);
+            supportedPlatforms
+                .putIfAbsent('Flutter', () => [])
+                .add(splitted[1]);
             break;
           case 'runtime':
             supportedPlatforms.putIfAbsent('Dart', () => []).add(splitted[1]);

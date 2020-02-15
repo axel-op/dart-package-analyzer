@@ -10,33 +10,34 @@ dynamic main(List<String> args) async {
   exitCode = 0;
 
   // Parsing user inputs and environment variables
-  final Inputs inputs = Inputs();
+  final Inputs _inputs = Inputs();
 
-  final Analysis analysis = await Analysis.queue(
-    commitSha: inputs.commitSha,
-    githubToken: inputs.githubToken,
-    repositorySlug: inputs.repositorySlug,
+  final Analysis _analysis = await Analysis.queue(
+    commitSha: _inputs.commitSha,
+    githubToken: _inputs.githubToken,
+    repositorySlug: _inputs.repositorySlug,
   );
 
-  Future<void> tryCancelAnalysis() async {
+  Future<void> _tryCancelAnalysis(dynamic cause) async {
     try {
-      await analysis.cancel();
+      await _analysis.cancel(cause: cause);
     } catch (e, s) {
       _writeError(e, s);
     }
   }
 
-  Future<void> _exitProgram([int code]) async {
-    await tryCancelAnalysis();
+  Future<void> _exitProgram([dynamic cause]) async {
+    await _tryCancelAnalysis(cause);
     await Future.wait<dynamic>([stderr.done, stdout.done]);
-    exit(code ?? exitCode);
+    stderr.writeln('Exiting with code $exitCode');
+    exit(exitCode);
   }
 
   try {
     // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
     await _runCommand('flutter', const <String>['config', '--no-analytics']);
 
-    await analysis.start();
+    await _analysis.start();
 
     // Executing the analysis
     stderr.writeln('Running analysis...');
@@ -47,39 +48,46 @@ dynamic main(List<String> args) async {
         '--no-warning',
         '--source',
         'path',
-        inputs.absolutePathToPackage,
+        _inputs.absolutePathToPackage,
       ],
     );
 
     if (panaResult.exitCode != 0) {
-      await _exitProgram(panaResult.exitCode);
+      stderr.writeln('Pana exited with code ${panaResult.exitCode}');
+      exitCode = panaResult.exitCode;
+      await _exitProgram();
     }
     if (panaResult.output == null) {
-      throw Exception('The pana command has returned no valid output.');
+      throw Exception('The pana command has returned no valid output.'
+          ' This should never happen.'
+          ' Please file an issue at https://github.com/axel-op/dart-package-analyzer/issues/new');
     }
 
     final Result result = Result.fromOutput(
-        jsonDecode(panaResult.output) as Map<String, dynamic>);
+      jsonDecode(panaResult.output) as Map<String, dynamic>,
+      filesPrefix: _inputs.pathFromRepoRoot,
+    );
 
     // Posting comments on GitHub
-    await analysis.complete(
-      pathPrefix: inputs.pathFromRepoRoot,
+    await _analysis.complete(
       result: result,
-      minAnnotationLevel: inputs.minAnnotationLevel,
+      minAnnotationLevel: _inputs.minAnnotationLevel,
     );
 
     // Setting outputs
-    await _runCommand('echo', [
-      '::set-output name=maintenance::${result.maintenanceScore.toStringAsFixed(2)}',
-    ]);
-    await _runCommand('echo', [
-      '::set-output name=health::${result.healthScore.toStringAsFixed(2)}',
-    ]);
+    await _setOutput('maintenance', result.maintenanceScore.toStringAsFixed(2));
+    await _setOutput('health', result.healthScore.toStringAsFixed(2));
   } catch (e) {
     //_writeErrors(e, s); // useless if we rethrow it
-    await tryCancelAnalysis();
+    await _tryCancelAnalysis(e);
     rethrow;
   }
+}
+
+/// Set an output for this Action.
+/// This output will be available for subsequent steps in the workflow.
+Future<void> _setOutput(String key, String value) async {
+  await _runCommand('echo', ['::set-output name=$key::$value']);
 }
 
 /// Runs a command and prints its outputs to stderr and stdout while running.

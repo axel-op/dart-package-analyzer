@@ -36,7 +36,7 @@ class _Input {
     final String v = Platform
         .environment['INPUT_${name.toUpperCase().replaceAll(" ", "_")}'];
     if ((v == null && !nullable) || (v != null && v.isEmpty && !canBeEmpty)) {
-      throw ArgumentError('No value were given for the argument \'$name\'.');
+      throw ArgumentError('No value was given for the argument \'$name\'.');
     }
     return v;
   }
@@ -62,8 +62,11 @@ class Inputs {
   final CheckRunAnnotationLevel minAnnotationLevel;
 
   factory Inputs() {
+    // Path to the folder containing the entire repository
     final String repoPath = _getRepoPath();
+    // Path to the package to analyze from the root of the repository
     final String packagePath = packagePathInput.value ?? '';
+    // Canonical path to the package to analyze
     final String sourcePath = path.canonicalize('$repoPath/$packagePath');
 
     return Inputs._(
