@@ -17,6 +17,8 @@ The pana package gives two scores: a [health score](https://pub.dev/help#health)
 
 You must include the `actions/checkout` step in your workflow. You **don't** need to run `pub get` or build a Dart container before.
 
+This action uses its own Dart container. I recommend you to run it in a separate job, as [jobs run in parallel](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobs).
+
 Here's an example:
 
 ```yml
@@ -59,7 +61,7 @@ This will slightly increase the time to pull the container that this action uses
 
 ### Using the scores in your workflow
 
-The health score and the maintenance score are set as outputs of this action. If you [set an id for the step of this action](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idsteps), you can use these outputs in the next steps of your workflow, as illustrated in this example:
+The health score and the maintenance score are set as outputs of this action. If you [set an id for this action](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idsteps), you can use these outputs in the next steps of your workflow, as illustrated in this example:
 
 ```yml
 name: Example workflow
