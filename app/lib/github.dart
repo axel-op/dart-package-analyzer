@@ -44,6 +44,16 @@ extension on Suggestion {
   }
 }
 
+extension on Result {
+  CheckRunConclusion getConclusion() =>
+      this.annotations.any((a) => a.level == CheckRunAnnotationLevel.failure) ||
+              this.generalSuggestions.any((s) => s.description
+                  .toLowerCase()
+                  .contains("exception: couldn't find a pubspec"))
+          ? CheckRunConclusion.failure
+          : CheckRunConclusion.success;
+}
+
 class Analysis {
   static String _getCheckRunName({String packageName}) => packageName != null
       ? 'Analysis of $packageName'
@@ -127,13 +137,7 @@ class Analysis {
     @required Result result,
     @required CheckRunAnnotationLevel minAnnotationLevel,
   }) async {
-    final CheckRunConclusion conclusion = testing
-        ? CheckRunConclusion.neutral
-        : result.annotations
-                .where((a) => a.level == CheckRunAnnotationLevel.failure)
-                .isNotEmpty
-            ? CheckRunConclusion.failure
-            : CheckRunConclusion.success;
+    final CheckRunConclusion conclusion = result.getConclusion();
     if (_checkRun == null) {
       if (conclusion == CheckRunConclusion.failure) {
         stderr.writeAll(const <String>[
