@@ -69,6 +69,11 @@ class Inputs {
     // Canonical path to the package to analyze
     final String sourcePath = path.canonicalize('$repoPath/$packagePath');
 
+    if (!Directory(sourcePath).existsSync()) {
+      throw ArgumentError.value(packagePath, packagePathInput.name,
+          'This directory doesn\'t exist in your repository');
+    }
+
     return Inputs._(
       absolutePathToPackage: sourcePath,
       commitSha: _getSHA(),
