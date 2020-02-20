@@ -3,31 +3,31 @@ import 'dart:io';
 
 import 'package:app/github.dart';
 import 'package:app/inputs.dart';
-import 'package:app/result.dart';
 import 'package:meta/meta.dart';
+import 'package:app/pana_result.dart';
 
 dynamic main(List<String> args) async {
   exitCode = 0;
 
   // Parsing user inputs and environment variables
-  final Inputs _inputs = Inputs();
+  final Inputs inputs = Inputs();
 
-  final Analysis _analysis = await Analysis.queue(
-    commitSha: _inputs.commitSha,
-    githubToken: _inputs.githubToken,
-    repositorySlug: _inputs.repositorySlug,
+  final Analysis analysis = await Analysis.queue(
+    commitSha: inputs.commitSha,
+    githubToken: inputs.githubToken,
+    repositorySlug: inputs.repositorySlug,
   );
 
-  Future<void> _tryCancelAnalysis(dynamic cause) async {
+  Future<void> tryCancelAnalysis(dynamic cause) async {
     try {
-      await _analysis.cancel(cause: cause);
+      await analysis.cancel(cause: cause);
     } catch (e, s) {
       _writeError(e, s);
     }
   }
 
   Future<void> _exitProgram([dynamic cause]) async {
-    await _tryCancelAnalysis(cause);
+    await tryCancelAnalysis(cause);
     await Future.wait<dynamic>([stderr.done, stdout.done]);
     stderr.writeln('Exiting with code $exitCode');
     exit(exitCode);
@@ -37,49 +37,54 @@ dynamic main(List<String> args) async {
     // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
     await _runCommand('flutter', const <String>['config', '--no-analytics']);
 
-    await _analysis.start();
+    await analysis.start();
 
     // Executing the analysis
-    stderr.writeln('Running analysis...');
-    final _ProcessResult panaResult = await _runCommand(
+    stderr.writeln('Running pana...');
+    final panaProcessResult = await _runCommand(
       'pana',
       <String>[
         '--scores',
         '--no-warning',
         '--source',
         'path',
-        _inputs.absolutePathToPackage,
+        inputs.paths.canonicalPathToPackage,
       ],
     );
 
-    if (panaResult.exitCode != 0) {
-      stderr.writeln('Pana exited with code ${panaResult.exitCode}');
-      exitCode = panaResult.exitCode;
+    if (panaProcessResult.exitCode != 0) {
+      stderr.writeln('Pana exited with code ${panaProcessResult.exitCode}');
+      exitCode = panaProcessResult.exitCode;
       await _exitProgram();
     }
-    if (panaResult.output == null) {
+    if (panaProcessResult.output == null) {
       throw Exception('The pana command has returned no valid output.'
           ' This should never happen.'
           ' Please file an issue at https://github.com/axel-op/dart-package-analyzer/issues/new');
     }
 
-    final Result result = Result.fromOutput(
-      jsonDecode(panaResult.output) as Map<String, dynamic>,
-      filesPrefix: _inputs.pathFromRepoRoot,
+    final panaResult = PanaResult.fromOutput(
+      jsonDecode(panaProcessResult.output) as Map<String, dynamic>,
+      paths: inputs.paths,
     );
 
     // Posting comments on GitHub
-    await _analysis.complete(
-      result: result,
-      minAnnotationLevel: _inputs.minAnnotationLevel,
+    await analysis.complete(
+      panaResult: panaResult,
+      minAnnotationLevel: inputs.minAnnotationLevel,
     );
 
     // Setting outputs
-    await _setOutput('maintenance', result.maintenanceScore.toStringAsFixed(2));
-    await _setOutput('health', result.healthScore.toStringAsFixed(2));
+    await _setOutput('health', panaResult.healthScore.toStringAsFixed(2));
+    await _setOutput(
+        'maintenance', panaResult.maintenanceScore.toStringAsFixed(2));
+    await _setOutput('errors', panaResult.analyzerResult.errorCount.toString());
+    await _setOutput(
+        'warnings', panaResult.analyzerResult.warningCount.toString());
+    await _setOutput('hints', panaResult.analyzerResult.hintCount.toString());
   } catch (e) {
     //_writeErrors(e, s); // useless if we rethrow it
-    await _tryCancelAnalysis(e);
+    await tryCancelAnalysis(e);
     rethrow;
   }
 }
@@ -94,22 +99,29 @@ Future<void> _setOutput(String key, String value) async {
 /// Returns a [_ProcessResult] with the sdtout output in a String.
 Future<_ProcessResult> _runCommand(
   String executable,
-  List<String> arguments,
-) async {
-  final List<Future<dynamic>> streamsToFree = [];
+  List<String> arguments, {
+  bool getStderr = false,
+}) async {
+  final streamsToFree = <Future<dynamic>>[];
   final Future<List<dynamic>> Function() freeStreams =
       () async => Future.wait<dynamic>(streamsToFree);
   try {
-    final Process process =
+    final process =
         await Process.start(executable, arguments, runInShell: true);
-    streamsToFree.add(stderr.addStream(process.stderr));
+    final Stream<List<int>> errStream = process.stderr.asBroadcastStream();
+    streamsToFree.add(stderr.addStream(errStream));
     final Stream<List<int>> outStream = process.stdout.asBroadcastStream();
     streamsToFree.add(stdout.addStream(outStream));
-    final Future<List<String>> output =
+    final Future<List<String>> outputStderr =
+        errStream.transform(utf8.decoder).toList();
+    final Future<List<String>> outputStdout =
         outStream.transform(utf8.decoder).toList();
-    final int code = await process.exitCode;
+    final code = await process.exitCode;
     await freeStreams();
-    return _ProcessResult(exitCode: code, output: (await output)?.join());
+    final output = StringBuffer();
+    if (getStderr) output.writeln((await outputStderr)?.join());
+    output.write((await outputStdout)?.join());
+    return _ProcessResult(exitCode: code, output: output.toString());
   } catch (e) {
     await freeStreams();
     rethrow;

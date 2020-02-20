@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:app/paths.dart';
 import 'package:github/github.dart';
 import 'package:meta/meta.dart';
-import 'package:path/path.dart' as path;
 
 const _Input githubTokenInput = _Input(
   'githubToken',
@@ -43,12 +43,6 @@ class _Input {
 }
 
 class Inputs {
-  /// Absolute path to the package that will be analyzed
-  final String absolutePathToPackage;
-
-  /// Relative path to the package from the root of the repository
-  final String pathFromRepoRoot;
-
   /// Token to call the GitHub API
   final String githubToken;
 
@@ -61,25 +55,23 @@ class Inputs {
   /// Minimum level of the diff annotations
   final CheckRunAnnotationLevel minAnnotationLevel;
 
-  factory Inputs() {
-    // Path to the folder containing the entire repository
-    final String repoPath = _getRepoPath();
-    // Path to the package to analyze from the root of the repository
-    final String packagePath = packagePathInput.value ?? '';
-    // Canonical path to the package to analyze
-    final String sourcePath = path.canonicalize('$repoPath/$packagePath');
+  final Paths paths;
 
-    if (!Directory(sourcePath).existsSync()) {
-      throw ArgumentError.value(packagePath, packagePathInput.name,
+  factory Inputs() {
+    final paths = Paths(packageRelativePath: packagePathInput.value ?? '');
+
+    if (!Directory(paths.canonicalPathToPackage).existsSync()) {
+      throw ArgumentError.value(
+          paths.canonicalPathToPackage,
+          packagePathInput.name,
           'This directory doesn\'t exist in your repository');
     }
 
     return Inputs._(
-      absolutePathToPackage: sourcePath,
-      commitSha: _getSHA(),
-      pathFromRepoRoot: path.relative(sourcePath, from: repoPath),
+      commitSha: _sha,
       githubToken: githubTokenInput.value,
-      minAnnotationLevel: _getMinAnnotationLevel(),
+      minAnnotationLevel: _minAnnotationLevel,
+      paths: paths,
       repositorySlug: Platform.environment['GITHUB_REPOSITORY'],
     );
   }
@@ -87,23 +79,12 @@ class Inputs {
   Inputs._({
     @required this.commitSha,
     @required this.githubToken,
-    @required this.pathFromRepoRoot,
-    @required this.absolutePathToPackage,
-    @required this.repositorySlug,
     @required this.minAnnotationLevel,
+    @required this.paths,
+    @required this.repositorySlug,
   });
 
-  static String _getRepoPath() {
-    const String envVarWorkspace = 'GITHUB_WORKSPACE';
-    final String repoPath = Platform.environment[envVarWorkspace];
-    if (repoPath == null) {
-      throw ArgumentError.value(repoPath, envVarWorkspace,
-          "Did you call 'actions/checkout' in a previous step? Invalid environment variable");
-    }
-    return repoPath;
-  }
-
-  static String _getSHA() {
+  static String get _sha {
     final String pathEventPayload = Platform.environment['GITHUB_EVENT_PATH'];
     final Map<String, dynamic> eventPayload =
         jsonDecode(File(pathEventPayload).readAsStringSync());
@@ -122,7 +103,7 @@ class Inputs {
     return commitSha;
   }
 
-  static CheckRunAnnotationLevel _getMinAnnotationLevel() {
+  static CheckRunAnnotationLevel get _minAnnotationLevel {
     const Map<String, CheckRunAnnotationLevel> annotationMapping = {
       'info': CheckRunAnnotationLevel.notice,
       'warning': CheckRunAnnotationLevel.warning,
