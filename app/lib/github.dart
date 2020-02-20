@@ -8,50 +8,91 @@ final bool testing = Platform.environment['INPUT_TESTING'] == 'true';
 
 extension on Annotation {
   CheckRunAnnotation toCheckRunAnnotation() => CheckRunAnnotation(
-        annotationLevel: this.level,
-        path: this.file,
-        title: this.errorType,
-        message: '[${this.errorCode ?? ""}]\n${this.description}',
-        startLine: this.line,
-        endLine: this.line,
-        startColumn: this.column,
-        endColumn: this.column,
+        annotationLevel: level,
+        path: file,
+        title: errorType,
+        message: '[${errorCode ?? ""}]\n${description}',
+        startLine: line,
+        endLine: line,
+        startColumn: column,
+        endColumn: column,
       );
 }
 
 extension on Suggestion {
   String toItemString() {
     final str = StringBuffer('\n* ');
-    if (this.title != null || this.loss != null) {
-      str.write('**');
-      if (this.title != null) {
-        final String trimmedTitle = this.title.trim();
-        str.write(trimmedTitle.substring(
-            0, trimmedTitle.length - (trimmedTitle.endsWith('.') ? 1 : 0)));
-      }
-      if (this.loss != null) {
-        str.write(' (${this.loss.toString()} points)');
-      }
-      str.write('**: ');
+    if (title != null) {
+      String trimmedTitle = title.trim();
+      trimmedTitle = trimmedTitle.substring(
+          0, trimmedTitle.length - (trimmedTitle.endsWith('.') ? 1 : 0));
+      str.write('**$trimmedTitle**  \n');
     }
-    str.write(this
-            .description
-            ?.trimRight()
-            ?.replaceAll(RegExp(r'\n```'), '')
-            ?.replaceAll(RegExp(r'(\n)+-? *'), '\n  * ') ??
-        '');
+    if (loss != null) {
+      str.write('**$loss points**  \n');
+    }
+    if (description != null) {
+      str.write(description
+          .trimRight()
+          .replaceAll(RegExp(r'\n```'), '')
+          .replaceAll(RegExp(r'(\n)+-? *'), '\n  * '));
+    }
     return str.toString();
   }
 }
 
 extension on Result {
   CheckRunConclusion getConclusion() =>
-      this.annotations.any((a) => a.level == CheckRunAnnotationLevel.failure) ||
-              this.generalSuggestions.any((s) => s.description
+      annotations.any((a) => a.level == CheckRunAnnotationLevel.failure) ||
+              generalSuggestions.any((s) => s.description
                   .toLowerCase()
                   .contains("exception: couldn't find a pubspec"))
           ? CheckRunConclusion.failure
           : CheckRunConclusion.success;
+
+  String buildSummary() {
+    final summary = StringBuffer();
+    summary.write('### Scores'
+        '\n* Health score: **${healthScore.toStringAsFixed(2)}%**'
+        '\n* Maintenance score: **${maintenanceScore.toStringAsFixed(2)}%**'
+        '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*');
+    final platforms = supportedPlatforms;
+    if (platforms.isNotEmpty) {
+      summary.write('\n### Supported platforms');
+    }
+    for (final platform in supportedPlatforms.keys) {
+      summary.write('\n* $platform');
+      platforms[platform].forEach((tag) => summary.write('\n  * `$tag`'));
+    }
+    return summary.toString();
+  }
+
+  String buildText() {
+    final Map<String, List<Suggestion>> suggestions = {
+      'General': generalSuggestions,
+      'Health': healthSuggestions,
+      'Maintenance': maintenanceSuggestions,
+    };
+    final text = StringBuffer();
+    if (suggestions.values.where((l) => l.isNotEmpty).isNotEmpty) {
+      text.write('### Issues');
+    }
+    for (final MapEntry<String, List<Suggestion>> entry
+        in suggestions.entries) {
+      if (entry.value.isNotEmpty) {
+        text.write('\n#### ${entry.key}');
+        entry.value.forEach((s) => text.write(s.toItemString()));
+      }
+    }
+    text.write('\n### Versions'
+        '\n* [Pana](https://pub.dev/packages/pana): ${panaVersion}'
+        '\n* Dart: ${dartSdkVersion}'
+        '\n* Flutter: ${flutterVersion}');
+    if (dartSdkVersion != dartSdkInFlutterVersion) {
+      text.write(' with Dart ${dartSdkInFlutterVersion}');
+    }
+    return text.toString();
+  }
 }
 
 class Analysis {
@@ -137,7 +178,7 @@ class Analysis {
     @required Result result,
     @required CheckRunAnnotationLevel minAnnotationLevel,
   }) async {
-    final CheckRunConclusion conclusion = result.getConclusion();
+    final conclusion = result.getConclusion();
     if (_checkRun == null) {
       if (conclusion == CheckRunConclusion.failure) {
         stderr.writeAll(const <String>[
@@ -152,18 +193,18 @@ class Analysis {
         .where((a) => a.level >= minAnnotationLevel)
         .map((a) => a.toCheckRunAnnotation())
         .toList();
-    final String title = result.packageName != null
+    final title = result.packageName != null
         ? 'Package analysis results for ${result.packageName}'
         : 'Package analysis results';
-    final String summary = (testing
+    final summary = (testing
             ? '**THIS ACTION HAS BEEN EXECUTED IN TEST MODE.**'
                 '\nConclusion = `$conclusion`\n'
             : '') +
-        _buildSummary(result);
-    final String text = _buildText(result);
+        result.buildSummary();
+    final text = result.buildText();
     int i = 0;
     do {
-      final bool isLastLoop = i + 50 >= annotations.length;
+      final isLastLoop = i + 50 >= annotations.length;
       await _client.checks.updateCheckRun(
         _repositorySlug,
         _checkRun,
@@ -186,47 +227,4 @@ class Analysis {
       i += 50;
     } while (i < annotations.length);
   }
-}
-
-String _buildSummary(Result result) {
-  final summary = StringBuffer();
-  summary.write('### Scores'
-      '\n* Health score: **${result.healthScore.toStringAsFixed(2)}%**'
-      '\n* Maintenance score: **${result.maintenanceScore.toStringAsFixed(2)}%**'
-      '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*');
-  final platforms = result.supportedPlatforms;
-  if (platforms.isNotEmpty) {
-    summary.write('\n### Supported platforms');
-  }
-  for (final platform in result.supportedPlatforms.keys) {
-    summary.write('\n* $platform');
-    platforms[platform].forEach((tag) => summary.write('\n  * `$tag`'));
-  }
-  return summary.toString();
-}
-
-String _buildText(Result result) {
-  final Map<String, List<Suggestion>> suggestions = {
-    'General': result.generalSuggestions,
-    'Health': result.healthSuggestions,
-    'Maintenance': result.maintenanceSuggestions,
-  };
-  final text = StringBuffer();
-  if (suggestions.values.where((l) => l.isNotEmpty).isNotEmpty) {
-    text.write('### Issues');
-  }
-  for (final MapEntry<String, List<Suggestion>> entry in suggestions.entries) {
-    if (entry.value.isNotEmpty) {
-      text.write('\n#### ${entry.key}');
-      entry.value.forEach((s) => text.write(s.toItemString()));
-    }
-  }
-  text.write('\n### Versions'
-          '\n* [Pana](https://pub.dev/packages/pana): ${result.panaVersion}'
-          '\n* Dart: ${result.dartSdkVersion}'
-          '\n* Flutter: ${result.flutterVersion}' +
-      (result.dartSdkVersion != result.dartSdkInFlutterVersion
-          ? ' with Dart ${result.dartSdkInFlutterVersion}'
-          : ''));
-  return text.toString();
 }
