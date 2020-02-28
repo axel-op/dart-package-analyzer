@@ -1,21 +1,29 @@
-name: 'Dart/Flutter Package Analyzer'
-description: 'Performs static analysis, linting, formatting, to compute the Pub score of your Dart/Flutter package.'
-author: 'axel-op'
+name: "Dart/Flutter Package Analyzer"
+description: "Performs static analysis, linting, formatting, to compute the Pub score of your Dart/Flutter package."
+author: "axel-op"
 branding:
-  color: 'blue'
-  icon: 'feather'
-inputs: 
+  color: "blue"
+  icon: "feather"
+inputs:
   githubToken:
-    description: 'Token to connect to Github. Use secrets.GITHUB_TOKEN'
+    description: "Token to connect to Github. Use secrets.GITHUB_TOKEN"
     required: true
   relativePath:
-    description: 'Path of your package in your repository'
+    description: "Path of your package in your repository"
     required: false
-    default: ''
+    default: ""
   minAnnotationLevel:
-    description: 'Minimum level for annotations. Accepted values are [info, warning, error].'
+    description: "Minimum level for annotations. Accepted values are [info, warning, error]."
     required: false
-    default: 'info'
+    default: "info"
+  customAnalysisOptions:
+    description: "Use a custom analysis options file."
+    required: false
+outputs:
+  maintenance:
+    description: "The maintenance score of your package"
+  health:
+    description: "The health score of your package"
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+  using: "docker"
+  image: "Dockerfile"

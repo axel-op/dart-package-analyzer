@@ -1,5 +1,4 @@
-# This workflow is for internal testing only, and its execution is slower than in regular conditions.
-# Please follow the README's instructions to use this action in your project.
+# Follow the README instructions to use this action in your repository.
 
 name: Test
 
@@ -44,13 +43,14 @@ jobs:
             echo Those scores are not perfect
           fi
 
-  test-with-path:
+  test-with-paths:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         path: ["test", "/test", "./test"]
         dockerfile: ["Dockerfile-parent", "with-full-sdk/Dockerfile-parent"]
+        analysisoptions: ["analysis_options.yaml", ""]
 
     steps:
       - uses: actions/checkout@v2
@@ -62,7 +62,7 @@ jobs:
           sudo docker exec test /bin/bash -c "mkdir workspace"
           sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/workspace/test
           sudo docker cp ${GITHUB_EVENT_PATH} test:/workspace/event.json
-          sudo docker exec -e GITHUB_EVENT_PATH=/workspace/event.json -e INPUT_RELATIVEPATH=${{ matrix.path }} -e GITHUB_WORKSPACE=/workspace -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+          sudo docker exec -e GITHUB_EVENT_PATH=/workspace/event.json -e INPUT_RELATIVEPATH=${{ matrix.path }} -e INPUT_CUSTOMANALYSISOPTIONS=${{ matrix.analysisoptions }} -e GITHUB_WORKSPACE=/workspace -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
 
   test-pubspec-error:
     runs-on: ubuntu-latest

@@ -1,10 +1,10 @@
 import 'dart:io';
 
+import 'package:app/annotation.dart';
 import 'package:app/result.dart';
+import 'package:app/test_mode.dart';
 import 'package:github/github.dart';
 import 'package:meta/meta.dart';
-
-final bool testing = Platform.environment['INPUT_TESTING'] == 'true';
 
 extension on Annotation {
   CheckRunAnnotation toCheckRunAnnotation() => CheckRunAnnotation(

@@ -1,16 +1,7 @@
-import 'package:github/github.dart';
+import 'package:app/annotation.dart';
+import 'package:app/extensions/map.dart';
+import 'package:app/paths.dart';
 import 'package:meta/meta.dart';
-import 'package:path/path.dart' as path;
-
-extension on Map<String, dynamic> {
-  bool containsNonNull(String key) => this[key] != null;
-}
-
-const Map<String, CheckRunAnnotationLevel> _annotationLevels = {
-  'ERROR': CheckRunAnnotationLevel.failure,
-  'WARNING': CheckRunAnnotationLevel.warning,
-  'INFO': CheckRunAnnotationLevel.notice,
-};
 
 class Suggestion {
   final double loss;
@@ -21,27 +12,6 @@ class Suggestion {
       : description = json['description'],
         loss = json['score'],
         title = json['title'];
-}
-
-class Annotation {
-  final String file;
-  final int line;
-  final int column;
-  final String description;
-  final CheckRunAnnotationLevel level;
-  final String errorType;
-  final String errorCode;
-
-  Annotation._fromJSON(Map<String, dynamic> json, {@required String pathPrefix})
-      : description = json['description'],
-        line = json['line'],
-        file = json.containsNonNull('file')
-            ? path.normalize("$pathPrefix/${json['file']}")
-            : null,
-        column = json['col'],
-        level = _annotationLevels[json['severity']],
-        errorCode = json['errorCode'],
-        errorType = json['errorType'];
 }
 
 class Result {
@@ -75,7 +45,7 @@ class Result {
 
   factory Result.fromOutput(
     Map<String, dynamic> output, {
-    @required String filesPrefix,
+    @required Paths paths,
   }) {
     final String packageName = output['packageName'];
     final Map<String, dynamic> runtimeInfo = output['runtimeInfo'];
@@ -128,7 +98,7 @@ class Result {
               List.castFrom<dynamic, Map<String, dynamic>>(
                   details['codeProblems']);
           lineSuggestions.addAll(problems.map(
-            (jsonObj) => Annotation._fromJSON(jsonObj, pathPrefix: filesPrefix),
+            (jsonObj) => Annotation.fromPana(jsonObj, paths: paths),
           ));
         }
       }

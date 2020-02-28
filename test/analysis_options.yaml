@@ -1,0 +1,46 @@
+# Defines a default set of lint rules enforced for
+# projects at Google. For details and rationale,
+# see https://github.com/dart-lang/pedantic#enabled-lints.
+# include: package:pedantic/analysis_options.yaml
+include: package:extra_pedantic/analysis_options.yaml
+
+# For lint rules and documentation, see http://dart-lang.github.io/linter/lints.
+# Uncomment to specify additional rules.
+analyzer:
+  strong-mode:
+    implicit-casts: true
+
+linter:
+  rules:
+    - camel_case_types
+
+    - unnecessary_const
+    - unnecessary_new
+
+    - prefer_const_declarations
+    - prefer_const_constructors
+
+    - cancel_subscriptions
+    - close_sinks
+
+    - directives_ordering
+
+    - prefer_final_in_for_each
+    - prefer_final_fields
+    - prefer_final_locals
+
+    - provide_deprecation_message
+
+    - prefer_constructors_over_static_methods
+
+    - prefer_expression_function_bodies
+
+    - prefer_typing_uninitialized_variables
+    - always_declare_return_types
+
+    - annotate_overrides
+
+    - valid_regexps
+#analyzer:
+#   exclude:
+#     - path/to/excluded/files/**
