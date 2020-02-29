@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:app/annotation.dart';
+import 'package:app/analyzer_result.dart';
 import 'package:app/github.dart';
 import 'package:app/inputs.dart';
-import 'package:app/result.dart';
 import 'package:meta/meta.dart';
+import 'package:app/pana_result.dart';
 
 dynamic main(List<String> args) async {
   exitCode = 0;
@@ -42,7 +42,7 @@ dynamic main(List<String> args) async {
 
     // Executing the analysis
     stderr.writeln('Running pana...');
-    final panaResult = await _runCommand(
+    final panaProcessResult = await _runCommand(
       'pana',
       <String>[
         '--scores',
@@ -53,26 +53,27 @@ dynamic main(List<String> args) async {
       ],
     );
 
-    if (panaResult.exitCode != 0) {
-      stderr.writeln('Pana exited with code ${panaResult.exitCode}');
-      exitCode = panaResult.exitCode;
+    if (panaProcessResult.exitCode != 0) {
+      stderr.writeln('Pana exited with code ${panaProcessResult.exitCode}');
+      exitCode = panaProcessResult.exitCode;
       await _exitProgram();
     }
-    if (panaResult.output == null) {
+    if (panaProcessResult.output == null) {
       throw Exception('The pana command has returned no valid output.'
           ' This should never happen.'
           ' Please file an issue at https://github.com/axel-op/dart-package-analyzer/issues/new');
     }
 
-    final result = Result.fromOutput(
-      jsonDecode(panaResult.output) as Map<String, dynamic>,
+    final panaResult = PanaResult.fromOutput(
+      jsonDecode(panaProcessResult.output) as Map<String, dynamic>,
       paths: inputs.paths,
     );
 
+    AnalyzerResult analyzerResult;
     // Executing dartanalyzer if an analysis options file is provided
     if (inputs.paths.canonicalPathToAnalysisOptions != null) {
-      stderr.writeln('Running dartanalyzer...');
-      final analyzerResult = await _runCommand(
+      stderr.writeln('\nRunning dartanalyzer...');
+      final processResult = await _runCommand(
         'dartanalyzer',
         <String>[
           '--format',
@@ -83,23 +84,23 @@ dynamic main(List<String> args) async {
         ],
         getStderr: true,
       );
-      result.annotations.clear();
-      analyzerResult.output
-          .split('\n')
-          .where((line) => line.isNotEmpty)
-          .forEach((line) => result.annotations
-              .add(Annotation.fromAnalyzer(line, paths: inputs.paths)));
+      analyzerResult = AnalyzerResult.fromOutput(
+        processResult.output,
+        paths: inputs.paths,
+      );
     }
 
     // Posting comments on GitHub
     await analysis.complete(
-      result: result,
+      panaResult: panaResult,
+      analyzerResult: analyzerResult,
       minAnnotationLevel: inputs.minAnnotationLevel,
     );
 
     // Setting outputs
-    await _setOutput('maintenance', result.maintenanceScore.toStringAsFixed(2));
-    await _setOutput('health', result.healthScore.toStringAsFixed(2));
+    await _setOutput(
+        'maintenance', panaResult.maintenanceScore.toStringAsFixed(2));
+    await _setOutput('health', panaResult.healthScore.toStringAsFixed(2));
   } catch (e) {
     //_writeErrors(e, s); // useless if we rethrow it
     await tryCancelAnalysis(e);

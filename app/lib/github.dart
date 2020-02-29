@@ -1,7 +1,8 @@
 import 'dart:io';
 
+import 'package:app/analyzer_result.dart';
 import 'package:app/annotation.dart';
-import 'package:app/result.dart';
+import 'package:app/pana_result.dart';
 import 'package:app/test_mode.dart';
 import 'package:github/github.dart';
 import 'package:meta/meta.dart';
@@ -26,10 +27,10 @@ extension on Suggestion {
       String trimmedTitle = title.trim();
       trimmedTitle = trimmedTitle.substring(
           0, trimmedTitle.length - (trimmedTitle.endsWith('.') ? 1 : 0));
-      str.write('**$trimmedTitle**  \n');
+      str.writeln('**$trimmedTitle**  ');
     }
     if (loss != null) {
-      str.write('**$loss points**  \n');
+      str.writeln('**$loss points**  ');
     }
     if (description != null) {
       str.write(description
@@ -41,21 +42,45 @@ extension on Suggestion {
   }
 }
 
-extension on Result {
-  CheckRunConclusion getConclusion() =>
-      annotations.any((a) => a.level == CheckRunAnnotationLevel.failure) ||
-              generalSuggestions.any((s) => s.description
-                  .toLowerCase()
-                  .contains("exception: couldn't find a pubspec"))
+extension on AnalyzerResult {
+  CheckRunConclusion get conclusion =>
+      annotations.any((a) => a.level == CheckRunAnnotationLevel.failure)
           ? CheckRunConclusion.failure
           : CheckRunConclusion.success;
 
-  String buildSummary() {
-    final summary = StringBuffer();
-    summary.write('### Scores'
-        '\n* Health score: **${healthScore.toStringAsFixed(2)}%**'
-        '\n* Maintenance score: **${maintenanceScore.toStringAsFixed(2)}%**'
-        '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*');
+  String getSummary({
+    @required bool usedForAnnotations,
+    @required bool usedByPana,
+  }) {
+    final summary = StringBuffer('* **With `$options`:**  ');
+    if (usedByPana) {
+      summary.write('\n(used by pana)  ');
+    }
+    if (usedForAnnotations) {
+      summary.write('\n(used for annotations)');
+    }
+    summary
+      ..write('\n  * Errors: **$errorCount**')
+      ..write('\n  * Warnings: **$warningCount**')
+      ..write('\n  * Hints: **$hintCount**');
+    return summary.toString();
+  }
+}
+
+extension on PanaResult {
+  CheckRunConclusion get conclusion =>
+      generalSuggestions.any((s) => s.description
+              .toLowerCase()
+              .contains("exception: couldn't find a pubspec"))
+          ? CheckRunConclusion.failure
+          : analyzerResult.conclusion;
+
+  String get summary {
+    final summary = StringBuffer()
+      ..write('### Scores'
+          '\n* Health score: **${healthScore.toStringAsFixed(2)}%**'
+          '\n* Maintenance score: **${maintenanceScore.toStringAsFixed(2)}%**'
+          '\n\n*Note that 50% of the overall score of your package on the [Pub site](https://pub.dev/help) will be based on its popularity ; 30% on its health score ; and 20% on its maintenance score.*');
     final platforms = supportedPlatforms;
     if (platforms.isNotEmpty) {
       summary.write('\n### Supported platforms');
@@ -67,7 +92,7 @@ extension on Result {
     return summary.toString();
   }
 
-  String buildText() {
+  String get text {
     final Map<String, List<Suggestion>> suggestions = {
       'General': generalSuggestions,
       'Health': healthSuggestions,
@@ -175,10 +200,13 @@ class Analysis {
   }
 
   Future<void> complete({
-    @required Result result,
+    @required PanaResult panaResult,
+    @required AnalyzerResult analyzerResult,
     @required CheckRunAnnotationLevel minAnnotationLevel,
   }) async {
-    final conclusion = result.getConclusion();
+    final conclusion = analyzerResult != null
+        ? analyzerResult.conclusion
+        : panaResult.conclusion;
     if (_checkRun == null) {
       if (conclusion == CheckRunConclusion.failure) {
         stderr.writeAll(const <String>[
@@ -189,26 +217,42 @@ class Analysis {
       }
       return;
     }
-    final List<CheckRunAnnotation> annotations = result.annotations
-        .where((a) => a.level >= minAnnotationLevel)
-        .map((a) => a.toCheckRunAnnotation())
-        .toList();
-    final title = result.packageName != null
-        ? 'Package analysis results for ${result.packageName}'
-        : 'Package analysis results';
-    final summary = (testing
-            ? '**THIS ACTION HAS BEEN EXECUTED IN TEST MODE.**'
-                '\nConclusion = `$conclusion`\n'
-            : '') +
-        result.buildSummary();
-    final text = result.buildText();
+    final List<CheckRunAnnotation> annotations =
+        (analyzerResult?.annotations ?? panaResult.analyzerResult.annotations)
+            .where((a) => a.level >= minAnnotationLevel)
+            .map((a) => a.toCheckRunAnnotation())
+            .toSet()
+            .toList();
+    final title = StringBuffer('Package analysis results');
+    if (panaResult.packageName != null) {
+      title.write(' for ${panaResult.packageName}');
+    }
+    final summary = StringBuffer();
+    if (testing) {
+      summary
+        ..writeln('**THIS ACTION HAS BEEN EXECUTED IN TEST MODE.**')
+        ..writeln('**Conclusion = `$conclusion`**');
+    }
+    summary
+      ..write(panaResult.summary)
+      ..writeln('\n### Dartanalyzer')
+      ..writeln(panaResult.analyzerResult.getSummary(
+        usedByPana: true,
+        usedForAnnotations: analyzerResult == null,
+      ));
+    if (analyzerResult != null) {
+      summary.writeln(analyzerResult.getSummary(
+        usedByPana: false,
+        usedForAnnotations: true,
+      ));
+    }
     int i = 0;
     do {
       final isLastLoop = i + 50 >= annotations.length;
       await _client.checks.updateCheckRun(
         _repositorySlug,
         _checkRun,
-        name: _getCheckRunName(packageName: result.packageName),
+        name: _getCheckRunName(packageName: panaResult.packageName),
         status:
             isLastLoop ? CheckRunStatus.completed : CheckRunStatus.inProgress,
         startedAt: _startTime,
@@ -217,9 +261,9 @@ class Analysis {
             ? (testing ? CheckRunConclusion.neutral : conclusion)
             : null,
         output: CheckRunOutput(
-          title: title,
-          summary: summary,
-          text: text,
+          title: title.toString(),
+          summary: summary.toString(),
+          text: panaResult.text,
           annotations:
               annotations.sublist(i, isLastLoop ? annotations.length : i + 50),
         ),

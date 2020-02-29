@@ -1,3 +1,4 @@
+import 'package:app/analyzer_result.dart';
 import 'package:app/annotation.dart';
 import 'package:app/extensions/map.dart';
 import 'package:app/paths.dart';
@@ -14,7 +15,7 @@ class Suggestion {
         title = json['title'];
 }
 
-class Result {
+class PanaResult {
   final String packageName;
   final double healthScore;
   final double maintenanceScore;
@@ -25,10 +26,10 @@ class Result {
   final List<Suggestion> generalSuggestions;
   final List<Suggestion> healthSuggestions;
   final List<Suggestion> maintenanceSuggestions;
-  final List<Annotation> annotations;
   final Map<String, List<String>> supportedPlatforms;
+  final AnalyzerResult analyzerResult;
 
-  Result._({
+  PanaResult._({
     @required this.packageName,
     @required this.healthScore,
     @required this.maintenanceScore,
@@ -36,14 +37,14 @@ class Result {
     @required this.generalSuggestions,
     @required this.healthSuggestions,
     @required this.maintenanceSuggestions,
-    @required this.annotations,
     @required this.dartSdkInFlutterVersion,
     @required this.dartSdkVersion,
     @required this.flutterVersion,
     @required this.supportedPlatforms,
+    @required this.analyzerResult,
   });
 
-  factory Result.fromOutput(
+  factory PanaResult.fromOutput(
     Map<String, dynamic> output, {
     @required Paths paths,
   }) {
@@ -122,7 +123,7 @@ class Result {
       });
     }
 
-    return Result._(
+    return PanaResult._(
       packageName: packageName,
       panaVersion: panaVersion,
       maintenanceScore: maintenanceScore,
@@ -130,11 +131,14 @@ class Result {
       generalSuggestions: generalSuggestions,
       healthSuggestions: healthSuggestions,
       maintenanceSuggestions: maintenanceSuggestions,
-      annotations: lineSuggestions,
       flutterVersion: flutterVersion,
       dartSdkInFlutterVersion: dartInFlutterVersion,
       dartSdkVersion: dartSdkVersion,
       supportedPlatforms: supportedPlatforms,
+      analyzerResult: AnalyzerResult.fromAnnotations(
+        lineSuggestions,
+        options: '[pedantic](https://pub.dev/packages/pedantic)',
+      ),
     );
   }
 }

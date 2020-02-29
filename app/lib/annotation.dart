@@ -37,6 +37,23 @@ class Annotation {
     assertion(line != null);
   }
 
+  @override
+  bool operator ==(dynamic other) {
+    if (other is Annotation) {
+      return other.file == file &&
+          other.level == level &&
+          other.errorType == errorType &&
+          other.errorCode == errorCode &&
+          other.line == line &&
+          other.column == column &&
+          other.description == description;
+    }
+    return false;
+  }
+
+  @override
+  int get hashCode => file.hashCode;
+
   factory Annotation.fromPana(
     Map<String, dynamic> json, {
     @required Paths paths,
