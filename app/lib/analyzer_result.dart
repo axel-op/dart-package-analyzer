@@ -45,9 +45,7 @@ class AnalyzerResult {
             .where((line) => line.isNotEmpty)
             .map((line) => Annotation.fromAnalyzer(line, paths: paths))
             .toList(),
-        options: path.relative(
-          paths.canonicalPathToAnalysisOptions,
-          from: paths.canonicalPathToRepoRoot,
-        ),
+        options:
+            '`${path.relative(paths.canonicalPathToAnalysisOptions, from: paths.canonicalPathToRepoRoot)}`',
       );
 }

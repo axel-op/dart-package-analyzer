@@ -52,7 +52,7 @@ extension on AnalyzerResult {
     @required bool usedForAnnotations,
     @required bool usedByPana,
   }) {
-    final summary = StringBuffer('* **With `$options`:**  ');
+    final summary = StringBuffer('* **With $options:**  ');
     if (usedByPana) {
       summary.write('\n(used by pana)  ');
     }

@@ -98,9 +98,15 @@ dynamic main(List<String> args) async {
     );
 
     // Setting outputs
+    await _setOutput('health', panaResult.healthScore.toStringAsFixed(2));
     await _setOutput(
         'maintenance', panaResult.maintenanceScore.toStringAsFixed(2));
-    await _setOutput('health', panaResult.healthScore.toStringAsFixed(2));
+    await _setOutput('errors',
+        (analyzerResult ?? panaResult.analyzerResult).errorCount.toString());
+    await _setOutput('warnings',
+        (analyzerResult ?? panaResult.analyzerResult).warningCount.toString());
+    await _setOutput('hints',
+        (analyzerResult ?? panaResult.analyzerResult).hintCount.toString());
   } catch (e) {
     //_writeErrors(e, s); // useless if we rethrow it
     await tryCancelAnalysis(e);

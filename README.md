@@ -19,7 +19,18 @@ You must include the `actions/checkout` step in your workflow. You **don't** nee
 
 This action uses its own Dart container. I recommend you to run it in a separate job, as [jobs run in parallel](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobs).
 
-Here's an example:
+### Inputs
+
+* `githubToken`  
+Required to post a report on GitHub. *Note:* the secret [`GITHUB_TOKEN`](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/authenticating-with-the-github_token) is already provided by GitHub and you don't have to set it up yourself.
+* `relativePath`  
+If your package isn't at the root of the repository, set this input to indicate its location.
+* `minAnnotationLevel`  
+If you only want to see annotations for important errors, try to set this input to another value. Accepted values are `info`, `warning` and `error`. Defaults to `info` that posts all the annotations.
+* `customAnalysisOptions`  
+Pana uses [pedantic](https://pub.dev/packages/pedantic) to lint your code. You can specify your own [analysis options](https://dart.dev/guides/language/analysis-options) file with this input. Setting this input will run the [dartanalyzer](https://dart.dev/tools/dartanalyzer) tool with your file, separately from pana. This will affect the annotations on the diff but not your scores, as pana will still use pedantic. The path to this file must be relative to your package (i.e. to `relativePath` if you set it, to the root of your repo otherwise).
+
+Example:
 
 ```yml
 name: Example workflow
@@ -40,28 +51,28 @@ jobs:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           # Optional:
           relativePath: packages/mypackage/
+          customAnalysisOptions: analysis_options.yaml
           minAnnotationLevel: info
 ```
 
-* `githubToken` input is required to post a report on GitHub. *Note:* the secret [`GITHUB_TOKEN`](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/authenticating-with-the-github_token) is already provided by GitHub and you don't have to set it up yourself.
-* If your package isn't at the root of the repository, use `relativePath` to indicate its location.
-* If you only want to see annotations for important errors, try to change the `minAnnotationLevel` parameter to another value. Accepted values are `info`, `warning` and `error`. Defaults to `info` that posts all the annotations.
+### Outputs
 
-### Using the full Dart SDK
+You can use the outputs in the next steps of your workfow by [associating an id to this action](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idsteps).
 
-By default, this action uses the Dart SDK embedded in Flutter. It may not be the latest version of the Dart SDK. To use the latest version of the full Dart SDK, append `/with-full-sdk` to the path of this action.
+In the following steps, you can retrieve an output with `${{ steps.the_id.outputs.name_of_output }}` (see the example below).
 
-In the example above, you would edit line 10 like this:
+* `health`  
+The "health" score given by pana.
+* `maintenance`  
+The "maintenance" score given by pana.
+* `errors`  
+Number of annotations with error level.
+* `warnings`  
+Number of annotations with warning level.
+* `hints`  
+Number of annotations with hint (= info) level.
 
-```yml
-      - uses: axel-op/dart-package-analyzer/with-full-sdk@stable
-```
-
-This will slightly increase the time to pull the container that this action uses.
-
-### Using the scores in your workflow
-
-The health score and the maintenance score are set as outputs of this action. If you [set an id for this action](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idsteps), you can use these outputs in the next steps of your workflow, as illustrated in this example:
+Example:
 
 ```yml
 name: Example workflow
@@ -93,6 +104,18 @@ jobs:
             exit 1
           fi
 ```
+
+### Using the full Dart SDK
+
+By default, this action uses the Dart SDK embedded in Flutter. It may not be the latest version of the Dart SDK. To use the latest version of the full Dart SDK, append `/with-full-sdk` to the path of this action.
+
+In the example above, you would edit line 10 like this:
+
+```yml
+      - uses: axel-op/dart-package-analyzer/with-full-sdk@stable
+```
+
+This will slightly increase the time to pull the container that this action uses.
 
 ## Examples
 

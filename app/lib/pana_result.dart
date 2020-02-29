@@ -137,7 +137,7 @@ class PanaResult {
       supportedPlatforms: supportedPlatforms,
       analyzerResult: AnalyzerResult.fromAnnotations(
         lineSuggestions,
-        options: '[pedantic](https://pub.dev/packages/pedantic)',
+        options: '[`pedantic`](https://pub.dev/packages/pedantic)',
       ),
     );
   }
