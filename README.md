@@ -92,6 +92,7 @@ jobs:
       # You can then use this id to retrieve the outputs in the next steps.
       # The following step shows how to exit the workflow with an error if a score is below 100:
       - name: Check scores
+        # NB: "analysis" is the id set above. Replace it with the one you used if different.
         run: |
           MAINTENANCE_SCORE=${{ steps.analysis.outputs.maintenance }}
           HEALTH_SCORE=${{ steps.analysis.outputs.health }}
