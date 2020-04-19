@@ -7,6 +7,11 @@ import 'package:app/test_mode.dart';
 import 'package:github/github.dart';
 import 'package:meta/meta.dart';
 
+extension on String {
+  bool equalsIgnoreCase(String other) =>
+      other.toLowerCase() == this.toLowerCase();
+}
+
 extension on Annotation {
   CheckRunAnnotation toCheckRunAnnotation() => CheckRunAnnotation(
         annotationLevel: level,
@@ -59,6 +64,15 @@ extension on AnalyzerResult {
 }
 
 extension on PanaResult {
+  static const tagsDocs = {
+    'native-jit':
+        'Can be run with the dart vm in jit mode. (Can use dart:io and dart:mirrors)',
+    'native-aot':
+        'Can be aot compiled with eg. dart2native (Can use dart:io but not dart:mirrors)',
+    'web':
+        'Can be compiled with DDC and dart2js. (Can use dart:html and friends, not dart:io, dart:mirrors, dart:ffi, etc.)',
+  };
+
   CheckRunConclusion get conclusion =>
       generalSuggestions.any((s) => s.description
               .toLowerCase()
@@ -78,7 +92,12 @@ extension on PanaResult {
     }
     for (final platform in supportedPlatforms.keys) {
       summary.write('\n* $platform');
-      platforms[platform].forEach((tag) => summary.write('\n  * `$tag`'));
+      platforms[platform].forEach((tag) {
+        summary.write('\n  * `$tag`');
+        if (platform.equalsIgnoreCase('dart') && tagsDocs.containsKey(tag)) {
+          summary.write('  \n${tagsDocs[tag]}');
+        }
+      });
     }
     return summary.toString();
   }

@@ -2,6 +2,7 @@ import 'package:app/analyzer_result.dart';
 import 'package:app/annotation.dart';
 import 'package:app/extensions/map.dart';
 import 'package:app/paths.dart';
+import 'package:app/test_mode.dart';
 import 'package:meta/meta.dart';
 
 class Suggestion {
@@ -107,6 +108,7 @@ class PanaResult {
 
     final List<dynamic> tags = output['tags'];
     if (tags != null) {
+      if (testing) tags.add('runtime:web');
       List.castFrom<dynamic, String>(tags).forEach((tag) {
         final splitted = tag.split(":");
         if (splitted.length != 2) return;
