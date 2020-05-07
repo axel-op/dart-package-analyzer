@@ -3,44 +3,24 @@ import 'dart:io';
 
 import 'package:app/paths.dart';
 import 'package:github/github.dart';
+import 'package:github_actions_toolkit/github_actions_toolkit.dart';
 import 'package:meta/meta.dart';
 
-const _Input githubTokenInput = _Input(
+const Input githubTokenInput = Input(
   'githubToken',
-  nullable: false,
+  isRequired: true,
   canBeEmpty: false,
 ),
-    packagePathInput = _Input(
+    packagePathInput = Input(
   'relativePath',
-  nullable: true,
+  isRequired: false,
   canBeEmpty: true,
 ),
-    minAnnotationLevelInput = _Input(
+    minAnnotationLevelInput = Input(
   'minAnnotationLevel',
-  nullable: false,
+  isRequired: true,
   canBeEmpty: false,
 );
-
-class _Input {
-  final String name;
-  final bool nullable;
-  final bool canBeEmpty;
-
-  const _Input(
-    this.name, {
-    @required this.nullable,
-    @required this.canBeEmpty,
-  });
-
-  String get value {
-    final String v = Platform
-        .environment['INPUT_${name.toUpperCase().replaceAll(" ", "_")}'];
-    if ((v == null && !nullable) || (v != null && v.isEmpty && !canBeEmpty)) {
-      throw ArgumentError('No value was given for the argument \'$name\'.');
-    }
-    return v;
-  }
-}
 
 class Inputs {
   /// Token to call the GitHub API
