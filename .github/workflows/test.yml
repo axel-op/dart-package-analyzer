@@ -17,21 +17,18 @@ jobs:
   test-outputs:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        dockerfile: ["Dockerfile-parent", "with-full-sdk/Dockerfile-parent"]
-
     steps:
       - uses: actions/checkout@v2
-      - name: Build container
-        run: sudo docker build -f ${{ matrix.dockerfile }} -t $IMAGE .
+      - name: Install Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
       - name: Run tests
         id: steptest
-        run: |
-          sudo docker run -d -t --name test $IMAGE
-          sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
-          sudo docker cp ${GITHUB_EVENT_PATH} test:/event.json
-          sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+        uses: ./
+        with:
+          testing: true
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
       - name: Test outputs
         run: |
           MAINT=${{ steps.steptest.outputs.maintenance }}
@@ -49,36 +46,33 @@ jobs:
     strategy:
       matrix:
         path: ["test", "/test", "./test"]
-        dockerfile: ["Dockerfile-parent", "with-full-sdk/Dockerfile-parent"]
-        analysisoptions: ["analysis_options.yaml", ""]
 
     steps:
       - uses: actions/checkout@v2
-      - name: Build container
-        run: sudo docker build -f ${{ matrix.dockerfile }} -t $IMAGE .
+      - name: Install Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
       - name: Run tests
-        run: |
-          sudo docker run -d -t --name test $IMAGE
-          sudo docker exec test /bin/bash -c "mkdir workspace"
-          sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/workspace/test
-          sudo docker cp ${GITHUB_EVENT_PATH} test:/workspace/event.json
-          sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/workspace/event.json -e INPUT_RELATIVEPATH=${{ matrix.path }} -e INPUT_CUSTOMANALYSISOPTIONS=${{ matrix.analysisoptions }} -e GITHUB_WORKSPACE=/workspace -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+        uses: ./
+        with:
+          testing: true
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          relativePath: ${{ matrix.path }}
 
   test-pubspec-error:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        dockerfile: ["Dockerfile-parent", "with-full-sdk/Dockerfile-parent"]
-
     steps:
       - uses: actions/checkout@v2
-      - name: Build container
-        run: sudo docker build -f ${{ matrix.dockerfile }} -t $IMAGE .
+      - name: Install Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - run: rm ${GITHUB_WORKSPACE}/test/pubspec.yaml
       - name: Run tests
-        run: |
-          sudo docker run -d -t --name test $IMAGE
-          sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
-          sudo docker cp ${GITHUB_EVENT_PATH} test:/event.json
-          sudo docker exec test /bin/bash -c "rm /test/pubspec.yaml"
-          sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+        uses: ./
+        with:
+          testing: true
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          relativePath: test
