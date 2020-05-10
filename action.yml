@@ -28,5 +28,5 @@ outputs:
   hints:
     description: "Number of annotations with hint (= info) level"
 runs:
-  using: "docker"
-  image: "Dockerfile"
+  using: "node12"
+  main: "index.js"
