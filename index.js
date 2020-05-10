@@ -3,9 +3,11 @@ const exec = require('@actions/exec');
 
 async function run() {
     try {
-        const flutterHome = process.env.FLUTTER_HOME;
-        const workspace = process.env.GITHUB_WORKSPACE;
-        core.addPath(`${flutterHome}/.pub-cache/bin`);
+        const env = process.env;
+        const workspace = env.GITHUB_WORKSPACE;
+        for (const home in [env.HOME, env.FLUTTER_HOME]) {
+            core.addPath(`${home}/.pub-cache/bin`);
+        }
         await core.group(
             'Installing pana',
             async () => await exec.exec('pub', ['global', 'activate', 'pana'])
