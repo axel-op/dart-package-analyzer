@@ -6,6 +6,8 @@ import 'package:app/inputs.dart';
 import 'package:app/pana_result.dart';
 import 'package:github_actions_toolkit/github_actions_toolkit.dart' as gaction;
 
+const logger = gaction.log;
+
 dynamic main(List<String> args) async {
   exitCode = 0;
 
@@ -29,18 +31,21 @@ dynamic main(List<String> args) async {
   Future<void> _exitProgram([dynamic cause]) async {
     await tryCancelAnalysis(cause);
     await Future.wait<dynamic>([stderr.done, stdout.done]);
-    stderr.writeln('Exiting with code $exitCode');
+    logger.error('Exiting with code $exitCode');
     exit(exitCode);
   }
 
   try {
     // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
-    await gaction.exec('flutter', const <String>['config', '--no-analytics']);
+    await logger.group(
+      'Disabling Flutter analytics',
+      () => gaction.exec('flutter', const <String>['config', '--no-analytics']),
+    );
 
     await analysis.start();
 
     // Executing the analysis
-    stderr.writeln('Running pana...');
+    logger.startGroup('Running pana');
     final panaProcessResult = await gaction.exec(
       'pana',
       <String>[
@@ -51,9 +56,10 @@ dynamic main(List<String> args) async {
         inputs.paths.canonicalPathToPackage,
       ],
     );
+    logger.endGroup();
 
     if (panaProcessResult.exitCode != 0) {
-      stderr.writeln('Pana exited with code ${panaProcessResult.exitCode}');
+      logger.error('Pana exited with code ${panaProcessResult.exitCode}');
       exitCode = panaProcessResult.exitCode;
       await _exitProgram();
     }
@@ -69,20 +75,29 @@ dynamic main(List<String> args) async {
     );
 
     // Posting comments on GitHub
-    await analysis.complete(
-      panaResult: panaResult,
-      minAnnotationLevel: inputs.minAnnotationLevel,
+    await logger.group(
+      'Publishing report',
+      () async => analysis.complete(
+        panaResult: panaResult,
+        minAnnotationLevel: inputs.minAnnotationLevel,
+      ),
     );
 
     // Setting outputs
-    gaction.setOutput('health', panaResult.healthScore.toStringAsFixed(2));
-    gaction.setOutput(
-        'maintenance', panaResult.maintenanceScore.toStringAsFixed(2));
-    gaction.setOutput(
-        'errors', panaResult.analyzerResult.errorCount.toString());
-    gaction.setOutput(
-        'warnings', panaResult.analyzerResult.warningCount.toString());
-    gaction.setOutput('hints', panaResult.analyzerResult.hintCount.toString());
+    await logger.group(
+      'Setting outputs',
+      () async {
+        for (final output in [
+          ['health', panaResult.healthScore.toStringAsFixed(2)],
+          ['maintenance', panaResult.maintenanceScore.toStringAsFixed(2)],
+          ['errors', panaResult.analyzerResult.errorCount.toString()],
+          ['warnings', panaResult.analyzerResult.warningCount.toString()],
+          ['hints', panaResult.analyzerResult.hintCount.toString()]
+        ]) {
+          gaction.setOutput(output[0], output[1]);
+        }
+      },
+    );
   } catch (e) {
     //_writeErrors(e, s); // useless if we rethrow it
     await tryCancelAnalysis(e);
@@ -91,6 +106,6 @@ dynamic main(List<String> args) async {
 }
 
 void _writeError(dynamic error, StackTrace stackTrace) {
-  stderr.writeln(error.toString() +
+  logger.error(error.toString() +
       (stackTrace != null ? '\n' + stackTrace.toString() : ''));
 }

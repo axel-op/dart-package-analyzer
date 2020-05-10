@@ -5,6 +5,7 @@ import 'package:app/annotation.dart';
 import 'package:app/pana_result.dart';
 import 'package:app/test_mode.dart';
 import 'package:github/github.dart';
+import 'package:github_actions_toolkit/github_actions_toolkit.dart' as gaction;
 import 'package:meta/meta.dart';
 
 extension on String {
@@ -155,7 +156,7 @@ class Analysis {
     } catch (e) {
       if (e is GitHubError &&
           e.message.contains('Resource not accessible by integration')) {
-        stderr.writeln('WARNING:'
+        gaction.log.warning(
             ' It seems that this action doesn\'t have the required permissions to call the GitHub API with the token you gave.'
             ' This can occur if this repository is a fork, as in that case GitHub reduces the GITHUB_TOKEN\'s permissions for security reasons.'
             ' Consequently, no report will be made on GitHub.'
@@ -218,10 +219,9 @@ class Analysis {
     final conclusion = panaResult.conclusion;
     if (_checkRun == null) {
       if (conclusion == CheckRunConclusion.failure) {
-        stderr.writeAll(const <String>[
-          'Static analysis has detected one or more compile-time errors.',
-          'As no report can be posted, this action will directly fail.'
-        ], " ");
+        gaction.log.error(
+            'Static analysis has detected one or more compile-time errors.'
+            ' As no report can be posted, this action will directly fail.');
         exitCode = 1;
       }
       return;
@@ -248,7 +248,7 @@ class Analysis {
     int i = 0;
     do {
       final isLastLoop = i + 50 >= annotations.length;
-      await _client.checks.checkRuns.updateCheckRun(
+      final checkRun = await _client.checks.checkRuns.updateCheckRun(
         _repositorySlug,
         _checkRun,
         name: _getCheckRunName(packageName: panaResult.packageName),
@@ -267,6 +267,12 @@ class Analysis {
               annotations.sublist(i, isLastLoop ? annotations.length : i + 50),
         ),
       );
+      if (isLastLoop) {
+        gaction.log
+          ..info('Check Run Id: ${checkRun.id}')
+          ..info('Check Suite Id: ${checkRun.checkSuiteId}')
+          ..info('Details: ${checkRun.detailsUrl}');
+      }
       i += 50;
     } while (i < annotations.length);
   }
