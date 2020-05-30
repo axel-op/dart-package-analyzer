@@ -43,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2 # required
 
-      - uses: axel-op/dart-package-analyzer@stable
+      - uses: axel-op/dart-package-analyzer@v2
         with:
           # Required:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
@@ -84,7 +84,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: axel-op/dart-package-analyzer@stable
+      - uses: axel-op/dart-package-analyzer@v2
         id: analysis # set an id for the current step
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
@@ -107,10 +107,10 @@ jobs:
 
 By default, this action uses the Dart SDK embedded in Flutter. It may not be the latest version of the Dart SDK. To use the latest version of the full Dart SDK, append `/with-full-sdk` to the path of this action.
 
-In the example above, you would edit line 10 like this:
+In the example above, you would edit line 13 like this:
 
 ```yml
-      - uses: axel-op/dart-package-analyzer/with-full-sdk@stable
+      - uses: axel-op/dart-package-analyzer/with-full-sdk@v2
 ```
 
 This will slightly increase the time to pull the container that this action uses.
