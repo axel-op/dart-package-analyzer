@@ -87,14 +87,16 @@ dynamic main(List<String> args) async {
     await logger.group(
       'Setting outputs',
       () async {
-        for (final output in [
-          ['health', panaResult.healthScore.toStringAsFixed(2)],
-          ['maintenance', panaResult.maintenanceScore.toStringAsFixed(2)],
-          ['errors', panaResult.analyzerResult.errorCount.toString()],
-          ['warnings', panaResult.analyzerResult.warningCount.toString()],
-          ['hints', panaResult.analyzerResult.hintCount.toString()]
-        ]) {
-          gaction.setOutput(output[0], output[1]);
+        final outputs = <String, String>{
+          'health': panaResult.healthScore.toStringAsFixed(2),
+          'maintenance': panaResult.maintenanceScore.toStringAsFixed(2),
+          'errors': panaResult.analyzerResult.errorCount.toString(),
+          'warnings': panaResult.analyzerResult.warningCount.toString(),
+          'hints': panaResult.analyzerResult.hintCount.toString()
+        };
+        for (final output in outputs.entries) {
+          logger.info('${output.key}: ${output.value}');
+          gaction.setOutput(output.key, output.value);
         }
       },
     );
