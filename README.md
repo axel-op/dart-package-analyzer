@@ -93,14 +93,8 @@ jobs:
       # The following step shows how to exit the workflow with an error if a score is below 100:
       - name: Check scores
         # NB: "analysis" is the id set above. Replace it with the one you used if different.
-        run: |
-          MAINTENANCE_SCORE=${{ steps.analysis.outputs.maintenance }}
-          HEALTH_SCORE=${{ steps.analysis.outputs.health }}
-          if (( $(echo "$MAINTENANCE_SCORE < 100" | bc) )) || (( $(echo "$HEALTH_SCORE < 100" | bc) ))
-          then
-            echo "Scores are not both equal to 100"
-            exit 1
-          fi
+        if: ${{ (steps.analysis.outputs.maintenance != 100.0) || (steps.analysis.outputs.health != 100)}}
+        run: exit 1
 ```
 
 ### Using the full Dart SDK
