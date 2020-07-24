@@ -74,12 +74,15 @@ extension on PanaResult {
         'Can be compiled with DDC and dart2js. (Can use dart:html and friends, not dart:io, dart:mirrors, dart:ffi, etc.)',
   };
 
-  CheckRunConclusion get conclusion =>
-      generalSuggestions.any((s) => s.description
-              .toLowerCase()
-              .contains("exception: couldn't find a pubspec"))
-          ? CheckRunConclusion.failure
-          : analyzerResult.conclusion;
+  CheckRunConclusion get conclusion {
+    return generalSuggestions.any((s) {
+      final descr = s.description.toLowerCase();
+      return descr.contains("exception: couldn't find a pubspec") ||
+          descr.contains("exception: couldn't read pubspec");
+    })
+        ? CheckRunConclusion.failure
+        : analyzerResult.conclusion;
+  }
 
   String get summary {
     final summary = StringBuffer()
