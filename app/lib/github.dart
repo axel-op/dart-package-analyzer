@@ -274,7 +274,7 @@ class Analysis {
         gaction.log
           ..info('Check Run Id: ${checkRun.id}')
           ..info('Check Suite Id: ${checkRun.checkSuiteId}')
-          ..info('Details: ${checkRun.detailsUrl}');
+          ..info('Report posted at: ${checkRun.detailsUrl}');
       }
       i += 50;
     } while (i < annotations.length);
