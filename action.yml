@@ -12,21 +12,9 @@ inputs:
     description: "Path of your package in your repository"
     required: false
     default: ""
-  minAnnotationLevel:
-    description: "Minimum level for annotations. Accepted values are [info, warning, error]."
-    required: false
-    default: "info"
 outputs:
-  maintenance:
-    description: "The maintenance score of your package"
-  health:
-    description: "The health score of your package"
-  errors:
-    description: "Number of annotations with error level"
-  warnings:
-    description: "Number of annotations with warning level"
-  hints:
-    description: "Number of annotations with hint (= info) level"
+  grantedPoints:
+    description: "Granted points"
 runs:
   using: "docker"
   image: "Dockerfile"

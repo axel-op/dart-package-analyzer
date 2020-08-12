@@ -2,25 +2,19 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:app/paths.dart';
-import 'package:github/github.dart';
 import 'package:github_actions_toolkit/github_actions_toolkit.dart';
 import 'package:meta/meta.dart';
 
 const Input githubTokenInput = Input(
-  'githubToken',
-  isRequired: true,
-  canBeEmpty: false,
-),
+      'githubToken',
+      isRequired: true,
+      canBeEmpty: false,
+    ),
     packagePathInput = Input(
-  'relativePath',
-  isRequired: false,
-  canBeEmpty: true,
-),
-    minAnnotationLevelInput = Input(
-  'minAnnotationLevel',
-  isRequired: true,
-  canBeEmpty: false,
-);
+      'relativePath',
+      isRequired: false,
+      canBeEmpty: true,
+    );
 
 class Inputs {
   /// Token to call the GitHub API
@@ -31,9 +25,6 @@ class Inputs {
 
   /// Slug of the repository
   final String repositorySlug;
-
-  /// Minimum level of the diff annotations
-  final CheckRunAnnotationLevel minAnnotationLevel;
 
   final Paths paths;
 
@@ -50,7 +41,6 @@ class Inputs {
     return Inputs._(
       commitSha: _sha,
       githubToken: githubTokenInput.value,
-      minAnnotationLevel: _minAnnotationLevel,
       paths: paths,
       repositorySlug: Platform.environment['GITHUB_REPOSITORY'],
     );
@@ -59,7 +49,6 @@ class Inputs {
   Inputs._({
     @required this.commitSha,
     @required this.githubToken,
-    @required this.minAnnotationLevel,
     @required this.paths,
     @required this.repositorySlug,
   });
@@ -81,20 +70,5 @@ class Inputs {
       }
     }
     return commitSha;
-  }
-
-  static CheckRunAnnotationLevel get _minAnnotationLevel {
-    const Map<String, CheckRunAnnotationLevel> annotationMapping = {
-      'info': CheckRunAnnotationLevel.notice,
-      'warning': CheckRunAnnotationLevel.warning,
-      'error': CheckRunAnnotationLevel.failure,
-    };
-    final CheckRunAnnotationLevel level =
-        annotationMapping[minAnnotationLevelInput.value.toLowerCase()];
-    if (level == null) {
-      throw ArgumentError.value(
-          minAnnotationLevelInput.value, 'minAnnotationLevel');
-    }
-    return level;
   }
 }

@@ -3,13 +3,16 @@ import 'dart:io';
 
 import 'package:app/github.dart';
 import 'package:app/inputs.dart';
-import 'package:app/pana_result.dart';
+import 'package:app/report.dart';
 import 'package:github_actions_toolkit/github_actions_toolkit.dart' as gaction;
 
 const logger = gaction.log;
 
 dynamic main(List<String> args) async {
   exitCode = 0;
+
+  logger.warning(
+      "You're using v3 of the dart-package-analyzer action. Consider it as being still in beta.");
 
   // Parsing user inputs and environment variables
   final Inputs inputs = Inputs();
@@ -67,18 +70,17 @@ dynamic main(List<String> args) async {
           ' Please file an issue at https://github.com/axel-op/dart-package-analyzer/issues/new');
     }
 
-    final panaResult = PanaResult.fromOutput(
-      jsonDecode(panaProcessResult.stdout) as Map<String, dynamic>,
-      paths: inputs.paths,
-    );
+    final report = Report.fromOutput(
+        jsonDecode(panaProcessResult.stdout) as Map<String, dynamic>);
+
+    if (report.errorMessage != null) {
+      logger.error(report.errorMessage);
+    }
 
     // Posting comments on GitHub
     await logger.group(
       'Publishing report',
-      () async => analysis.complete(
-        panaResult: panaResult,
-        minAnnotationLevel: inputs.minAnnotationLevel,
-      ),
+      () async => analysis.complete(report: report),
     );
 
     // Setting outputs
@@ -86,11 +88,7 @@ dynamic main(List<String> args) async {
       'Setting outputs',
       () async {
         final outputs = <String, String>{
-          'health': panaResult.healthScore.toStringAsFixed(2),
-          'maintenance': panaResult.maintenanceScore.toStringAsFixed(2),
-          'errors': panaResult.analyzerResult.errorCount.toString(),
-          'warnings': panaResult.analyzerResult.warningCount.toString(),
-          'hints': panaResult.analyzerResult.hintCount.toString()
+          'grantedPoints': report.grantedPoints?.toString()
         };
         for (final output in outputs.entries) {
           logger.info('${output.key}: ${output.value}');
