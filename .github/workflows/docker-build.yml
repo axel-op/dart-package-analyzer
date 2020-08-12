@@ -3,32 +3,29 @@ name: Docker image update
 on:
   push:
     branches:
-      - 'stable'
+      - "stable"
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        tag: [latest, full-sdk]
-        include: 
-          - tag: full-sdk
+        tag: [v2, v2-full-sdk]
+        include:
+          - tag: v2-full-sdk
             dockerfile: with-full-sdk/Dockerfile-parent
-          - tag: latest
+          - tag: v2
             dockerfile: Dockerfile-parent
-    
+
     env:
       TAG: ${{ matrix.tag }}
       IMAGE: axelop/dart_package_analyzer
 
     steps:
-
       - uses: actions/checkout@v2
         with:
           fetch-depth: 1
@@ -76,7 +73,7 @@ jobs:
           echo "::set-env name=CURRENT_PANA::$CURRENT_PANA"
           echo "::set-env name=CURRENT_DART::$CURRENT_DART"
           echo "::set-output name=should_push::$SHOULD_PUSH"
-      
+
       - name: Build new image
         if: steps.check.outputs.should_push == 'true'
         run: sudo docker build --label "fluttersha=$CURRENT_FLUTTER" --label "panaversion=$CURRENT_PANA" --label "dartdigest=$CURRENT_DART" -f ${{ matrix.dockerfile }} -t $IMAGE:$TAG .

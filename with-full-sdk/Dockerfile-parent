@@ -24,4 +24,4 @@ RUN git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutte
     && flutter --version
 
 # Installing and activating pana
-RUN pub global activate pana
+RUN pub global activate pana "<0.14.0"
