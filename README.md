@@ -103,18 +103,6 @@ jobs:
           fi
 ```
 
-### Using the full Dart SDK
-
-By default, this action uses the Dart SDK embedded in Flutter. It may not be the latest version of the Dart SDK. To use the latest version of the full Dart SDK, append `/with-full-sdk` to the path of this action.
-
-In the example above, you would edit line 13 like this:
-
-```yml
-      - uses: axel-op/dart-package-analyzer/with-full-sdk@v2
-```
-
-This will slightly increase the time to pull the container that this action uses.
-
 ## Examples
 
 ### Report

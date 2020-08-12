@@ -11,18 +11,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        tag: [v2, v2-full-sdk]
-        include:
-          - tag: v2-full-sdk
-            dockerfile: with-full-sdk/Dockerfile-parent
-          - tag: v2
-            dockerfile: Dockerfile-parent
-
     env:
-      TAG: ${{ matrix.tag }}
+      TAG: v3
+      DOCKERFILE: Dockerfile-parent
       IMAGE: axelop/dart_package_analyzer
 
     steps:
@@ -76,7 +67,7 @@ jobs:
 
       - name: Build new image
         if: steps.check.outputs.should_push == 'true'
-        run: sudo docker build --label "fluttersha=$CURRENT_FLUTTER" --label "panaversion=$CURRENT_PANA" --label "dartdigest=$CURRENT_DART" -f ${{ matrix.dockerfile }} -t $IMAGE:$TAG .
+        run: sudo docker build --label "fluttersha=$CURRENT_FLUTTER" --label "panaversion=$CURRENT_PANA" --label "dartdigest=$CURRENT_DART" -f $DOCKERFILE -t $IMAGE:$TAG .
 
       - name: Test new image
         if: steps.check.outputs.should_push == 'true'

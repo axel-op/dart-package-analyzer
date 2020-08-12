@@ -11,11 +11,6 @@ const logger = gaction.log;
 dynamic main(List<String> args) async {
   exitCode = 0;
 
-  logger.warning(
-      "This version of the dart-package-analyzer action (v2) uses an old version of Pana, and won't be maintained anymore."
-      " Switch to v3 to use the latest version of Pana."
-      " See https://github.com/axel-op/dart-package-analyzer.");
-
   // Parsing user inputs and environment variables
   final Inputs inputs = Inputs();
 

@@ -12,19 +12,16 @@ on:
 
 env:
   IMAGE: axelop/dart_package_analyzer:test
+  DOCKERFILE: Dockerfile-parent
 
 jobs:
   test-outputs:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        dockerfile: ["Dockerfile-parent", "with-full-sdk/Dockerfile-parent"]
-
     steps:
       - uses: actions/checkout@v2
       - name: Build container
-        run: sudo docker build -f ${{ matrix.dockerfile }} -t $IMAGE .
+        run: sudo docker build -f $DOCKERFILE -t $IMAGE .
       - name: Run tests
         id: steptest
         run: |
@@ -49,13 +46,12 @@ jobs:
     strategy:
       matrix:
         path: ["test", "/test", "./test"]
-        dockerfile: ["Dockerfile-parent", "with-full-sdk/Dockerfile-parent"]
         analysisoptions: ["analysis_options.yaml", ""]
 
     steps:
       - uses: actions/checkout@v2
       - name: Build container
-        run: sudo docker build -f ${{ matrix.dockerfile }} -t $IMAGE .
+        run: sudo docker build -f $DOCKERFILE -t $IMAGE .
       - name: Run tests
         run: |
           sudo docker run -d -t --name test $IMAGE
@@ -67,14 +63,10 @@ jobs:
   test-pubspec-error:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        dockerfile: ["Dockerfile-parent", "with-full-sdk/Dockerfile-parent"]
-
     steps:
       - uses: actions/checkout@v2
       - name: Build container
-        run: sudo docker build -f ${{ matrix.dockerfile }} -t $IMAGE .
+        run: sudo docker build -f $DOCKERFILE -t $IMAGE .
       - name: Run tests
         run: |
           sudo docker run -d -t --name test $IMAGE

@@ -7,15 +7,16 @@ RUN cd /app \
     && pub get \
     && dart2native /app/bin/main.dart -o /app/dart_package_analyzer
 
-# Using a lighter parent image to build the final image
-FROM bitnami/minideb:latest
+# Using the latest version of the Dart SDK
+FROM google/dart:latest
 
 # Copying only the executable
 COPY --from=dartimage /app/dart_package_analyzer /dart_package_analyzer
 
-ENV PATH /flutter/bin/cache/dart-sdk/bin:/root/.pub-cache/bin:/flutter/bin:$PATH
+ENV PATH /flutter/bin:$PATH
 
-RUN install_packages git unzip curl ca-certificates \
+RUN apt-get update -y \
+    && apt-get install -y --no-install-recommends unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Installing Flutter
@@ -23,4 +24,4 @@ RUN git clone -b stable --depth 1 https://github.com/flutter/flutter.git /flutte
     && flutter --version
 
 # Installing and activating pana
-RUN flutter pub global activate pana "<0.14.0"
+RUN pub global activate pana
