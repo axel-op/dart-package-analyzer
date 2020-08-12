@@ -49,10 +49,8 @@ dynamic main(List<String> args) async {
     final panaProcessResult = await gaction.exec(
       'pana',
       <String>[
-        '--scores',
+        '--json',
         '--no-warning',
-        '--source',
-        'path',
         inputs.paths.canonicalPathToPackage,
       ],
     );
