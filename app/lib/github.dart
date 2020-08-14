@@ -32,7 +32,7 @@ extension on Report {
     if (grantedPoints != null && maxPoints != null) {
       summary
         ..writeln("### Score")
-        ..write("$grantedPoints/$maxPoints points")
+        ..write("**$grantedPoints/$maxPoints** points")
         ..writeln(" (${grantedPoints * 100.0 / maxPoints}%)");
     }
 
@@ -56,13 +56,28 @@ extension on Report {
     final text = StringBuffer();
 
     for (final section in sections) {
+      final summary = section.summary.splitMapJoin(
+        RegExp(r'# \[(.)\] '),
+        onMatch: (Match m) {
+          switch (m.group(1)) {
+            case '*':
+              return '# ✔ ';
+            case 'x':
+              return '# ❌ ';
+            case '~':
+              return '# ⚠ ';
+            default:
+              return m.group(0);
+          }
+        },
+      );
       text
         ..write("## ${section.title}")
         ..write(" (${section.grantedPoints}/${section.grantedPoints})")
-        ..write("\n\n${section.summary}\n\n");
+        ..write("\n\n$summary\n\n");
     }
 
-    text.write('\n### Versions'
+    text.write('\n## Versions'
         '\n* [Pana](https://pub.dev/packages/pana): ${panaVersion}'
         '\n* Dart: ${dartSdkVersion}'
         '\n* Flutter: ${flutterVersion}');
