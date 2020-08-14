@@ -1,6 +1,6 @@
 # Dart/Flutter package analyzer
 
-This action uses the [pana (Package ANAlysis) package](https://pub.dev/packages/pana) to compute the score that your Dart or Flutter package will have on the [Pub site](https://pub.dev/help), and annotates your code, with suggestions for improvements.
+This action uses the [pana (Package ANAlysis) package](https://pub.dev/packages/pana) to compute the score that your Dart or Flutter package will have on the [Pub site](https://pub.dev/help/scoring).
 
 This package, amongst other things:
 
@@ -11,11 +11,11 @@ This package, amongst other things:
 * checks for required files (`CHANGELOG`, `README`, `example` folder...)
 * ...
 
-The pana package gives two scores: a [health score](https://pub.dev/help#health) and a [maintenance score](https://pub.dev/help#maintenance). Those scores are set in the outputs of this action, so you can use them in the next steps of your workflow (see below).
+The pana package gives scores in five categories and sum them up to get your total score.
 
 ## Usage
 
-You must include the `actions/checkout` step in your workflow. You **don't** need to run `pub get` or build a Dart container before.
+You must include the [`actions/checkout`](https://github.com/actions/checkout) step in your workflow. You **don't** need to run `pub get` or build a Dart container before.
 
 This action uses its own Dart container. I recommend you to run it in a separate job, as [jobs run in parallel](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobs).
 
@@ -25,8 +25,6 @@ This action uses its own Dart container. I recommend you to run it in a separate
 Required to post a report on GitHub. *Note:* the secret [`GITHUB_TOKEN`](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/authenticating-with-the-github_token) is already provided by GitHub and you don't have to set it up yourself.
 * `relativePath`  
 If your package isn't at the root of the repository, set this input to indicate its location.
-* `minAnnotationLevel`  
-If you only want to see annotations for important errors, try to set this input to another value. Accepted values are `info`, `warning` and `error`. Defaults to `info` that posts all the annotations.
 
 Example:
 
@@ -43,33 +41,41 @@ jobs:
     steps:
       - uses: actions/checkout@v2 # required
 
-      - uses: axel-op/dart-package-analyzer@v2
+      - uses: axel-op/dart-package-analyzer@v3
         with:
           # Required:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           # Optional:
           relativePath: packages/mypackage/
-          minAnnotationLevel: info
 ```
 
 ### Outputs
 
-You can use the outputs in the next steps of your workfow by [associating an id to this action](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idsteps).
+There is an output for each of the [five categories](https://pub.dev/help/scoring) that are evaluated by the pana package, whose value is the score obtained by your package, plus an output for the total score of your package.
 
-In the following steps, you can retrieve an output with `${{ steps.the_id.outputs.name_of_output }}` (see the example below).
+For each of these outputs, there is also a `..._max` output corresponding to the maximum score that a package can have in the category.
 
-* `health`  
-The "health" score given by pana.
-* `maintenance`  
-The "maintenance" score given by pana.
-* `errors`  
-Number of annotations with error level.
-* `warnings`  
-Number of annotations with warning level.
-* `hints`  
-Number of annotations with hint (= info) level.
+You can use the outputs in the next steps of your workfow by [associating an id to this action](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idsteps). In the following steps, you can retrieve an output with `${{ steps.the_id.outputs.name_of_output }}` (see the example below).
 
-Example:
+* `total` & `total_max`  
+The total score of your package, and the maximum score that it can get.
+
+* `conventions` & `conventions_max`  
+Score for the category __*Follow Dart file conventions*__.
+
+* `documentation` & `documentation_max`  
+Score for the category __*Provide documentation*__.
+
+* `platforms` & `platforms_max`  
+Score for the category __*Support multiple platforms*__.
+
+* `analysis` & `analysis_max`  
+Score for the category __*Pass static analysis*__.
+
+* `dependencies` & `dependencies_max`  
+Score for the category __*Support up-to-date dependencies*__.
+
+#### Usage example
 
 ```yml
 name: Example workflow
@@ -84,31 +90,28 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: axel-op/dart-package-analyzer@v2
-        id: analysis # set an id for the current step
+      - uses: axel-op/dart-package-analyzer@v3
+        # set an id for the current step
+        id: analysis
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
       # You can then use this id to retrieve the outputs in the next steps.
-      # The following step shows how to exit the workflow with an error if a score is below 100:
+      # The following step shows how to exit the workflow with an error if the total score in percentage is below 50:
       - name: Check scores
-        # NB: "analysis" is the id set above. Replace it with the one you used if different.
+        env:
+          # NB: "analysis" is the id set above. Replace it with the one you used if different.
+          TOTAL: ${{ steps.analysis.outputs.total }}
+          TOTAL_MAX: ${{ steps.analysis.outputs.total_max }}
         run: |
-          MAINTENANCE_SCORE=${{ steps.analysis.outputs.maintenance }}
-          HEALTH_SCORE=${{ steps.analysis.outputs.health }}
-          if (( $(echo "$MAINTENANCE_SCORE < 100" | bc) )) || (( $(echo "$HEALTH_SCORE < 100" | bc) ))
+          PERCENTAGE=$(( $TOTAL * 100 / $TOTAL_MAX ))
+          if (( $PERCENTAGE < 50 ))
           then
-            echo "Scores are not both equal to 100"
+            echo Score too low!
             exit 1
           fi
 ```
 
-## Examples
+## Example
 
-### Report
-
-![](example_report.png)
-
-### Diff annotations
-
-![](example_annotation.png)
+![Example report](example_report.png)
