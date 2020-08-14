@@ -34,7 +34,7 @@ extension on Report {
       summary
         ..writeln("### Score")
         ..write("$grantedPoints/$maxPoints points")
-        ..writeln(" (${grantedPoints * 100 / maxPoints}%)");
+        ..writeln(" (${grantedPoints * 100.0 / maxPoints}%)");
     }
 
     final platforms = supportedPlatforms;
@@ -58,7 +58,7 @@ extension on Report {
 
     for (final section in sections) {
       text
-        ..write("#### ${section.title}")
+        ..write("## ${section.title}")
         ..write(" (${section.grantedPoints}/${section.grantedPoints})")
         ..write("\n\n${section.summary}\n\n");
     }

@@ -11,8 +11,8 @@ extension on Map<String, dynamic> {
 
 class Report {
   final String packageName;
-  final double grantedPoints;
-  final double maxPoints;
+  final int grantedPoints;
+  final int maxPoints;
   final String panaVersion;
   final String flutterVersion;
   final String dartSdkVersion;
@@ -43,10 +43,8 @@ class Report {
     final flutterVersion = flutterInfo['frameworkVersion'] as String;
     final dartInFlutterVersion = flutterInfo['dartSdkVersion'] as String;
     final scores = output['scores'] as Map<String, dynamic>;
-    final grantedPoints =
-        scores.get('grantedPoints', (dynamic i) => (i as int).toDouble());
-    final maxPoints =
-        scores.get('maxPoints', (dynamic i) => (i as int).toDouble());
+    final grantedPoints = scores.get('grantedPoints', (dynamic i) => i as int);
+    final maxPoints = scores.get('maxPoints', (dynamic i) => i as int);
     final String errorMessage = output['errorMessage'];
     final sections = <Section>[];
 
