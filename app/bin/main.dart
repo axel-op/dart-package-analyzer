@@ -75,6 +75,7 @@ dynamic main(List<String> args) async {
 
     if (report.errorMessage != null) {
       logger.error(report.errorMessage);
+      await _exitProgram(report.errorMessage);
     }
 
     // Posting comments on GitHub
