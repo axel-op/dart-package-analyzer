@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:app/report.dart';
 import 'package:app/test_mode.dart';
@@ -74,12 +75,6 @@ extension on Report {
 }
 
 class Analysis {
-  static String _getCheckRunName({String packageName}) =>
-      (packageName != null
-          ? 'Analysis of $packageName'
-          : 'Dart package analysis') +
-      (testing ? ' (${Platform.environment['GITHUB_RUN_NUMBER']})' : '');
-
   static Future<Analysis> queue({
     @required String repositorySlug,
     @required String githubToken,
@@ -88,11 +83,18 @@ class Analysis {
     final GitHub client = GitHub(auth: Authentication.withToken(githubToken));
     final RepositorySlug slug = RepositorySlug.full(repositorySlug);
     try {
+      final id = Random().nextInt(1000).toString();
+      final name = StringBuffer('Dart package analysis');
+      if (testing) {
+        gaction.log.info('Id attributed to checkrun: $id');
+        name.write(' ($id)');
+      }
       final CheckRun checkRun = await client.checks.checkRuns.createCheckRun(
         slug,
         status: CheckRunStatus.queued,
-        name: _getCheckRunName(),
+        name: name.toString(),
         headSha: commitSha,
+        externalId: id,
       );
       return Analysis._(client, checkRun, slug);
     } catch (e) {
@@ -146,11 +148,11 @@ class Analysis {
       output: cause == null
           ? null
           : CheckRunOutput(
-              title: _getCheckRunName(),
+              title: _checkRun.name,
               summary:
                   'This check run has been cancelled, due to the following error:'
-                  '\n`$cause`'
-                  '\nCheck your logs for more information.'),
+                  '\n\n```\n$cause\n```\n\n'
+                  'Check your logs for more information.'),
     );
   }
 
@@ -172,16 +174,18 @@ class Analysis {
       title.write(' for ${report.packageName}');
     }
     final summary = StringBuffer();
+    final name = StringBuffer('Analysis of ${report.packageName}');
     if (testing) {
       summary
         ..writeln('**THIS ACTION HAS BEEN EXECUTED IN TEST MODE.**')
         ..writeln('**Conclusion = `$conclusion`**');
+      name.write(' (${_checkRun.externalId})');
     }
     summary.writeln(report.summary);
     final checkRun = await _client.checks.checkRuns.updateCheckRun(
       _repositorySlug,
       _checkRun,
-      name: _getCheckRunName(packageName: report.packageName),
+      name: name.toString(),
       status: CheckRunStatus.completed,
       startedAt: _startTime,
       completedAt: DateTime.now(),
