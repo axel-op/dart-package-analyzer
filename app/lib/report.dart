@@ -2,13 +2,6 @@ import 'package:app/section.dart';
 import 'package:github_actions_toolkit/github_actions_toolkit.dart';
 import 'package:meta/meta.dart';
 
-extension on Map<String, dynamic> {
-  T get<T>(String key, T Function(dynamic) ifNotNull) {
-    final dynamic value = this['key'];
-    return value != null ? ifNotNull(value) : null;
-  }
-}
-
 class Report {
   final String packageName;
   final int grantedPoints;
@@ -43,12 +36,17 @@ class Report {
     final flutterVersion = flutterInfo['frameworkVersion'] as String;
     final dartInFlutterVersion = flutterInfo['dartSdkVersion'] as String;
     final scores = output['scores'] as Map<String, dynamic>;
-    final grantedPoints = scores.get('grantedPoints', (dynamic i) => i as int);
-    final maxPoints = scores.get('maxPoints', (dynamic i) => i as int);
+    final int grantedPoints = scores['grantedPoints'];
+    final int maxPoints = scores['maxPoints'];
     final String errorMessage = output['errorMessage'];
     final sections = <Section>[];
 
-    if (isDebug) {}
+    if (isDebug) {
+      log.debug(
+          'GrantedPoints: $grantedPoints (from output: ${output['scores']['grantedPoints']})');
+      log.debug(
+          'maxPoints: $maxPoints (from output: ${output['scores']['maxPoints']})');
+    }
 
     final supportedPlatforms = <String, List<String>>{};
 
