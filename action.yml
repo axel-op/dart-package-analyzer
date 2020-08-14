@@ -1,20 +1,46 @@
 name: "Dart/Flutter Package Analyzer"
 description: "Performs static analysis, linting, formatting, to compute the Pub score of your Dart/Flutter package."
 author: "axel-op"
+
 branding:
   color: "blue"
   icon: "feather"
+
 inputs:
   githubToken:
-    description: "Token to connect to Github. Use secrets.GITHUB_TOKEN"
+    description: "Token to connect to GitHub. Use secrets.GITHUB_TOKEN"
     required: true
   relativePath:
-    description: "Path of your package in your repository"
+    description: "Path of the package relatively to the root of the repository"
     required: false
     default: ""
+
 outputs:
-  grantedPoints:
-    description: "Granted points"
+  total:
+    description: "Total score of the package"
+  total_max:
+    description: "Maximum score the package can get"
+  conventions:
+    description: "Score for the category 'Follow Dart file conventions'"
+  conventions_max:
+    description: "Maximum score for the category 'Follow Dart file conventions'"
+  documentation:
+    description: "Score for the category 'Provide documentation'"
+  documentation_max:
+    description: "Maximum score for the category 'Provide documentation'"
+  platforms:
+    description: "Score for the category 'Support multiple platforms'"
+  platforms_max:
+    description: "Maximum score for the category 'Support multiple platforms'"
+  analysis:
+    description: "Score for the category 'Static analysis'"
+  analysis_max:
+    description: "Maximum score for the category 'Static analysis'"
+  dependencies:
+    description: "Score for the category 'Support up-to-date dependencies'"
+  dependencies_max:
+    description: "Maximum score for the category 'Support up-to-date dependencies'"
+
 runs:
   using: "docker"
   image: "Dockerfile"
