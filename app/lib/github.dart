@@ -73,7 +73,7 @@ extension on Report {
       );
       text
         ..write("## ${section.title}")
-        ..write(" (${section.grantedPoints}/${section.grantedPoints})")
+        ..write(" (${section.grantedPoints}/${section.maxPoints})")
         ..write("\n\n$summary\n\n");
     }
 
