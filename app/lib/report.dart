@@ -1,5 +1,5 @@
 import 'package:app/section.dart';
-import 'package:app/test_mode.dart';
+import 'package:github_actions_toolkit/github_actions_toolkit.dart';
 import 'package:meta/meta.dart';
 
 extension on Map<String, dynamic> {
@@ -48,11 +48,17 @@ class Report {
     final String errorMessage = output['errorMessage'];
     final sections = <Section>[];
 
+    if (isDebug) {}
+
     final supportedPlatforms = <String, List<String>>{};
 
     final List<dynamic> tags = output['tags'];
     if (tags != null) {
-      if (testing) tags.add('runtime:web');
+      if (isDebug) {
+        log.debug(
+            "The tag 'runtime:web' has been added for demonstration purpose");
+        tags.add('runtime:web');
+      }
       List.castFrom<dynamic, String>(tags).forEach((tag) {
         final splitted = tag.split(":");
         if (splitted.length != 2) return;

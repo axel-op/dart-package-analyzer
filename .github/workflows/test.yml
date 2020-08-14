@@ -28,7 +28,7 @@ jobs:
           sudo docker run -d -t --name test $IMAGE
           sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
           sudo docker cp ${GITHUB_EVENT_PATH} test:/event.json
-          sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+          sudo docker exec -e RUNNER_DEBUG -e GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA -e GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
       - name: Test outputs
         run: |
           MAINT=${{ steps.steptest.outputs.maintenance }}
@@ -58,7 +58,7 @@ jobs:
           sudo docker exec test /bin/bash -c "mkdir workspace"
           sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/workspace/test
           sudo docker cp ${GITHUB_EVENT_PATH} test:/workspace/event.json
-          sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/workspace/event.json -e INPUT_RELATIVEPATH=${{ matrix.path }} -e INPUT_CUSTOMANALYSISOPTIONS=${{ matrix.analysisoptions }} -e GITHUB_WORKSPACE=/workspace -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+          sudo docker exec -e RUNNER_DEBUG -e GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/workspace/event.json -e INPUT_RELATIVEPATH=${{ matrix.path }} -e INPUT_CUSTOMANALYSISOPTIONS=${{ matrix.analysisoptions }} -e GITHUB_WORKSPACE=/workspace -e GITHUB_SHA -e GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
 
   test-pubspec-error:
     runs-on: ubuntu-latest
@@ -73,4 +73,4 @@ jobs:
           sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
           sudo docker cp ${GITHUB_EVENT_PATH} test:/event.json
           sudo docker exec test /bin/bash -c "rm /test/pubspec.yaml"
-          sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_TESTING=true -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+          sudo docker exec -e RUNNER_DEBUG -e GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA -e GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"

@@ -14,7 +14,7 @@ class Section {
 
   Section.fromJSON(Map<String, dynamic> json)
       : title = json['title'],
-        grantedPoints = (json['grantedPoints'] as int).toDouble(),
-        maxPoints = (json['maxPoints'] as int).toDouble(),
+        grantedPoints = json['grantedPoints'] as int,
+        maxPoints = json['maxPoints'] as int,
         summary = json['summary'];
 }
