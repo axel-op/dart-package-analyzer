@@ -2,13 +2,7 @@
 
 name: Test
 
-on:
-  push:
-    branches-ignore:
-      - "stable"
-  pull_request:
-    branches:
-      - "*"
+on: [push, pull_request]
 
 env:
   IMAGE: axelop/dart_package_analyzer:test

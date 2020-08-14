@@ -3,7 +3,7 @@ name: Docker image update
 on:
   push:
     branches:
-      - "stable"
+      - "master"
   schedule:
     - cron: "0 0 * * *"
 
