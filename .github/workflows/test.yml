@@ -24,14 +24,30 @@ jobs:
           sudo docker cp ${GITHUB_EVENT_PATH} test:/event.json
           sudo docker exec -e RUNNER_DEBUG=$RUNNER_DEBUG -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
       - name: Test outputs
+        env:
+          TOTAL: ${{ steps.steptest.outputs.total }}
+          TOTAL_MAX: ${{ steps.steptest.outputs.total_max }}
+          CONVENTIONS: ${{ steps.steptest.outputs.conventions }}
+          CONVENTIONS_MAX: ${{ steps.steptest.outputs.conventions_max }}
+          DOCUMENTATION: ${{ steps.steptest.outputs.documentation }}
+          DOCUMENTATION_MAX: ${{ steps.steptest.outputs.documentation_max }}
+          PLATFORMS: ${{ steps.steptest.outputs.platforms }}
+          PLATFORMS_MAX: ${{ steps.steptest.outputs.platforms_max }}
+          ANALYSIS: ${{ steps.steptest.outputs.analysis }}
+          ANALYSIS_MAX: ${{ steps.steptest.outputs.analysis_max }}
+          DEPENDENCIES: ${{ steps.steptest.outputs.dependencies }}
+          DEPENDENCIES_MAX: ${{ steps.steptest.outputs.dependencies_max }}
         run: |
-          MAINT=${{ steps.steptest.outputs.maintenance }}
-          HEALTH=${{ steps.steptest.outputs.health }}
-          echo $MAINT
-          echo $HEALTH
-          if [[ -z $MAINT ]] || [[ -z $HEALTH ]]; then exit 1; fi
-          if (( $(echo "$MAINT < 100" | bc) )) || (( $(echo "$HEALTH < 100" | bc) )); then
-            echo Those scores are not perfect
+          if [ -z "$TOTAL" ] || [ -z "$TOTAL_MAX" ] || [ -z "$CONVENTIONS" ] || [ -z "$CONVENTIONS_MAX" ] || [ -z "$DOCUMENTATION" ] || [ -z "$DOCUMENTATION_MAX" ] || [ -z "$PLATFORMS" ] || [ -z "$PLATFORMS_MAX" ] || [ -z "$ANALYSIS" ] || [ -z "$ANALYSIS_MAX" ] || [ -z "$DEPENDENCIES" ] || [ -z "$DEPENDENCIES_MAX" ]
+          then
+            echo All the outputs have not been properly set
+            exit 1
+          fi
+          if (( "$TOTAL" < "$TOTAL_MAX" ))
+          then
+            echo Total score can be improved
+          else
+            echo Perfect scores!
           fi
 
   test-with-paths:

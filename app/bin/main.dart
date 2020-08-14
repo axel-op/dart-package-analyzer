@@ -89,8 +89,22 @@ dynamic main(List<String> args) async {
       'Setting outputs',
       () async {
         final outputs = <String, String>{
-          'grantedPoints': report.grantedPoints?.toString()
+          "total": report.grantedPoints?.toString(),
+          "total_max": report.maxPoints?.toString()
         };
+        final keys = [
+          "conventions",
+          "documentation",
+          "platforms",
+          "analysis",
+          "dependencies"
+        ];
+        for (final section in report.sections) {
+          final key =
+              keys.firstWhere((k) => section.title.toLowerCase().contains(k));
+          outputs[key] = section.grantedPoints?.toString();
+          outputs["${key}_max"] = section.maxPoints?.toString();
+        }
         for (final output in outputs.entries) {
           logger.info('${output.key}: ${output.value}');
           gaction.setOutput(output.key, output.value);
