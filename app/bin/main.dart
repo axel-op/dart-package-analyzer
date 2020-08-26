@@ -74,8 +74,7 @@ dynamic main(List<String> args) async {
         jsonDecode(panaProcessResult.stdout) as Map<String, dynamic>);
 
     if (report.errorMessage != null) {
-      logger.error(report.errorMessage);
-      await _exitProgram(report.errorMessage);
+      throw report.errorMessage;
     }
 
     // Posting comments on GitHub
