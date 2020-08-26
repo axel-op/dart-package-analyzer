@@ -78,6 +78,7 @@ jobs:
       - name: Build container
         run: sudo docker build -f $DOCKERFILE -t $IMAGE .
       - name: Run tests
+        continue-on-error: true
         run: |
           sudo docker run -d -t --name test $IMAGE
           sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
