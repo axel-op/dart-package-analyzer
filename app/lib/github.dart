@@ -32,8 +32,8 @@ extension on Report {
     if (grantedPoints != null && maxPoints != null) {
       summary
         ..writeln("### Score")
-        ..write("**$grantedPoints/$maxPoints** points")
-        ..writeln(" (${grantedPoints * 100.0 / maxPoints}%)");
+        ..writeln("**$grantedPoints/$maxPoints** points")
+        ..writeln("(${grantedPoints * 100.0 / maxPoints}%)");
     }
 
     final platforms = supportedPlatforms;
@@ -78,7 +78,7 @@ extension on Report {
     }
 
     text.write('\n## Versions'
-        '\n* [Pana](https://pub.dev/packages/pana): ${panaVersion}'
+        '\n* [Pana: ${panaVersion}](https://pub.dev/packages/pana/versions/${panaVersion})'
         '\n* Dart: ${dartSdkVersion}'
         '\n* Flutter: ${flutterVersion}');
     if (dartSdkVersion != dartSdkInFlutterVersion) {
