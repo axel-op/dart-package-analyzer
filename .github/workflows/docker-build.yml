@@ -79,7 +79,7 @@ jobs:
           sudo docker run -d -t --name test $IMAGE:$TAG
           sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
           sudo docker cp $GITHUB_EVENT_PATH test:/eventpayload
-          sudo docker exec -e RUNNER_DEBUG=$RUNNER_DEBUG -e GITHUB_WORKSPACE=/test -e GITHUB_EVENT_PATH=/eventpayload -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+          sudo docker exec -e GITHUB_WORKSPACE=/test -e GITHUB_EVENT_PATH=/eventpayload -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
 
       - name: Push new image
         if: steps.check.outputs.should_push == 'true'

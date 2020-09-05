@@ -41,22 +41,10 @@ class Report {
     final String errorMessage = output['errorMessage'];
     final sections = <Section>[];
 
-    if (isDebug) {
-      log.debug(
-          'GrantedPoints: $grantedPoints (from output: ${output['scores']['grantedPoints']})');
-      log.debug(
-          'maxPoints: $maxPoints (from output: ${output['scores']['maxPoints']})');
-    }
-
     final supportedPlatforms = <String, List<String>>{};
 
     final List<dynamic> tags = output['tags'];
     if (tags != null) {
-      if (isDebug) {
-        log.debug(
-            "The tag 'runtime:web' has been added for demonstration purpose");
-        tags.add('runtime:web');
-      }
       List.castFrom<dynamic, String>(tags).forEach((tag) {
         final splitted = tag.split(":");
         if (splitted.length != 2) return;

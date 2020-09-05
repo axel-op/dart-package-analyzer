@@ -6,6 +6,9 @@ import 'package:github/github.dart';
 import 'package:github_actions_toolkit/github_actions_toolkit.dart' as gaction;
 import 'package:meta/meta.dart';
 
+final _useTestMode = Platform.environment['GITHUB_REPOSITORY'] ==
+    'axel-op/dart-package-analyzer';
+
 extension on String {
   bool equalsIgnoreCase(String other) =>
       other.toLowerCase() == this.toLowerCase();
@@ -99,10 +102,8 @@ class Analysis {
     try {
       final id = Random().nextInt(1000).toString();
       final name = StringBuffer('Dart package analysis');
-      if (gaction.isDebug) {
-        gaction.log.debug('Id attributed to checkrun: $id');
-        name.write(' ($id)');
-      }
+      gaction.log.debug('Id attributed to checkrun: $id');
+      if (_useTestMode) name.write(' ($id)');
       final CheckRun checkRun = await client.checks.checkRuns.createCheckRun(
         slug,
         status: CheckRunStatus.queued,
@@ -152,17 +153,14 @@ class Analysis {
 
   Future<void> cancel({dynamic cause}) async {
     if (_checkRun == null) return;
-    if (gaction.isDebug) {
-      gaction.log.debug(
-          "Checkrun cancelled. Conclusion would be CANCELLED on non-debug mode.");
-    }
+    gaction.log.debug("Checkrun cancelled. Conclusion is 'CANCELLED'.");
     await _client.checks.checkRuns.updateCheckRun(
       _repositorySlug,
       _checkRun,
       startedAt: _startTime,
       completedAt: DateTime.now(),
       status: CheckRunStatus.completed,
-      conclusion: gaction.isDebug
+      conclusion: _useTestMode
           ? CheckRunConclusion.neutral
           : CheckRunConclusion.cancelled,
       output: cause == null
@@ -195,9 +193,9 @@ class Analysis {
     }
     final summary = StringBuffer();
     final name = StringBuffer('Analysis of ${report.packageName}');
-    if (gaction.isDebug) {
+    if (_useTestMode) {
       summary
-        ..writeln('**THIS ACTION HAS BEEN EXECUTED IN DEBUG MODE.**')
+        ..writeln('**THIS ACTION HAS BEEN EXECUTED IN TEST MODE.**')
         ..writeln('**Conclusion = `$conclusion`**');
       name.write(' (${_checkRun.externalId})');
     }
@@ -209,7 +207,7 @@ class Analysis {
       status: CheckRunStatus.completed,
       startedAt: _startTime,
       completedAt: DateTime.now(),
-      conclusion: gaction.isDebug ? CheckRunConclusion.neutral : conclusion,
+      conclusion: _useTestMode ? CheckRunConclusion.neutral : conclusion,
       output: CheckRunOutput(
         title: title.toString(),
         summary: summary.toString(),
