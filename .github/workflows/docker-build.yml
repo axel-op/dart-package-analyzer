@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - "master"
+    paths:
+      - ".github/**"
+      - "app/**"
+      - "Dockerfile-parent"
   schedule:
     - cron: "0 0 * * *"
 
