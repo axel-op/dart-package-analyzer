@@ -74,7 +74,7 @@ dynamic main(List<String> args) async {
         jsonDecode(panaProcessResult.stdout) as Map<String, dynamic>);
 
     if (report.errorMessage != null) {
-      throw report.errorMessage;
+      throw Exception(report.errorMessage);
     }
 
     // Posting comments on GitHub
