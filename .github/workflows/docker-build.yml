@@ -26,6 +26,7 @@ jobs:
           fetch-depth: 1
 
       - name: Get labels
+        continue-on-error: true
         id: labels
         uses: axel-op/docker-labels-retriever@master
         with:
@@ -52,17 +53,10 @@ jobs:
           echo $PREVIOUS_FLUTTER is the commit of Flutter on Docker image
           echo $CURRENT_PANA is the latest stable version of pana
           echo $PREVIOUS_PANA is the version of pana on Docker image
-          if [ "$TAG" = full-sdk ]; then
-            echo $CURRENT_DART is the digest of the latest Dart image on Docker Hub
-            echo $PREVIOUS_DART is the digest of the Dart SDK on Docker image
-          fi
           if [ "$EVENT" = push ] || [ "$CURRENT_FLUTTER" != "$PREVIOUS_FLUTTER" ] || [ "$CURRENT_PANA" != "$PREVIOUS_PANA" ]; then
             SHOULD_PUSH=true
           else
             SHOULD_PUSH=false
-          fi
-          if [ "$TAG" = full-sdk ] && [ "$CURRENT_DART" != "$PREVIOUS_DART" ]; then
-            SHOULD_PUSH=true
           fi
           echo "::set-env name=CURRENT_FLUTTER::$CURRENT_FLUTTER"
           echo "::set-env name=CURRENT_PANA::$CURRENT_PANA"
