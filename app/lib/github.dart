@@ -119,8 +119,8 @@ class Analysis {
             ' It seems that this action doesn\'t have the required permissions to call the GitHub API with the token you gave.'
             ' This can occur if this repository is a fork, as in that case GitHub reduces the GITHUB_TOKEN\'s permissions for security reasons.'
             ' Consequently, no report will be made on GitHub.'
-            ' Check this issue for more information: '
-            '\n* https://github.com/axel-op/dart-package-analyzer/issues/2');
+            ' Check this issue for more information:'
+            ' https://github.com/axel-op/dart-package-analyzer/issues/2');
         return Analysis._(client, null, slug);
       }
       rethrow;
