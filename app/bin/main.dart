@@ -11,9 +11,6 @@ const logger = gaction.log;
 dynamic main(List<String> args) async {
   exitCode = 0;
 
-  logger.warning(
-      "You're using v3 of the dart-package-analyzer action, which is still in beta.");
-
   // Parsing user inputs and environment variables
   final Inputs inputs = Inputs();
 
