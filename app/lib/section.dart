@@ -4,16 +4,22 @@ class Section {
   final num grantedPoints;
   final num maxPoints;
   final String summary;
+  final String id;
+  final String status;
 
+  /*
   const Section._(
     this.title,
     this.grantedPoints,
     this.maxPoints,
     this.summary,
   );
+  */
 
   Section.fromJSON(Map<String, dynamic> json)
-      : title = json['title'],
+      : id = json['id'],
+        status = json['status'],
+        title = json['title'],
         grantedPoints = json['grantedPoints'] as int,
         maxPoints = json['maxPoints'] as int,
         summary = json['summary'];

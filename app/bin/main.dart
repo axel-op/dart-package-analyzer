@@ -88,16 +88,16 @@ dynamic main(List<String> args) async {
           "total": report.grantedPoints?.toString(),
           "total_max": report.maxPoints?.toString()
         };
-        final keys = [
-          "conventions",
-          "documentation",
-          "platforms",
-          "analysis",
-          "dependencies"
-        ];
+        final idsToKeys = <String, String>{
+          "convention": "conventions",
+          "documentation": "documentation",
+          "platform": "platforms",
+          "analysis": "analysis",
+          "dependency": "dependencies",
+          "null-safety": "null_safety",
+        };
         for (final section in report.sections) {
-          final key =
-              keys.firstWhere((k) => section.title.toLowerCase().contains(k));
+          final key = idsToKeys[section.id] ?? section.id;
           outputs[key] = section.grantedPoints?.toString();
           outputs["${key}_max"] = section.maxPoints?.toString();
         }
