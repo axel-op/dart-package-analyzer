@@ -1,5 +1,4 @@
 import 'package:app/section.dart';
-import 'package:github_actions_toolkit/github_actions_toolkit.dart';
 import 'package:meta/meta.dart';
 
 class Report {
