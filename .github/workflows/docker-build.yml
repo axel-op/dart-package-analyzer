@@ -37,23 +37,26 @@ jobs:
         id: check
         env:
           EVENT: ${{ github.event_name }}
-          IMAGE_DART: google/dart
+          DART_IMAGE: google/dart
+          DART_VERSION: beta
           GIT_FLUTTER: git://github.com/flutter/flutter.git
-          API_ADDRESS: https://registry-1.docker.io/v2
+          FLUTTER_BRANCH: beta
           PANA_DOC: https://pub.dev/api/documentation/pana
         run: |
-          CURRENT_FLUTTER=$(git ls-remote $GIT_FLUTTER refs/heads/stable | cut -f 1)
+          CURRENT_FLUTTER=$(git ls-remote $GIT_FLUTTER refs/heads/$FLUTTER_BRANCH | cut -f 1)
           CURRENT_PANA=$(curl -s $PANA_DOC | jq -r '.latestStableVersion')
-          API_TOKEN=$(curl -s "https://auth.docker.io/token?scope=repository:$IMAGE_DART:pull&service=registry.docker.io" | jq -r '.token')
-          CURRENT_DART=$(curl -s -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "$API_ADDRESS/$IMAGE_DART/manifests/latest" | jq -r '.config.digest')
+          API_TOKEN=$(curl -s "https://auth.docker.io/token?scope=repository:$DART_IMAGE:pull&service=registry.docker.io" | jq -r '.token')
+          CURRENT_DART=$(curl -s -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "https://registry-1.docker.io/v2/$DART_IMAGE/manifests/$DART_VERSION" | jq -r '.config.digest')
           PREVIOUS_FLUTTER=${{ steps.labels.outputs.fluttersha }}
           PREVIOUS_PANA=${{ steps.labels.outputs.panaversion }}
           PREVIOUS_DART=${{ steps.labels.outputs.dartdigest }}
-          echo $CURRENT_FLUTTER is the latest commit in the stable branch of Flutter
+          echo $CURRENT_DART is the sha for ${DART_IMAGE}:${DART_VERSION}
+          echo $PREVIOUS_DART is the sha labelled with the Docker image 
+          echo $CURRENT_FLUTTER is the latest commit in the $FLUTTER_BRANCH branch of Flutter
           echo $PREVIOUS_FLUTTER is the commit of Flutter on Docker image
-          echo $CURRENT_PANA is the latest stable version of pana
+          echo $CURRENT_PANA is the latest version of pana
           echo $PREVIOUS_PANA is the version of pana on Docker image
-          if [ "$EVENT" = push ] || [ "$CURRENT_FLUTTER" != "$PREVIOUS_FLUTTER" ] || [ "$CURRENT_PANA" != "$PREVIOUS_PANA" ]; then
+          if [ "$EVENT" = push ] || [ "$CURRENT_FLUTTER" != "$PREVIOUS_FLUTTER" ] || [ "$CURRENT_PANA" != "$PREVIOUS_PANA" ] || [ "$CURRENT_DART" != "$PREVIOUS_DART" ]; then
             SHOULD_PUSH=true
           else
             SHOULD_PUSH=false
