@@ -51,7 +51,7 @@ jobs:
 
 ### Outputs
 
-There is an output for each of the [five categories](https://pub.dev/help/scoring) that are evaluated by the pana package, whose value is the score obtained by your package, plus an output for the total score of your package.
+There is an output for each of the [six categories](https://pub.dev/help/scoring) that are evaluated by the pana package, whose value is the score obtained by your package, plus an output for the total score of your package.
 
 For each of these outputs, there is also a `..._max` output corresponding to the maximum score that a package can have in the category.
 
@@ -74,6 +74,9 @@ Score for the category __*Pass static analysis*__.
 
 * `dependencies` & `dependencies_max`  
 Score for the category __*Support up-to-date dependencies*__.
+
+* `null_safety` & `null_safety_max`  
+Score for the category __*Support null-safety*__.
 
 #### Usage example
 
