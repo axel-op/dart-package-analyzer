@@ -61,6 +61,10 @@ dynamic main(List<String> args) async {
       exitCode = panaProcessResult.exitCode;
       await _exitProgram();
     }
+    if (panaProcessResult.stderr
+        .contains("Invalid kernel binary format version")) {
+      throw Exception("SDK incompatibility");
+    }
     if (panaProcessResult.stdout == null) {
       throw Exception('The pana command has returned no valid output.'
           ' This should never happen.'
