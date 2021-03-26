@@ -38,9 +38,9 @@ jobs:
         env:
           EVENT: ${{ github.event_name }}
           DART_IMAGE: google/dart
-          DART_VERSION: beta
+          DART_VERSION: latest
           GIT_FLUTTER: git://github.com/flutter/flutter.git
-          FLUTTER_BRANCH: beta
+          FLUTTER_BRANCH: stable
           PANA_DOC: https://pub.dev/api/documentation/pana
         run: |
           CURRENT_FLUTTER=$(git ls-remote $GIT_FLUTTER refs/heads/$FLUTTER_BRANCH | cut -f 1)
