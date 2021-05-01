@@ -25,6 +25,7 @@ jobs:
           sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
       - name: Test outputs
         env:
+          JSON_OUTPUT: ${{ steps.steptest.outputs.json_output }}
           TOTAL: ${{ steps.steptest.outputs.total }}
           TOTAL_MAX: ${{ steps.steptest.outputs.total_max }}
           CONVENTIONS: ${{ steps.steptest.outputs.conventions }}
@@ -41,6 +42,12 @@ jobs:
           if [ -z "$TOTAL" ] || [ -z "$TOTAL_MAX" ] || [ -z "$CONVENTIONS" ] || [ -z "$CONVENTIONS_MAX" ] || [ -z "$DOCUMENTATION" ] || [ -z "$DOCUMENTATION_MAX" ] || [ -z "$PLATFORMS" ] || [ -z "$PLATFORMS_MAX" ] || [ -z "$ANALYSIS" ] || [ -z "$ANALYSIS_MAX" ] || [ -z "$DEPENDENCIES" ] || [ -z "$DEPENDENCIES_MAX" ]
           then
             echo All the outputs have not been properly set
+            exit 1
+          fi
+          if ! jq -e . >/dev/null 2>&1 <<< "$JSON_OUTPUT"
+          then
+            echo "Invalid JSON"
+            echo "$JSON_OUTPUT"
             exit 1
           fi
           if (( "$TOTAL" < "$TOTAL_MAX" ))

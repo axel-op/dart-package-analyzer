@@ -89,6 +89,7 @@ dynamic main(List<String> args) async {
       'Setting outputs',
       () async {
         final outputs = <String, String>{
+          "json_output": jsonEncode(jsonDecode(panaProcessResult.stdout)),
           "total": report.grantedPoints?.toString(),
           "total_max": report.maxPoints?.toString()
         };

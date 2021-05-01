@@ -55,6 +55,8 @@ There is an output for each of the [six categories](https://pub.dev/help/scoring
 
 For each of these outputs, there is also a `..._max` output corresponding to the maximum score that a package can have in the category.
 
+There is also an output containing the full `pana` output in JSON format if you need to parse it yourself.
+
 You can use the outputs in the next steps of your workfow by [associating an id to this action](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idsteps). In the following steps, you can retrieve an output with `${{ steps.the_id.outputs.name_of_output }}` (see the example below).
 
 * `total` & `total_max`  
@@ -77,6 +79,9 @@ Score for the category __*Support up-to-date dependencies*__.
 
 * `null_safety` & `null_safety_max`  
 Score for the category __*Support null-safety*__.
+
+* `json_output`
+The `pana` output in JSON format.
 
 #### Usage example
 
