@@ -13,7 +13,7 @@ FROM dart:stable
 # Copying only the executable
 COPY --from=dartimage /app/dart_package_analyzer /dart_package_analyzer
 
-ENV PATH /flutter/bin:$PATH
+ENV PATH /root/.pub-cache/bin:/flutter/bin:$PATH
 
 RUN apt-get update -y \
     && apt-get install -y --no-install-recommends unzip \
