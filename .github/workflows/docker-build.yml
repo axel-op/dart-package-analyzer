@@ -5,7 +5,7 @@ on:
     branches:
       - "master"
     paths:
-      - ".github/**"
+      - ".github/workflows/docker-build.yml"
       - "app/**"
       - "Dockerfile-parent"
   schedule:
