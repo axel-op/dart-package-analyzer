@@ -37,7 +37,7 @@ jobs:
         id: check
         env:
           EVENT: ${{ github.event_name }}
-          DART_IMAGE: google/dart
+          DART_IMAGE: library/dart
           DART_VERSION: latest
           GIT_FLUTTER: git://github.com/flutter/flutter.git
           FLUTTER_BRANCH: stable

@@ -8,7 +8,7 @@ RUN cd /app \
     && dart2native /app/bin/main.dart -o /app/dart_package_analyzer
 
 # Using the latest version of the Dart SDK
-FROM google/dart:latest
+FROM dart:stable
 
 # Copying only the executable
 COPY --from=dartimage /app/dart_package_analyzer /dart_package_analyzer
