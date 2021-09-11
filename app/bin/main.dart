@@ -62,7 +62,8 @@ dynamic main(List<String> args) async {
       await _exitProgram();
     }
     if (panaProcessResult.stderr
-        .contains("Invalid kernel binary format version")) {
+        .toLowerCase()
+        .contains("can't load kernel binary")) {
       throw Exception("SDK incompatibility");
     }
     if (panaProcessResult.stdout == null) {
