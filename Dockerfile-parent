@@ -4,7 +4,7 @@ COPY app/ /app/
 
 # Compiling the Dart application that manages this action
 RUN cd /app \
-    && pub get \
+    && dart pub get \
     && dart compile exe /app/bin/main.dart -o /app/dart_package_analyzer
 
 # Using the latest version of the Dart SDK
