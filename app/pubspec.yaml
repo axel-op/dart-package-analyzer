@@ -13,7 +13,7 @@ dependencies:
   path: ^1.6.4
   github: ^6.2.0
   # logging: ^0.11.4
-  github_actions_toolkit: 0.0.3
+  github_actions_toolkit: ^0.0.6
 
 dev_dependencies:
   pedantic: ^1.8.0
