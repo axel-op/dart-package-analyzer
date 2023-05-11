@@ -5,11 +5,11 @@ environment:
   sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
-  args: ^1.5.2
-  github: ^6.2.0
+  args: ^2.4.1
+  github: ^9.14.0
   github_actions_toolkit: ^0.0.6
-  meta: ^1.1.7
-  path: ^1.6.4
+  meta: ^1.9.1
+  path: ^1.8.3
 
 dev_dependencies:
   extra_pedantic: any
