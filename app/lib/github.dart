@@ -4,14 +4,19 @@ import 'dart:math';
 import 'package:app/report.dart';
 import 'package:github/github.dart';
 import 'package:github_actions_toolkit/github_actions_toolkit.dart' as gaction;
-import 'package:meta/meta.dart';
 
 final _useTestMode = Platform.environment['GITHUB_REPOSITORY'] ==
     'axel-op/dart-package-analyzer';
 
 extension on String {
-  bool equalsIgnoreCase(String other) =>
-      other.toLowerCase() == this.toLowerCase();
+  bool equalsIgnoreCase(String other) => other.toLowerCase() == toLowerCase();
+}
+
+extension on GitHubError {
+  bool hasMessageContaining(Pattern other) {
+    final m = message;
+    return m != null && m.contains(other);
+  }
 }
 
 extension on Report {
@@ -36,22 +41,22 @@ extension on Report {
       summary
         ..writeln("### Score")
         ..writeln("**$grantedPoints/$maxPoints** points")
-        ..writeln("(${grantedPoints * 100.0 / maxPoints}%)");
+        ..writeln("(${grantedPoints! * 100.0 / maxPoints!}%)");
     }
 
     final platforms = supportedPlatforms;
     if (platforms.isNotEmpty) {
       summary.write('\n### Supported platforms');
     }
-    for (final platform in supportedPlatforms.keys) {
+    supportedPlatforms.forEach((platform, value) {
       summary.write('\n* $platform');
-      platforms[platform].forEach((tag) {
+      for (final tag in value) {
         summary.write('\n  * `$tag`');
         if (platform.equalsIgnoreCase('dart') && tagsDocs.containsKey(tag)) {
           summary.write('  \n${tagsDocs[tag]}');
         }
-      });
-    }
+      }
+    });
     return summary.toString();
   }
 
@@ -70,7 +75,7 @@ extension on Report {
             case '~':
               return '# ⚠ ';
             default:
-              return m.group(0);
+              return m.group(0)!;
           }
         },
       );
@@ -81,11 +86,11 @@ extension on Report {
     }
 
     text.write('\n## Versions'
-        '\n* [Pana: ${panaVersion}](https://pub.dev/packages/pana/versions/${panaVersion})'
-        '\n* Dart: ${dartSdkVersion}'
-        '\n* Flutter: ${flutterVersion}');
+        '\n* [Pana: $panaVersion](https://pub.dev/packages/pana/versions/$panaVersion)'
+        '\n* Dart: $dartSdkVersion'
+        '\n* Flutter: $flutterVersion');
     if (dartSdkVersion != dartSdkInFlutterVersion) {
-      text.write(' with Dart ${dartSdkInFlutterVersion}');
+      text.write(' with Dart $dartSdkInFlutterVersion');
     }
     return text.toString();
   }
@@ -93,9 +98,9 @@ extension on Report {
 
 class Analysis {
   static Future<Analysis> queue({
-    @required String repositorySlug,
-    @required String githubToken,
-    @required String commitSha,
+    required String repositorySlug,
+    required String githubToken,
+    required String commitSha,
   }) async {
     final GitHub client = GitHub(auth: Authentication.withToken(githubToken));
     final RepositorySlug slug = RepositorySlug.full(repositorySlug);
@@ -114,7 +119,7 @@ class Analysis {
       return Analysis._(client, checkRun, slug);
     } catch (e) {
       if (e is GitHubError &&
-          e.message.contains('Resource not accessible by integration')) {
+          e.hasMessageContaining('Resource not accessible by integration')) {
         gaction.log.warning(
             ' It seems that this action doesn\'t have the required permissions to call the GitHub API with the token you gave.'
             ' This can occur if this repository is a fork, as in that case GitHub reduces the GITHUB_TOKEN\'s permissions for security reasons.'
@@ -130,9 +135,9 @@ class Analysis {
   final GitHub _client;
 
   /// No report will be posted on GitHub if this is null.
-  final CheckRun _checkRun;
+  final CheckRun? _checkRun;
   final RepositorySlug _repositorySlug;
-  DateTime _startTime;
+  DateTime? _startTime;
 
   Analysis._(
     this._client,
@@ -145,7 +150,7 @@ class Analysis {
     _startTime = DateTime.now();
     await _client.checks.checkRuns.updateCheckRun(
       _repositorySlug,
-      _checkRun,
+      _checkRun!,
       startedAt: _startTime,
       status: CheckRunStatus.inProgress,
     );
@@ -156,7 +161,7 @@ class Analysis {
     gaction.log.debug("Checkrun cancelled. Conclusion is 'CANCELLED'.");
     await _client.checks.checkRuns.updateCheckRun(
       _repositorySlug,
-      _checkRun,
+      _checkRun!,
       startedAt: _startTime,
       completedAt: DateTime.now(),
       status: CheckRunStatus.completed,
@@ -166,7 +171,7 @@ class Analysis {
       output: cause == null
           ? null
           : CheckRunOutput(
-              title: _checkRun.name,
+              title: _checkRun!.name!,
               summary:
                   'This check run has been cancelled, due to the following error:'
                   '\n\n```\n$cause\n```\n\n'
@@ -175,7 +180,7 @@ class Analysis {
   }
 
   Future<void> complete({
-    @required Report report,
+    required Report report,
   }) async {
     final conclusion = report.conclusion;
     if (_checkRun == null) {
@@ -197,12 +202,12 @@ class Analysis {
       summary
         ..writeln('**THIS ACTION HAS BEEN EXECUTED IN TEST MODE.**')
         ..writeln('**Conclusion = `$conclusion`**');
-      name.write(' (${_checkRun.externalId})');
+      name.write(' (${_checkRun!.externalId})');
     }
     summary.writeln(report.summary);
     final checkRun = await _client.checks.checkRuns.updateCheckRun(
       _repositorySlug,
-      _checkRun,
+      _checkRun!,
       name: name.toString(),
       status: CheckRunStatus.completed,
       startedAt: _startTime,

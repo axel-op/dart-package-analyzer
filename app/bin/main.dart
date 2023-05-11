@@ -28,7 +28,7 @@ dynamic main(List<String> args) async {
     }
   }
 
-  Future<void> _exitProgram([dynamic cause]) async {
+  Future<void> exitProgram([dynamic cause]) async {
     await tryCancelAnalysis(cause);
     await Future.wait<dynamic>([stderr.done, stdout.done]);
     logger.error('Exiting with code $exitCode');
@@ -59,7 +59,7 @@ dynamic main(List<String> args) async {
     if (panaProcessResult.exitCode != 0) {
       logger.error('Pana exited with code ${panaProcessResult.exitCode}');
       exitCode = panaProcessResult.exitCode;
-      await _exitProgram();
+      await exitProgram();
     }
     if (panaProcessResult.stderr
         .toLowerCase()
@@ -91,8 +91,8 @@ dynamic main(List<String> args) async {
       () async {
         final outputs = <String, String>{
           "json_output": jsonEncode(jsonDecode(panaProcessResult.stdout)),
-          "total": report.grantedPoints?.toString(),
-          "total_max": report.maxPoints?.toString()
+          "total": report.grantedPoints.toString(),
+          "total_max": report.maxPoints.toString()
         };
         final idsToKeys = <String, String>{
           "convention": "conventions",
@@ -104,8 +104,8 @@ dynamic main(List<String> args) async {
         };
         for (final section in report.sections) {
           final key = idsToKeys[section.id] ?? section.id;
-          outputs[key] = section.grantedPoints?.toString();
-          outputs["${key}_max"] = section.maxPoints?.toString();
+          outputs[key] = section.grantedPoints.toString();
+          outputs["${key}_max"] = section.maxPoints.toString();
         }
         for (final output in outputs.entries) {
           logger.info('${output.key}: ${output.value}');
@@ -121,6 +121,5 @@ dynamic main(List<String> args) async {
 }
 
 void _writeError(dynamic error, StackTrace stackTrace) {
-  logger.error(error.toString() +
-      (stackTrace != null ? '\n' + stackTrace.toString() : ''));
+  logger.error('$error\n$stackTrace');
 }
