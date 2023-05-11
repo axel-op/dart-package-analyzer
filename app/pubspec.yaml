@@ -1,8 +1,5 @@
 name: app
 description: A sample command-line application.
-author: axel-op <49279289+axel-op@users.noreply.github.com>
-# version: 1.0.0
-# homepage: https://www.example.com
 
 environment:
   sdk: ">=2.6.0 <3.0.0"
