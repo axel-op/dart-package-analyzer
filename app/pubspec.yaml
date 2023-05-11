@@ -12,5 +12,4 @@ dependencies:
   path: ^1.8.3
 
 dev_dependencies:
-  extra_pedantic: any
-  pedantic: ^1.8.0
+  lints: ^2.0.1
