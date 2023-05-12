@@ -64,7 +64,7 @@ jobs:
           echo "CURRENT_FLUTTER=$CURRENT_FLUTTER" >> $GITHUB_ENV
           echo "CURRENT_PANA=$CURRENT_PANA" >> $GITHUB_ENV
           echo "CURRENT_DART=$CURRENT_DART" >> $GITHUB_ENV
-          echo "::set-output name=should_push::$SHOULD_PUSH"
+          echo "should_push=$SHOULD_PUSH" >> "$GITHUB_OUTPUT"
 
       - name: Build new image
         if: steps.check.outputs.should_push == 'true'
