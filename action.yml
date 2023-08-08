@@ -40,6 +40,8 @@ outputs:
     description: "Score for the category 'Support up-to-date dependencies'"
   dependencies_max:
     description: "Maximum score for the category 'Support up-to-date dependencies'"
+  json_output:
+    description: "The pana output in JSON format"
 
 runs:
   using: "docker"
