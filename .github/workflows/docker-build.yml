@@ -41,10 +41,10 @@ jobs:
           DART_VERSION: latest
           GIT_FLUTTER: https://github.com/flutter/flutter.git
           FLUTTER_BRANCH: stable
-          PANA_DOC: https://pub.dev/api/documentation/pana
+          PANA_DOC: https://pub.dev/api/packages/pana
         run: |
           CURRENT_FLUTTER=$(git ls-remote $GIT_FLUTTER refs/heads/$FLUTTER_BRANCH | cut -f 1)
-          CURRENT_PANA=$(curl -s $PANA_DOC | jq -r '.latestStableVersion')
+          CURRENT_PANA=$(curl -s $PANA_DOC | jq -r '.latest.version')
           API_TOKEN=$(curl -s "https://auth.docker.io/token?scope=repository:$DART_IMAGE:pull&service=registry.docker.io" | jq -r '.token')
           CURRENT_DART=$(curl -s -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "https://registry-1.docker.io/v2/$DART_IMAGE/manifests/$DART_VERSION" | jq -r '.config.digest')
           PREVIOUS_FLUTTER=${{ steps.labels.outputs.fluttersha }}
