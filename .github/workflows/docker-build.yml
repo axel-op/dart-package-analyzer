@@ -21,7 +21,7 @@ jobs:
       IMAGE: axelop/dart_package_analyzer
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
@@ -73,10 +73,11 @@ jobs:
       - name: Test new image
         if: steps.check.outputs.should_push == 'true'
         run: |
-          sudo docker run -d -t --name test $IMAGE:$TAG
-          sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
-          sudo docker cp $GITHUB_EVENT_PATH test:/eventpayload
-          sudo docker exec -e GITHUB_WORKSPACE=/test -e GITHUB_EVENT_PATH=/eventpayload -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+          sudo docker run -d -t --name test-container $IMAGE:$TAG
+          sudo docker cp ${GITHUB_WORKSPACE}/test/. test-container:/test
+          sudo docker cp $GITHUB_EVENT_PATH test-container:/eventpayload
+          sudo docker exec test-container /bin/bash -c "cd /test && git init"
+          sudo docker exec -e GITHUB_WORKSPACE=/test -e GITHUB_EVENT_PATH=/eventpayload -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test-container /bin/bash -c "/dart_package_analyzer"
 
       - name: Push new image
         if: steps.check.outputs.should_push == 'true'

@@ -13,16 +13,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build container
         run: sudo docker build --quiet -f $DOCKERFILE -t $IMAGE .
       - name: Run tests
         id: steptest
         run: |
-          sudo docker run -d -t --name test $IMAGE
-          sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
-          sudo docker cp ${GITHUB_EVENT_PATH} test:/event.json
-          sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+          sudo docker run -d -t --name test-container $IMAGE
+          sudo docker cp ${GITHUB_WORKSPACE}/test/. test-container:/test
+          sudo docker cp ${GITHUB_EVENT_PATH} test-container:/event.json
+          sudo docker exec test-container /bin/bash -c "cd /test && git init"
+          sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test-container /bin/bash -c "/dart_package_analyzer"
       - name: Test outputs
         env:
           JSON_OUTPUT: ${{ steps.steptest.outputs.json_output }}
@@ -66,30 +67,32 @@ jobs:
         analysisoptions: ["analysis_options.yaml", ""]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build container
         run: sudo docker build --quiet -f $DOCKERFILE -t $IMAGE .
       - name: Run tests
         env:
           WORKSPACE: /tmp
         run: |
-          sudo docker run -d -t --name test $IMAGE
-          sudo docker cp ${GITHUB_WORKSPACE}/test/. test:$WORKSPACE/test
-          sudo docker cp ${GITHUB_EVENT_PATH} test:$WORKSPACE/event.json
-          sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=$WORKSPACE/event.json -e INPUT_RELATIVEPATH=${{ matrix.path }} -e INPUT_CUSTOMANALYSISOPTIONS=${{ matrix.analysisoptions }} -e GITHUB_WORKSPACE=$WORKSPACE -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+          sudo docker run -d -t --name test-container $IMAGE
+          sudo docker cp ${GITHUB_WORKSPACE}/test/. test-container:$WORKSPACE/test
+          sudo docker cp ${GITHUB_EVENT_PATH} test-container:$WORKSPACE/event.json
+          sudo docker exec test-container /bin/bash -c "cd $WORKSPACE/test && git init"
+          sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=$WORKSPACE/event.json -e INPUT_RELATIVEPATH=${{ matrix.path }} -e INPUT_CUSTOMANALYSISOPTIONS=${{ matrix.analysisoptions }} -e GITHUB_WORKSPACE=$WORKSPACE -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test-container /bin/bash -c "/dart_package_analyzer"
 
   test-pubspec-error:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build container
         run: sudo docker build --quiet -f $DOCKERFILE -t $IMAGE .
       - name: Run tests
         continue-on-error: true
         run: |
-          sudo docker run -d -t --name test $IMAGE
-          sudo docker cp ${GITHUB_WORKSPACE}/test/. test:/test
-          sudo docker cp ${GITHUB_EVENT_PATH} test:/event.json
-          sudo docker exec test /bin/bash -c "rm /test/pubspec.yaml"
-          sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test /bin/bash -c "/dart_package_analyzer"
+          sudo docker run -d -t --name test-container $IMAGE
+          sudo docker cp ${GITHUB_WORKSPACE}/test/. test-container:/test
+          sudo docker cp ${GITHUB_EVENT_PATH} test-container:/event.json
+          sudo docker exec test-container /bin/bash -c "cd /test && git init"
+          sudo docker exec test-container /bin/bash -c "rm /test/pubspec.yaml"
+          sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=/event.json -e GITHUB_WORKSPACE=/test -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test-container /bin/bash -c "/dart_package_analyzer"
