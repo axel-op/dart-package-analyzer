@@ -39,7 +39,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           DART_IMAGE: library/dart
           DART_VERSION: latest
-          GIT_FLUTTER: git://github.com/flutter/flutter.git
+          GIT_FLUTTER: https://github.com/flutter/flutter.git
           FLUTTER_BRANCH: stable
           PANA_DOC: https://pub.dev/api/documentation/pana
         run: |
