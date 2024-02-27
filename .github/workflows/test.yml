@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build container
-        run: sudo docker build -f $DOCKERFILE -t $IMAGE .
+        run: sudo docker build --quiet -f $DOCKERFILE -t $IMAGE .
       - name: Run tests
         id: steptest
         run: |
@@ -68,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build container
-        run: sudo docker build -f $DOCKERFILE -t $IMAGE .
+        run: sudo docker build --quiet -f $DOCKERFILE -t $IMAGE .
       - name: Run tests
         env:
           WORKSPACE: /tmp
@@ -84,7 +84,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build container
-        run: sudo docker build -f $DOCKERFILE -t $IMAGE .
+        run: sudo docker build --quiet -f $DOCKERFILE -t $IMAGE .
       - name: Run tests
         continue-on-error: true
         run: |

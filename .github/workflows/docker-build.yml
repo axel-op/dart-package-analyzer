@@ -68,7 +68,7 @@ jobs:
 
       - name: Build new image
         if: steps.check.outputs.should_push == 'true'
-        run: sudo docker build --label "fluttersha=$CURRENT_FLUTTER" --label "panaversion=$CURRENT_PANA" --label "dartdigest=$CURRENT_DART" -f $DOCKERFILE -t $IMAGE:$TAG .
+        run: sudo docker build --quiet --label "fluttersha=$CURRENT_FLUTTER" --label "panaversion=$CURRENT_PANA" --label "dartdigest=$CURRENT_DART" -f $DOCKERFILE -t $IMAGE:$TAG .
 
       - name: Test new image
         if: steps.check.outputs.should_push == 'true'
