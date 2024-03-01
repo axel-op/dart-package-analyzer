@@ -16,9 +16,10 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TAG: v3
       DOCKERFILE: Dockerfile-parent
-      IMAGE: axelop/dart_package_analyzer
+      GHCR_IMAGE_TAG: "ghcr.io/${{ github.repository }}:v3"
+      DOCKER_HUB_IMAGE_TAG: "axelop/dart_package_analyzer:v3"
+      REGISTRY: ghcr.io
 
     steps:
       - uses: actions/checkout@v4
@@ -30,8 +31,8 @@ jobs:
         id: labels
         uses: axel-op/docker-labels-retriever@master
         with:
-          image: ${{ env.IMAGE }}:${{ env.TAG }}
-          registry: docker-hub
+          image: ${{ env.GHCR_IMAGE_TAG }}
+          registry: ${{ env.REGISTRY }}
 
       - name: Check current image
         id: check
@@ -68,22 +69,36 @@ jobs:
 
       - name: Build new image
         if: steps.check.outputs.should_push == 'true'
-        run: sudo docker build --quiet --label "fluttersha=$CURRENT_FLUTTER" --label "panaversion=$CURRENT_PANA" --label "dartdigest=$CURRENT_DART" -f $DOCKERFILE -t $IMAGE:$TAG .
+        run: |
+          sudo docker build \
+            --quiet \
+            --label "fluttersha=$CURRENT_FLUTTER" \
+            --label "panaversion=$CURRENT_PANA" \
+            --label "dartdigest=$CURRENT_DART" \
+            --label "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+            -f $DOCKERFILE \
+            -t $GHCR_IMAGE_TAG \
+            -t $DOCKER_HUB_IMAGE_TAG \
+            .
 
       - name: Test new image
         if: steps.check.outputs.should_push == 'true'
         run: |
-          sudo docker run -d -t --name test-container $IMAGE:$TAG
+          sudo docker run -d -t --name test-container $GHCR_IMAGE_TAG
           sudo docker cp ${GITHUB_WORKSPACE}/test/. test-container:/test
           sudo docker cp $GITHUB_EVENT_PATH test-container:/eventpayload
           sudo docker exec test-container /bin/bash -c "cd /test && git init"
           sudo docker exec -e GITHUB_WORKSPACE=/test -e GITHUB_EVENT_PATH=/eventpayload -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test-container /bin/bash -c "/dart_package_analyzer"
-
+      
       - name: Push new image
         if: steps.check.outputs.should_push == 'true'
         env:
-          DOCKER_USERNAME: axelop
-          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCKER_HUB_USERNAME: axelop
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_TOKEN }}
         run: |
-          echo $DOCKER_TOKEN | sudo docker login --username=$DOCKER_USERNAME --password-stdin
-          sudo docker push $IMAGE:$TAG
+          echo $GHCR_TOKEN | sudo docker login $REGISTRY --username=$GHCR_USERNAME --password-stdin
+          sudo docker push $GHCR_IMAGE_TAG
+          echo $DOCKER_HUB_TOKEN | sudo docker login --username=$DOCKER_HUB_USERNAME --password-stdin
+          sudo docker push $DOCKER_HUB_IMAGE_TAG
