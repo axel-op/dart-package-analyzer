@@ -39,8 +39,14 @@ dynamic main(List<String> args) async {
     // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
     await logger.group(
       'Disabling Flutter analytics',
-      () => gaction.exec('flutter', const <String>['config', '--no-analytics']),
+      () => gaction.exec('flutter', const ['config', '--no-analytics']),
     );
+
+    final canonicalPathToPackage = inputs.paths.canonicalPathToPackage;
+    final userProcessResult = await gaction.exec('whoami', [], silent: true);
+    final user = (userProcessResult.stdout as String).trim();
+    logger.debug('whoami returned: $user');
+    gaction.exec('chown', [user, '-R', canonicalPathToPackage]);
 
     await analysis.start();
 
@@ -48,11 +54,7 @@ dynamic main(List<String> args) async {
     logger.startGroup('Running pana');
     final panaProcessResult = await gaction.exec(
       'pana',
-      <String>[
-        '--json',
-        '--no-warning',
-        inputs.paths.canonicalPathToPackage,
-      ],
+      ['--json', '--no-warning', canonicalPathToPackage],
     );
     logger.endGroup();
 
