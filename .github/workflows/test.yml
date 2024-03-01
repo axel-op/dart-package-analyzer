@@ -5,7 +5,7 @@ name: Test
 on: [push, pull_request]
 
 env:
-  IMAGE: axelop/dart_package_analyzer:test
+  IMAGE: axelop/dart-package-analyzer:test
   DOCKERFILE: Dockerfile-parent
 
 jobs:
