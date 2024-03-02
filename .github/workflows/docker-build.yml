@@ -89,7 +89,7 @@ jobs:
           sudo docker cp $GITHUB_EVENT_PATH test-container:/eventpayload
           sudo docker exec test-container /bin/bash -c "cd /test && git init"
           sudo docker exec -e GITHUB_WORKSPACE=/test -e GITHUB_EVENT_PATH=/eventpayload -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test-container /bin/bash -c "/dart_package_analyzer"
-      
+
       - name: Push new image
         if: steps.check.outputs.should_push == 'true'
         env:
@@ -102,3 +102,10 @@ jobs:
           sudo docker push $GHCR_IMAGE_TAG
           echo $DOCKER_HUB_TOKEN | sudo docker login --username=$DOCKER_HUB_USERNAME --password-stdin
           sudo docker push $DOCKER_HUB_IMAGE_TAG
+
+      - name: Delete untagged image versions
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: ${{ github.event.repository.name }}
+          package-type: container
+          delete-only-untagged-versions: true
