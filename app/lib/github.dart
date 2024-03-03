@@ -120,6 +120,7 @@ class Analysis {
     } catch (e) {
       if (e is GitHubError &&
           e.hasMessageContaining('Resource not accessible by integration')) {
+        gaction.log.warning(e.message!);
         gaction.log.warning(
             ' It seems that this action doesn\'t have the required permissions to call the GitHub API with the token you gave.'
             ' This can occur if this repository is a fork, as in that case GitHub reduces the GITHUB_TOKEN\'s permissions for security reasons.'
