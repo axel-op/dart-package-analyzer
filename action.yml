@@ -45,4 +45,5 @@ outputs:
 
 runs:
   using: "docker"
-  image: "Dockerfile"
+  image: "docker://ghcr.io/axel-op/dart-package-analyzer:v3"
+  entrypoint: "/dart_package_analyzer"
