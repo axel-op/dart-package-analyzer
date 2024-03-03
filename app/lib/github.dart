@@ -122,9 +122,11 @@ class Analysis {
           e.hasMessageContaining('Resource not accessible by integration')) {
         gaction.log.warning(e.message!);
         gaction.log.warning(
-            ' It seems that this action doesn\'t have the required permissions to call the GitHub API with the token you gave.'
-            ' This can occur if this repository is a fork, as in that case GitHub reduces the GITHUB_TOKEN\'s permissions for security reasons.'
+            'It seems that this action doesn\'t have the required permissions to call the GitHub API with the token you gave.'
             ' Consequently, no report will be made on GitHub.'
+            ' 1) Verify that GITHUB_TOKEN is granted read and write permissions in your repository settings:'
+            ' https://github.com/${slug.fullName}/settings/actions'
+            ' 2) If this repository is a fork, GitHub has reduced GITHUB_TOKEN\'s permissions for security reasons.'
             ' Check this issue for more information:'
             ' https://github.com/axel-op/dart-package-analyzer/issues/2');
         return Analysis._(client, null, slug);
