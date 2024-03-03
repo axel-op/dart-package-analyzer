@@ -3,11 +3,7 @@ name: Docker image update
 on:
   push:
     branches:
-      - "master"
-    paths:
-      - ".github/workflows/docker-build.yml"
-      - "app/**"
-      - "Dockerfile-parent"
+      - "*"
   schedule:
     - cron: "0 0 * * *"
 
@@ -17,9 +13,11 @@ jobs:
 
     env:
       DOCKERFILE: Dockerfile-parent
-      GHCR_IMAGE_TAG: "ghcr.io/${{ github.repository }}:v3"
+      GHCR_IMAGE: "ghcr.io/${{ github.repository }}"
+      GHCR_IMAGE_TAG_VERSION: "ghcr.io/${{ github.repository }}:v3"
+      GHCR_IMAGE_TAG_COMMIT: "ghcr.io/${{ github.repository }}:${{ github.sha }}"
       DOCKER_HUB_IMAGE_TAG: "axelop/dart_package_analyzer:v3"
-      REGISTRY: ghcr.io
+      GHCR_REGISTRY: ghcr.io
 
     steps:
       - uses: actions/checkout@v4
@@ -31,8 +29,8 @@ jobs:
         id: labels
         uses: axel-op/docker-labels-retriever@master
         with:
-          image: ${{ env.GHCR_IMAGE_TAG }}
-          registry: ${{ env.REGISTRY }}
+          image: ${{ env.GHCR_IMAGE_TAG_VERSION }}
+          registry: ${{ env.GHCR_REGISTRY }}
 
       - name: Check current image
         id: check
@@ -77,14 +75,15 @@ jobs:
             --label "dartdigest=$CURRENT_DART" \
             --label "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
             -f $DOCKERFILE \
-            -t $GHCR_IMAGE_TAG \
+            -t $GHCR_IMAGE_TAG_VERSION \
+            -t $GHCR_IMAGE_TAG_COMMIT \
             -t $DOCKER_HUB_IMAGE_TAG \
             .
 
       - name: Test new image
         if: steps.check.outputs.should_push == 'true'
         run: |
-          sudo docker run -d -t --name test-container $GHCR_IMAGE_TAG
+          sudo docker run -d -t --name test-container $GHCR_IMAGE_TAG_VERSION
           sudo docker cp ${GITHUB_WORKSPACE}/test/. test-container:/test
           sudo docker cp $GITHUB_EVENT_PATH test-container:/eventpayload
           sudo docker exec test-container /bin/bash -c "cd /test && git init"
@@ -98,8 +97,8 @@ jobs:
           DOCKER_HUB_USERNAME: axelop
           DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_TOKEN }}
         run: |
-          echo $GHCR_TOKEN | sudo docker login $REGISTRY --username=$GHCR_USERNAME --password-stdin
-          sudo docker push $GHCR_IMAGE_TAG
+          echo $GHCR_TOKEN | sudo docker login $GHCR_REGISTRY --username=$GHCR_USERNAME --password-stdin
+          sudo docker push --all-tags $GHCR_IMAGE
           echo $DOCKER_HUB_TOKEN | sudo docker login --username=$DOCKER_HUB_USERNAME --password-stdin
           sudo docker push $DOCKER_HUB_IMAGE_TAG
 
