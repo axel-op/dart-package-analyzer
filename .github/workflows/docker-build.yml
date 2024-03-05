@@ -82,12 +82,14 @@ jobs:
 
       - name: Test new image
         if: steps.check.outputs.should_push == 'true'
+        env:
+          TEST_DIR: "test-package"
         run: |
           sudo docker run -d -t --name test-container $GHCR_IMAGE_TAG_VERSION
-          sudo docker cp ${GITHUB_WORKSPACE}/test/. test-container:/test
+          sudo docker cp ${GITHUB_WORKSPACE}/$TEST_DIR/. test-container:/$TEST_DIR
           sudo docker cp $GITHUB_EVENT_PATH test-container:/eventpayload
-          sudo docker exec test-container /bin/bash -c "cd /test && git init"
-          sudo docker exec -e GITHUB_WORKSPACE=/test -e GITHUB_EVENT_PATH=/eventpayload -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test-container /bin/bash -c "/dart_package_analyzer"
+          sudo docker exec test-container /bin/bash -c "cd /$TEST_DIR && git init"
+          sudo docker exec -e GITHUB_WORKSPACE=/$TEST_DIR -e GITHUB_EVENT_PATH=/eventpayload -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test-container /bin/bash -c "/dart_package_analyzer"
 
       - name: Push new image
         if: steps.check.outputs.should_push == 'true'
