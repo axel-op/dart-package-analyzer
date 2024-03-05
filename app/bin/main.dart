@@ -42,17 +42,17 @@ dynamic main(List<String> args) async {
       () => gaction.exec('flutter', const ['config', '--no-analytics']),
     );
 
-    final canonicalPathToPackage = inputs.paths.canonicalPathToPackage;
+    final canonicalPathToRepoRoot = inputs.paths.canonicalPathToRepoRoot;
     final userProcessResult = await gaction.exec('whoami', [], silent: true);
     final user = (userProcessResult.stdout as String).trim();
     logger.info('whoami returned: $user');
     final chownProcessResult = await gaction.exec(
       'chown',
-      [user, '-R', canonicalPathToPackage],
+      [user, '-R', canonicalPathToRepoRoot],
     );
     if (chownProcessResult.exitCode > 0) {
       logger.warning(
-          "Couldn't change ownership of $canonicalPathToPackage: ${jsonEncode({
+          "Couldn't change ownership of $canonicalPathToRepoRoot: ${jsonEncode({
             "stdout": chownProcessResult.stdout,
             "stderr": chownProcessResult.stderr,
           })}");
@@ -64,7 +64,7 @@ dynamic main(List<String> args) async {
     logger.startGroup('Running pana');
     final panaProcessResult = await gaction.exec(
       'pana',
-      ['--json', '--no-warning', canonicalPathToPackage],
+      ['--json', '--no-warning', inputs.paths.canonicalPathToPackage],
     );
     logger.endGroup();
 

@@ -81,6 +81,25 @@ jobs:
           sudo docker exec test-container /bin/bash -c "cd $WORKSPACE/$TEST_DIR && git init"
           sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=$WORKSPACE/event.json -e INPUT_RELATIVEPATH=${{ matrix.path }} -e INPUT_CUSTOMANALYSISOPTIONS=${{ matrix.analysisoptions }} -e GITHUB_WORKSPACE=$WORKSPACE -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test-container /bin/bash -c "/dart_package_analyzer"
 
+  test-subdirectory:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build container
+        run: sudo docker build --quiet -f $DOCKERFILE -t $IMAGE .
+      - name: Run tests
+        env:
+          WORKSPACE: "/test"
+        run: |
+          sudo docker run -d -t --name test-container $IMAGE
+          sudo docker exec test-container /bin/bash -c "mkdir --parents $WORKSPACE/git-root"
+          sudo docker exec test-container /bin/bash -c "useradd unknown && chown unknown -R $WORKSPACE/git-root"
+          sudo docker cp ${GITHUB_WORKSPACE}/$TEST_DIR/. test-container:$WORKSPACE/git-root/$TEST_DIR
+          sudo docker cp ${GITHUB_EVENT_PATH} test-container:$WORKSPACE/event.json
+          sudo docker exec test-container /bin/bash -c "cd $WORKSPACE/git-root && git init"
+          sudo docker exec -e GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER -e GITHUB_EVENT_PATH=$WORKSPACE/event.json -e INPUT_RELATIVEPATH=./git-root/$TEST_DIR -e GITHUB_WORKSPACE=$WORKSPACE -e GITHUB_SHA=$GITHUB_SHA -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e INPUT_MINANNOTATIONLEVEL=info -e INPUT_GITHUBTOKEN=${{ secrets.GITHUB_TOKEN }} test-container /bin/bash -c "/dart_package_analyzer"
+
   test-pubspec-error:
     runs-on: ubuntu-latest
 
