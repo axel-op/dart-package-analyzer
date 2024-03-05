@@ -45,8 +45,18 @@ dynamic main(List<String> args) async {
     final canonicalPathToPackage = inputs.paths.canonicalPathToPackage;
     final userProcessResult = await gaction.exec('whoami', [], silent: true);
     final user = (userProcessResult.stdout as String).trim();
-    logger.debug('whoami returned: $user');
-    gaction.exec('chown', [user, '-R', canonicalPathToPackage]);
+    logger.info('whoami returned: $user');
+    final chownProcessResult = await gaction.exec(
+      'chown',
+      [user, '-R', canonicalPathToPackage],
+    );
+    if (chownProcessResult.exitCode > 0) {
+      logger.warning(
+          "Couldn't change ownership of $canonicalPathToPackage: ${jsonEncode({
+            "stdout": chownProcessResult.stdout,
+            "stderr": chownProcessResult.stderr,
+          })}");
+    }
 
     await analysis.start();
 
