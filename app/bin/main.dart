@@ -36,27 +36,17 @@ dynamic main(List<String> args) async {
   }
 
   try {
+    final canonicalPathToRepoRoot = inputs.paths.canonicalPathToRepoRoot;
+    final userProcessResult = await gaction.exec('whoami', [], silent: true);
+    final user = (userProcessResult.stdout as String).trim();
+    logger.info('whoami returned: $user');
+    await gaction.exec('chown', [user, '-R', canonicalPathToRepoRoot]);
+
     // Command to disable analytics reporting, and also to prevent a warning from the next command due to Flutter welcome screen
     await logger.group(
       'Disabling Flutter analytics',
       () => gaction.exec('flutter', const ['config', '--no-analytics']),
     );
-
-    final canonicalPathToRepoRoot = inputs.paths.canonicalPathToRepoRoot;
-    final userProcessResult = await gaction.exec('whoami', [], silent: true);
-    final user = (userProcessResult.stdout as String).trim();
-    logger.info('whoami returned: $user');
-    final chownProcessResult = await gaction.exec(
-      'chown',
-      [user, '-R', canonicalPathToRepoRoot],
-    );
-    if (chownProcessResult.exitCode > 0) {
-      logger.warning(
-          "Couldn't change ownership of $canonicalPathToRepoRoot: ${jsonEncode({
-            "stdout": chownProcessResult.stdout,
-            "stderr": chownProcessResult.stderr,
-          })}");
-    }
 
     await analysis.start();
 
